@@ -1,0 +1,2280 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="theme-color" content="#14121f">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="CatCards">
+<link rel="manifest" href='data:application/manifest+json,{"name":"CatCards","short_name":"CatCards","display":"standalone","background_color":"%2314121f","theme_color":"%2314121f","start_url":"."}'>
+<title>CatCards — Trasforma il tuo gatto in una carta</title>
+<script src="https://cdn.jsdelivr.net/npm/webaudiofont@3.0.4/npm/dist/WebAudioFontPlayer.js"></script>
+<style>
+  :root{
+    --bg:#14121f; --panel:#1e1b2e; --panel2:#282440;
+    --accent:#ffb703; --accent2:#8338ec; --text:#f1eefc; --muted:#9b93b8;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    background:radial-gradient(1200px 800px at 50% -10%, #2a2345 0%, var(--bg) 60%);
+    color:var(--text); font-family:'Segoe UI', system-ui, -apple-system, sans-serif;
+    min-height:100vh; display:flex; flex-direction:column; align-items:center; padding:20px 16px 60px;
+  }
+  h1{font-size:2rem; letter-spacing:1px; margin-top:8px;}
+  h1 span{color:var(--accent);}
+  .tag{color:var(--muted); margin:6px 0 24px; text-align:center; font-size:.95rem;}
+  .panel{
+    background:var(--panel); border:1px solid #363057; border-radius:18px;
+    padding:22px; width:100%; max-width:440px; box-shadow:0 10px 40px rgba(0,0,0,.4);
+  }
+  .drop{
+    border:2px dashed #4d4477; border-radius:14px; padding:34px 16px; text-align:center;
+    cursor:pointer; transition:.2s; background:var(--panel2);
+  }
+  .drop:hover{border-color:var(--accent);}
+  .drop .cat{font-size:3rem;}
+  .drop p{color:var(--muted); margin-top:8px; font-size:.9rem;}
+  input[type=file]{display:none;}
+  .btn{
+    display:block; width:100%; margin-top:14px; padding:14px; border:none; border-radius:12px;
+    background:linear-gradient(135deg, var(--accent) 0%, #fb8500 100%); color:#1a1200;
+    font-size:1.05rem; font-weight:700; cursor:pointer; transition:.15s;
+  }
+  .btn:hover{transform:translateY(-1px); filter:brightness(1.06);}
+  .btn:disabled{opacity:.4; cursor:not-allowed; transform:none;}
+  .btn.secondary{background:var(--panel2); color:var(--text); border:1px solid #4d4477;}
+  .preview{width:100%; border-radius:12px; margin-top:14px; display:none; max-height:300px; object-fit:cover;}
+  label.small{display:block; color:var(--muted); font-size:.85rem; margin:14px 0 6px;}
+  input[type=text], input[type=password]{
+    width:100%; padding:12px; border-radius:10px; border:1px solid #4d4477;
+    background:var(--panel2); color:var(--text); font-size:1rem;
+  }
+  details{margin-top:16px;}
+  summary{color:var(--muted); cursor:pointer; font-size:.9rem;}
+  details p{color:var(--muted); font-size:.8rem; margin-top:8px; line-height:1.5;}
+  #status{text-align:center; color:var(--accent); margin-top:14px; min-height:22px; font-size:.95rem;}
+  #cardWrap{display:none; flex-direction:column; align-items:center; width:100%; max-width:440px;}
+  #cardCanvas{width:100%; max-width:400px; border-radius:20px; box-shadow:0 20px 60px rgba(0,0,0,.6); margin-top:10px;}
+  .spinner{
+    display:inline-block; width:18px; height:18px; border:3px solid rgba(255,183,3,.25);
+    border-top-color:var(--accent); border-radius:50%; animation:spin .8s linear infinite; vertical-align:middle; margin-right:8px;
+  }
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .collGrid{display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:12px;}
+  .collGrid .thumb{position:relative;}
+  .collGrid img{width:100%; border-radius:8px; cursor:pointer; border:1px solid #363057; transition:.15s; display:block;}
+  .collGrid img:hover{transform:scale(1.04); border-color:var(--accent);}
+  .thumb .del{
+    position:absolute; top:5px; right:5px; width:28px; height:28px;
+    background:rgba(0,0,0,.7); border:1px solid #555; border-radius:8px;
+    color:#fff; font-size:.85rem; cursor:pointer; line-height:1;
+  }
+  .thumb .del:hover{background:#c1121f; border-color:#c1121f;}
+  select{
+    width:100%; padding:12px; border-radius:10px; border:1px solid #4d4477;
+    background:var(--panel2); color:var(--text); font-size:1rem;
+  }
+  .battle{position:fixed; inset:0; background:rgba(10,8,18,.97); display:none; flex-direction:column; align-items:center; padding:20px 16px; z-index:20; overflow:auto;}
+  .fighters{display:flex; gap:14px; width:100%; max-width:440px; position:sticky; top:0; z-index:3; background:rgba(10,8,18,.97); padding:6px 0;}
+  #vsFlash{position:fixed; inset:0; display:none; align-items:center; justify-content:center; z-index:30; pointer-events:none;}
+  #vsFlash span{font-size:6rem; font-weight:900; color:var(--accent); text-shadow:0 0 34px rgba(255,183,3,.85); animation:vsPop .95s ease forwards;}
+  @keyframes vsPop{0%{transform:scale(.2) rotate(-8deg); opacity:0}40%{transform:scale(1.35) rotate(2deg); opacity:1}100%{transform:scale(1); opacity:0}}
+  #vsIntro{position:fixed; inset:0; display:none; align-items:center; justify-content:center; gap:12px; background:rgba(10,8,18,.95); z-index:29; padding:16px;}
+  #vsIntro .side{text-align:center; width:38%; max-width:190px;}
+  #vsIntro img{width:100%; border-radius:14px; box-shadow:0 14px 44px rgba(0,0,0,.7);}
+  #vsIntro .ph2{font-size:4.5rem;}
+  #vsIntro .vname{font-weight:800; margin-top:8px; font-size:1rem;}
+  #vsIntro .vepit{color:var(--muted); font-size:.78rem; font-style:italic;}
+  #vsIntro .side.L{animation:slideL .55s ease;}
+  #vsIntro .side.R{animation:slideR .55s ease;}
+  #vsIntro .vstxt{font-size:3.6rem; font-weight:900; color:var(--accent); text-shadow:0 0 30px rgba(255,183,3,.85); animation:vsPulse 1s ease infinite alternate;}
+  @keyframes slideL{from{transform:translateX(-130%); opacity:0}to{transform:none; opacity:1}}
+  @keyframes slideR{from{transform:translateX(130%); opacity:0}to{transform:none; opacity:1}}
+  @keyframes vsPulse{from{transform:scale(1)}to{transform:scale(1.18)}}
+  .fighters.replay{filter:grayscale(.85) contrast(1.15);}
+  .fighter.atkLslow{animation:lungeL 1.4s;}
+  .fighter.atkRslow{animation:lungeR 1.4s;}
+  .fighter.hitSlow{animation:shake 1.3s;}
+  #blog .chron{color:#ffd166; font-style:italic; border-left:3px solid #ffd166; padding-left:8px; margin-top:8px;}
+  .fighter{flex:1; background:var(--panel); border:1px solid #363057; border-radius:14px; padding:10px; text-align:center; position:relative; transition:filter 1s, transform 1s;}
+  @keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-7px) rotate(-2deg)}40%{transform:translateX(6px)}60%{transform:translateX(-5px) rotate(2deg)}80%{transform:translateX(4px)}}
+  @keyframes lungeL{50%{transform:translateX(26px) scale(1.06)}}
+  @keyframes lungeR{50%{transform:translateX(-26px) scale(1.06)}}
+  .fighter.hit{animation:shake .45s;}
+  .fighter.atkL{animation:lungeL .4s;}
+  .fighter.atkR{animation:lungeR .4s;}
+  .fighter.ko{filter:grayscale(1) brightness(.55); transform:rotate(4deg) scale(.96);}
+  .dmgfloat{position:absolute; left:50%; top:28%; font-weight:800; font-size:1.5rem; color:#ff5d5d; text-shadow:0 2px 8px #000; animation:rise 1s forwards; pointer-events:none; z-index:2;}
+  .dmgfloat.crit{color:#ffd166; font-size:1.9rem;}
+  .dmgfloat.heal{color:#51cf66;}
+  .dmgfloat.miss{color:#b9b3d0; font-size:1.1rem; font-weight:700;}
+  @keyframes rise{from{opacity:1; transform:translate(-50%,0)}to{opacity:0; transform:translate(-50%,-50px) scale(1.15)}}
+  .holoWrap{position:relative; display:inline-block; border-radius:20px; overflow:hidden; max-width:100%;}
+  .holoWrap::after{
+    content:''; position:absolute; inset:0; pointer-events:none;
+    background:linear-gradient(115deg, transparent 32%, rgba(255,0,255,.10) 42%, rgba(0,255,255,.13) 50%, rgba(255,255,0,.09) 58%, transparent 68%);
+    background-size:300% 300%; animation:holo 3.2s linear infinite; mix-blend-mode:screen;
+  }
+  @keyframes holo{0%{background-position:0% 0%}100%{background-position:100% 100%}}
+  #bracket{position:fixed; inset:0; display:none; align-items:center; justify-content:center; background:rgba(10,8,18,.85); z-index:28; padding:16px;}
+  .bwrap{display:flex; gap:8px; background:var(--panel); border:1px solid #4d4477; border-radius:16px; padding:16px; width:100%; max-width:440px; box-shadow:0 20px 60px rgba(0,0,0,.6);}
+  #bracket .round{flex:1; display:flex; flex-direction:column; justify-content:space-around; gap:6px; min-width:0;}
+  #bracket .rlabel{text-align:center; font-size:.62rem; color:var(--muted); text-transform:uppercase; letter-spacing:.5px;}
+  #bracket .match{background:var(--panel); border:1px solid #363057; border-radius:8px; padding:4px 6px; font-size:.72rem;}
+  #bracket .match.current{border-color:var(--accent); box-shadow:0 0 10px rgba(255,183,3,.45);}
+  #bracket .p{white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  #bracket .p.win{color:#51cf66; font-weight:700;}
+  #bracket .p.lose{color:#6d6787; text-decoration:line-through;}
+  .fighter img{width:100%; border-radius:10px;}
+  .fighter .ph{font-size:3.4rem; padding:24px 0;}
+  .fighter .fname{font-weight:700; margin-top:6px; font-size:.95rem;}
+  .fighter .fhp{font-size:.8rem; color:var(--muted);}
+  .hpbar{height:10px; background:rgba(255,255,255,.15); border-radius:5px; margin-top:6px; overflow:hidden;}
+  .hpbar div{height:100%; background:#51cf66; width:100%; transition:width .5s, background .5s;}
+  #blog{width:100%; max-width:440px; margin-top:14px; font-size:.92rem; line-height:1.75; max-height:36vh; overflow-y:auto;}
+  #blog p{margin:3px 0;}
+  #blog .winner{font-size:1.25rem; color:var(--accent); font-weight:700; margin-top:10px;}
+  #collPanel h2{font-size:1.05rem;}
+  #collPanel .count{color:var(--muted); font-size:.85rem; margin-top:2px;}
+  .modal{position:fixed; inset:0; background:rgba(0,0,0,.88); display:none; align-items:center; justify-content:flex-start; flex-direction:column; padding:16px 16px 40px; z-index:10; overflow-y:auto;}
+  .modal img{max-width:88%; max-height:52vh; border-radius:14px; box-shadow:0 20px 60px rgba(0,0,0,.7); flex-shrink:0;}
+  .modal .btn{max-width:320px; margin-top:10px; flex-shrink:0;}
+</style>
+</head>
+<body>
+  <h1>🐱 Cat<span>Cards</span></h1>
+  <p class="tag">Fotografa il tuo gatto e trasformalo in una carta da collezione · <strong style="color:var(--accent)">v4.5</strong></p>
+
+  <div class="panel" id="uploadPanel">
+    <div class="drop" onclick="document.getElementById('fileInput').click()">
+      <div class="cat">📸🐈</div>
+      <strong>Tocca per scattare o caricare una foto</strong>
+      <p>JPG o PNG — meglio se il gatto è ben visibile</p>
+    </div>
+    <input type="file" id="fileInput" accept="image/*" capture="environment">
+    <img id="preview" class="preview" alt="anteprima">
+    <label class="small">Nome del gatto (opzionale)</label>
+    <input type="text" id="catName" placeholder="Es. Briciola" maxlength="16">
+    <button class="btn" id="genBtn" disabled>✨ Genera la carta</button>
+    <div id="status"></div>
+    <details>
+      <summary>⚙️ Impostazioni AI (opzionale)</summary>
+      <p>Senza chiave API uso un filtro cartoon integrato e gratuito.
+      Con una chiave <strong>Google Gemini</strong> il cartoon è generato dall'AI (qualità molto superiore).
+      Creala gratis su <strong>aistudio.google.com</strong> → «Get API key».</p>
+      <label class="small">Chiave API Gemini</label>
+      <input type="password" id="apiKey" placeholder="AIza...">
+      <button class="btn secondary" id="testKeyBtn" type="button" style="margin-top:10px;">🧪 Prova la chiave</button>
+      <p id="keyStatus" style="margin-top:8px; font-size:.85rem; min-height:18px;"></p>
+    </details>
+  </div>
+
+  <div id="cardWrap">
+    <p id="cardNote" style="color:var(--accent); font-size:.85rem; text-align:center; max-width:400px; margin-top:8px;"></p>
+    <p id="cardDesc" style="color:var(--muted); font-style:italic; font-size:.92rem; text-align:center; max-width:400px; margin-top:4px;"></p>
+    <div id="cardHolo"><canvas id="cardCanvas" width="750" height="1050"></canvas></div>
+    <button class="btn" onclick="downloadCard()">⬇️ Scarica la carta (PNG)</button>
+    <button class="btn secondary" onclick="shareCurrent()">📤 Condividi</button>
+    <button class="btn secondary" onclick="doGenerate()">🔁 Rigenera il disegno</button>
+    <button class="btn secondary" onclick="reset()">🔄 Nuova carta</button>
+  </div>
+
+  <div class="panel" id="collPanel" style="margin-top:20px; display:none;">
+    <h2>📚 La tua collezione</h2>
+    <p class="count" id="collCount"></p>
+    <p class="count" id="melStatus"></p>
+    <div class="collGrid" id="collGrid"></div>
+    <div style="display:flex; gap:10px;">
+      <button class="btn secondary" onclick="exportBackup()" style="margin-top:12px;">💾 Esporta backup</button>
+      <button class="btn secondary" onclick="document.getElementById('backupFile').click()" style="margin-top:12px;">📂 Importa backup</button>
+    </div>
+    <input type="file" id="backupFile" accept="application/json,.json" style="display:none" onchange="importBackup(event)">
+  </div>
+
+  <div class="panel" id="arenaPanel" style="margin-top:20px; display:none;">
+    <h2>⚔️ Arena</h2>
+    <p class="count" id="wallet"></p>
+    <label class="small">La tua carta</label>
+    <select id="selA"></select>
+    <label class="small">Avversario</label>
+    <select id="selB"></select>
+    <button class="btn" onclick="startBattle()">⚔️ Combatti!</button>
+    <div style="display:flex; gap:10px;">
+      <button class="btn secondary" onclick="startTournament(4)" style="margin-top:10px;">🏆 Torneo a 4</button>
+      <button class="btn secondary" onclick="startTournament(8)" style="margin-top:10px;">🏆 Torneo a 8</button>
+    </div>
+    <div id="statsBox" style="margin-top:16px; display:none;">
+      <h2 style="font-size:1rem;">📊 Albo d'oro</h2>
+      <div id="statsList" class="count" style="line-height:2; margin-top:6px;"></div>
+    </div>
+    <details style="margin-top:12px;">
+      <summary>📥 Importa la carta di un amico</summary>
+      <label class="small">Incolla qui il codice sfida ricevuto</label>
+      <input type="text" id="rivalCode" placeholder="CATCARD:...">
+      <button class="btn secondary" onclick="importRival()" style="margin-top:10px;">Importa rivale</button>
+      <p id="rivalMsg" class="count" style="margin-top:6px;"></p>
+    </details>
+  </div>
+
+  <div class="battle" id="battleScreen">
+    <div class="fighters">
+      <div class="fighter" id="fA"></div>
+      <div class="fighter" id="fB"></div>
+    </div>
+    <button class="btn secondary" id="skipBtn" onclick="skipIntroNow()" style="max-width:320px; display:none;">⏭️ Salta la presentazione</button>
+    <div id="blog"></div>
+    <button class="btn secondary" id="bracketBtn" onclick="showBracket()" style="max-width:320px; display:none;">📋 Tabellone</button>
+    <button class="btn secondary" onclick="toggleSound(this)" style="max-width:320px;">🔊 Suoni: ON</button>
+    <button class="btn secondary" onclick="closeBattle()" style="max-width:320px;">✖ Chiudi</button>
+    <div id="vsFlash"><span>VS</span></div>
+    <div id="vsIntro"></div>
+  </div>
+
+  <div id="bracket" onclick="hideBracket()"><div class="bwrap" id="bwrap"></div></div>
+
+  <div class="modal" id="betBox" style="z-index:26;">
+    <div class="panel" style="max-width:340px; margin-top:40px;">
+      <h2>🎲 Pronostico</h2>
+      <p class="count" id="betInfo" style="margin-top:6px;">Punti la tua scommessa (10 punti). Se indovini, vinci in base alla quota!</p>
+      <button class="btn" id="betA"></button>
+      <button class="btn" id="betB"></button>
+      <button class="btn secondary" id="betSkip">Non scommetto, via al match!</button>
+    </div>
+  </div>
+
+  <div class="modal" id="modal" onclick="if(event.target===this)closeModal()">
+    <div id="modalHolo"><img id="modalImg" alt="carta" style="max-width:100%; max-height:52vh; border-radius:14px;"></div>
+    <p id="modalCap" style="color:var(--text); text-align:center; max-width:360px; font-size:.92rem; margin-top:8px; line-height:1.5;"></p>
+    <button class="btn" onclick="downloadSaved()">⬇️ Scarica</button>
+    <button class="btn secondary" onclick="playSavedTheme()">▶️ Ascolta il tema</button>
+    <button class="btn secondary" onclick="regenTheme()">🎼 Rigenera tema (AI)</button>
+    <button class="btn secondary" onclick="shareSaved()">📤 Condividi</button>
+    <button class="btn secondary" onclick="copyChallenge()">🔗 Copia codice sfida</button>
+    <button class="btn secondary" onclick="deleteSaved()">🗑️ Elimina</button>
+    <button class="btn secondary" onclick="closeModal()">✖ Chiudi</button>
+  </div>
+
+<script>
+"use strict";
+const fileInput = document.getElementById('fileInput');
+const previewEl = document.getElementById('preview');
+const genBtn    = document.getElementById('genBtn');
+const statusEl  = document.getElementById('status');
+const apiKeyEl  = document.getElementById('apiKey');
+const canvas    = document.getElementById('cardCanvas');
+const ctx       = canvas.getContext('2d');
+let srcImage = null;
+
+/* ---------- pulizia una tantum dei dati pregressi (v2) ---------- */
+try {
+  if (localStorage.getItem('catcards_v') !== '2'){
+    localStorage.removeItem('catcards_stats');   // statistiche combattimenti vecchie
+    localStorage.removeItem('catcards_rivals');  // rivali importati vecchi
+    localStorage.setItem('catcards_v', '2');
+  }
+} catch(e){}
+
+/* ---------- persistenza chiave API (se disponibile) ---------- */
+try { apiKeyEl.value = localStorage.getItem('catcards_key') || ''; } catch(e){}
+function updateAiBadge(){
+  genBtn.textContent = apiKeyEl.value.trim() ? '✨ Genera la carta (con AI 🤖)' : '✨ Genera la carta (filtro base)';
+}
+apiKeyEl.addEventListener('input', () => {
+  try { localStorage.setItem('catcards_key', apiKeyEl.value.trim()); } catch(e){}
+  updateAiBadge();
+});
+updateAiBadge();
+
+/* ---------- test della chiave ---------- */
+document.getElementById('testKeyBtn').addEventListener('click', async () => {
+  const ks = document.getElementById('keyStatus');
+  const key = apiKeyEl.value.trim();
+  if (!key){ ks.style.color = '#ff6b6b'; ks.textContent = '❌ Il campo chiave è vuoto.'; return; }
+  if (!key.startsWith('AIza')){ ks.style.color = '#ff6b6b'; ks.textContent = '⚠️ La chiave di solito inizia con "AIza": controlla di aver copiato quella giusta.'; }
+  ks.style.color = 'var(--accent)'; ks.textContent = 'Verifica in corso…';
+  try {
+    const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models?key=' + encodeURIComponent(key));
+    if (!r.ok){
+      let msg = 'HTTP ' + r.status;
+      try { const j = await r.json(); if (j.error && j.error.message) msg = j.error.message.slice(0, 200); } catch(e){}
+      ks.style.color = '#ff6b6b';
+      ks.textContent = '❌ Chiave rifiutata: ' + msg;
+      return;
+    }
+    const j = await r.json();
+    const imgModels = (j.models || [])
+      .filter(m => (m.name || '').includes('image') && (m.supportedGenerationMethods || []).includes('generateContent'))
+      .map(m => m.name.replace('models/', ''));
+    if (imgModels.length){
+      ks.style.color = '#51cf66';
+      ks.textContent = '✅ Chiave valida! Userò: ' + imgModels[0];
+    } else {
+      ks.style.color = '#ffb703';
+      ks.textContent = '⚠️ Chiave valida ma nessun modello immagini disponibile per questo account.';
+    }
+  } catch(err){
+    ks.style.color = '#ff6b6b';
+    ks.textContent = '❌ Connessione fallita: ' + err.message + ' (sei online?)';
+  }
+});
+
+/* ---------- caricamento foto ---------- */
+fileInput.addEventListener('change', e => {
+  const f = e.target.files[0];
+  if (!f) return;
+  const img = new Image();
+  img.onload = () => { srcImage = img; previewEl.src = img.src; previewEl.style.display='block'; genBtn.disabled=false; statusEl.textContent=''; };
+  img.src = URL.createObjectURL(f);
+});
+
+/* ---------- RNG deterministico dalla foto ---------- */
+function hashPixels(img){
+  const c = document.createElement('canvas'); c.width = 64; c.height = 64;
+  c.getContext('2d').drawImage(img, 0, 0, 64, 64);
+  const d = c.getContext('2d').getImageData(0,0,64,64).data;
+  let h = 2166136261;
+  for (let i = 0; i < d.length; i += 16){ h ^= d[i]; h = Math.imul(h, 16777619); }
+  return h >>> 0;
+}
+function mulberry32(seed){
+  return function(){
+    seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+    let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+
+/* ---------- dati di gioco ---------- */
+const RARITIES = [
+  {name:'Comune',      color:'#8d99ae', glow:'#5c6678', chance:.55, bonus:0},
+  {name:'Rara',        color:'#3a86ff', glow:'#1d4f9e', chance:.28, bonus:8},
+  {name:'Epica',       color:'#a855f7', glow:'#6b21a8', chance:.13, bonus:16},
+  {name:'Leggendaria', color:'#ffb703', glow:'#b45309', chance:.04, bonus:25},
+];
+const STATS = [
+  {key:'Forza',        icon:'💪'}, {key:'Intelligenza', icon:'🧠'},
+  {key:'Destrezza',    icon:'🎯'}, {key:'Velocità',     icon:'⚡'},
+  {key:'Fascino',      icon:'✨'}, {key:'Indifferenza', icon:'😼'},
+];
+const ATK_A = ['Graffio','Agguato','Sguardo','Balzo','Zampata','Miagolio','Assalto','Fusa'];
+const ATK_B = ['Fulmineo','del Divano','di Disprezzo','Cosmico','Selvaggio','Notturno','delle 4 del Mattino','Ipnotiche'];
+const NAMES = ['Briciola','Baffo','Artiglio','Nuvola','Tigro','Luna','Ombra','Pallino','Zoe','Micio'];
+
+function rollCard(seed, name){
+  const rng = mulberry32(seed);
+  let roll = rng(), acc = 0, rarity = RARITIES[0];
+  for (const r of RARITIES){ acc += r.chance; if (roll <= acc){ rarity = r; break; } }
+  const stats = STATS.map(s => ({...s, value: Math.min(99, 35 + Math.floor(rng()*46) + rarity.bonus)}));
+  const hp = 60 + Math.floor(rng()*41) + rarity.bonus;
+  const attack = ATK_A[Math.floor(rng()*ATK_A.length)] + ' ' + ATK_B[Math.floor(rng()*ATK_B.length)];
+  const atkPower = 20 + Math.floor(rng()*31) + rarity.bonus;
+  // 3 mosse con stili diversi (generate DOPO i valori sopra: le carte esistenti non cambiano)
+  const moves = ['forte', 'rapido', 'astuto'].map((kind, ki) => {
+    const nm = ki === 0 ? attack
+      : ATK_A[Math.floor(rng()*ATK_A.length)] + ' ' + ATK_B[Math.floor(rng()*ATK_B.length)];
+    const delta = kind === 'forte' ? 8 : kind === 'rapido' ? -6 : 0;
+    return {name: nm, power: Math.max(10, atkPower + delta), kind: kind};
+  });
+  return {
+    name: name || NAMES[Math.floor(rng()*NAMES.length)],
+    rarity, stats, hp, attack, atkPower, moves,
+    serial: seed.toString(16).toUpperCase().padStart(8,'0'),
+  };
+}
+
+/* ---------- cartoon: filtro locale ---------- */
+function cartoonLocal(img){
+  const W = Math.min(700, img.width);
+  const H = Math.round(img.height * W / img.width);
+  // 1) Ammorbidisci appena i dettagli (un solo passaggio, delicato)
+  const s1 = document.createElement('canvas');
+  s1.width = Math.max(1, Math.round(W/3)); s1.height = Math.max(1, Math.round(H/3));
+  s1.getContext('2d').drawImage(img, 0, 0, s1.width, s1.height);
+  const c = document.createElement('canvas'); c.width = W; c.height = H;
+  const cx = c.getContext('2d');
+  cx.drawImage(s1, 0, 0, W, H);
+  const id = cx.getImageData(0, 0, W, H);
+  const d = id.data;
+  // 2) Normalizza luminosità/contrasto (aiuta molto le foto scure)
+  let lo = 255, hi = 0;
+  for (let i = 0; i < d.length; i += 4){
+    const l = d[i]*0.299 + d[i+1]*0.587 + d[i+2]*0.114;
+    if (l < lo) lo = l; if (l > hi) hi = l;
+  }
+  const range = Math.max(40, hi - lo);
+  const gray = new Float32Array(W*H);
+  for (let i = 0, p = 0; i < d.length; i += 4, p++){
+    for (let k = 0; k < 3; k++){
+      let v = (d[i+k] - lo) * 255 / range;               // stretch contrasto
+      const avg = (d[i]+d[i+1]+d[i+2])/3;
+      v = avg + (v - avg) * 1.35;                         // saturazione moderata
+      v = Math.round(v/26)*26;                            // ~10 livelli: stilizzato ma leggibile
+      d[i+k] = v < 0 ? 0 : v > 255 ? 255 : v;
+    }
+    gray[p] = d[i]*0.299 + d[i+1]*0.587 + d[i+2]*0.114;
+  }
+  // 3) Contorni sottili, solo sui bordi netti
+  for (let y = 1; y < H-1; y++){
+    for (let x = 1; x < W-1; x++){
+      const p = y*W + x;
+      const gx = -gray[p-W-1]-2*gray[p-1]-gray[p+W-1]+gray[p-W+1]+2*gray[p+1]+gray[p+W+1];
+      const gy = -gray[p-W-1]-2*gray[p-W]-gray[p-W+1]+gray[p+W-1]+2*gray[p+W]+gray[p+W+1];
+      const m = Math.sqrt(gx*gx + gy*gy);
+      if (m > 130){
+        const i = p*4, f = Math.min(0.6, (m-130)/200);
+        d[i] *= 1-f; d[i+1] *= 1-f; d[i+2] *= 1-f;
+      }
+    }
+  }
+  cx.putImageData(id, 0, 0);
+  return c;
+}
+
+/* ---------- cartoon: API Gemini ---------- */
+const GEMINI_MODELS = ['gemini-2.5-flash-image', 'gemini-3-pro-image-preview', 'gemini-2.5-flash-image-preview'];
+async function listImageModels(key){
+  const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models?key=' + encodeURIComponent(key));
+  if (!r.ok) return [];
+  const j = await r.json();
+  return (j.models || [])
+    .filter(m => (m.name || '').includes('image') && (m.supportedGenerationMethods || []).includes('generateContent'))
+    .map(m => m.name.replace('models/', ''))
+    // preferisci i "flash" (più economici e veloci), evita i deprecati "preview" se c'è di meglio
+    .sort((a, b) => (a.includes('flash') ? 0 : 1) - (b.includes('flash') ? 0 : 1));
+}
+const CARTOON_PROMPT = 'Completely REDRAW this image from scratch as a 2D cartoon illustration for a collectible trading card game. The result must NOT look like a photograph in any way: flat cel shading, thick black outlines, simplified geometric shapes, exaggerated cute cartoon proportions (bigger eyes, rounder face), clean vector-art style like a modern animated series. Every surface must be repainted as flat cartoon color fills — no photographic textures, no realism, this is mandatory. When choosing the colors of the flat fills, stay faithful to the palette of the original photo (fur, markings, nose, eyes, background objects) instead of inventing new hues. Keep the pose and fur pattern recognizable, simplify the background into flat shapes. Output the illustration only.';
+const CARTOON_PROMPT_RETRY = 'Your previous answer returned the photograph almost unchanged. That is WRONG and unacceptable. Discard the photographic rendering entirely: repaint every single pixel as a bold 2D cartoon drawing with thick black ink outlines, flat solid color fills, cel shading and cute exaggerated proportions, as if hand-drawn for an animated TV series. Keep only the cat\'s pose, markings and color palette from the photo. The output must be unmistakably a drawing, never a photo.';
+function imgDiff(a, b){
+  const S = 48;
+  const ca = document.createElement('canvas'); ca.width = S; ca.height = S;
+  ca.getContext('2d').drawImage(a, 0, 0, S, S);
+  const cb = document.createElement('canvas'); cb.width = S; cb.height = S;
+  cb.getContext('2d').drawImage(b, 0, 0, S, S);
+  const da = ca.getContext('2d').getImageData(0, 0, S, S).data;
+  const db = cb.getContext('2d').getImageData(0, 0, S, S).data;
+  let sum = 0;
+  for (let i = 0; i < da.length; i += 4)
+    sum += Math.abs(da[i]-db[i]) + Math.abs(da[i+1]-db[i+1]) + Math.abs(da[i+2]-db[i+2]);
+  return sum / (S * S * 3);
+}
+async function cartoonGemini(img, key){
+  const c = document.createElement('canvas');
+  const W = Math.min(1024, img.width);
+  c.width = W; c.height = Math.round(img.height * W / img.width);
+  c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+  const b64 = c.toDataURL('image/jpeg', 0.9).split(',')[1];
+  const makeBody = p => ({ contents: [{ parts: [
+    { text: p },
+    { inline_data: { mime_type: 'image/jpeg', data: b64 } }
+  ]}]});
+  let lastErr = 'errore sconosciuto';
+  let available = [];
+  try { available = await listImageModels(key); } catch(e){}
+  const tryModels = [...new Set([...available, ...GEMINI_MODELS])].slice(0, 5);
+  async function callModel(model, promptText){
+    const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent?key=' + encodeURIComponent(key), {
+      method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(makeBody(promptText))
+    });
+    if (!r.ok){
+      let msg = 'HTTP ' + r.status;
+      try { const ej = await r.json(); if (ej.error && ej.error.message) msg = ej.error.message.slice(0, 160); } catch(e){}
+      throw new Error(msg);
+    }
+    const j = await r.json();
+    const parts = (j.candidates && j.candidates[0] && j.candidates[0].content && j.candidates[0].content.parts) || [];
+    const imgParts = parts.filter(p => (p.inlineData && p.inlineData.data) || (p.inline_data && p.inline_data.data));
+    const part = imgParts[imgParts.length - 1];   // l'ultima immagine è il risultato finale
+    if (!part) throw new Error('il modello non ha restituito un\'immagine');
+    const data = (part.inlineData || part.inline_data).data;
+    const mime = (part.inlineData || part.inline_data).mimeType || (part.inlineData || part.inline_data).mime_type || 'image/png';
+    return await new Promise((res, rej) => {
+      const im = new Image();
+      im.onload = () => res(im); im.onerror = rej;
+      im.src = 'data:' + mime + ';base64,' + data;
+    });
+  }
+  const LAZY = 20;   // sotto questa differenza media il risultato è "troppo foto"
+  let bestOut = null, bestDiff = -1, bestModel = '';
+  for (const model of tryModels){
+    try {
+      let out = await callModel(model, CARTOON_PROMPT);
+      let diff = imgDiff(img, out);
+      if (diff < LAZY){
+        statusEl.innerHTML = '<span class="spinner"></span>Il modello è stato pigro, insisto…';
+        try {
+          const out2 = await callModel(model, CARTOON_PROMPT_RETRY);
+          const d2 = imgDiff(img, out2);
+          if (d2 > diff){ out = out2; diff = d2; }
+        } catch(e){}
+      }
+      if (diff > bestDiff){ bestOut = out; bestDiff = diff; bestModel = model; }
+      if (diff >= LAZY){
+        window._usedModel = model; window._lazy = false;
+        return out;
+      }
+      // ancora troppo fotografico: prova il modello successivo
+    } catch(err){ lastErr = err.message; }
+  }
+  if (bestOut){
+    window._usedModel = bestModel; window._lazy = true;
+    return bestOut;
+  }
+  throw new Error(lastErr);
+}
+
+/* ---------- disegno carta ---------- */
+function roundRect(g, x, y, w, h, r){
+  g.beginPath();
+  g.moveTo(x+r, y);
+  g.arcTo(x+w, y,   x+w, y+h, r);
+  g.arcTo(x+w, y+h, x,   y+h, r);
+  g.arcTo(x,   y+h, x,   y,   r);
+  g.arcTo(x,   y,   x+w, y,   r);
+  g.closePath();
+}
+function drawCard(card, art){
+  const W = 750, H = 1050, col = card.rarity.color;
+  // sfondo
+  const bg = ctx.createLinearGradient(0, 0, 0, H);
+  bg.addColorStop(0, '#231f36'); bg.addColorStop(1, '#131020');
+  ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
+  // cornice rarità
+  ctx.lineWidth = 14; ctx.strokeStyle = col;
+  roundRect(ctx, 12, 12, W-24, H-24, 34); ctx.stroke();
+  ctx.lineWidth = 3; ctx.strokeStyle = card.rarity.glow;
+  roundRect(ctx, 26, 26, W-52, H-52, 26); ctx.stroke();
+  // banner nome
+  ctx.fillStyle = 'rgba(0,0,0,.45)';
+  roundRect(ctx, 48, 44, W-96-120, 62, 16); ctx.fill();
+  ctx.fillStyle = '#fff'; ctx.font = 'bold 40px "Segoe UI", sans-serif';
+  ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+  ctx.fillText(card.name, 70, 77);
+  // HP
+  ctx.fillStyle = '#e63946'; ctx.beginPath(); ctx.arc(W-104, 75, 48, 0, 7); ctx.fill();
+  ctx.fillStyle = '#fff'; ctx.textAlign = 'center';
+  ctx.font = 'bold 34px "Segoe UI", sans-serif'; ctx.fillText(card.hp, W-104, 68);
+  ctx.font = 'bold 17px "Segoe UI", sans-serif'; ctx.fillText('HP', W-104, 95);
+  // immagine (cover fit)
+  const ix = 55, iy = 128, iw = W-110, ih = 470;
+  ctx.save(); roundRect(ctx, ix, iy, iw, ih, 18); ctx.clip();
+  const s = Math.max(iw/art.width, ih/art.height);
+  const dw = art.width*s, dh = art.height*s;
+  ctx.drawImage(art, ix+(iw-dw)/2, iy+(ih-dh)/2, dw, dh);
+  ctx.restore();
+  ctx.lineWidth = 4; ctx.strokeStyle = col;
+  roundRect(ctx, ix, iy, iw, ih, 18); ctx.stroke();
+  // etichetta rarità (+ razza se nota)
+  ctx.fillStyle = col; ctx.textAlign = 'center';
+  ctx.font = card.razza ? 'bold 23px "Segoe UI", sans-serif' : 'bold 26px "Segoe UI", sans-serif';
+  ctx.fillText('◆ ' + card.rarity.name.toUpperCase() + ' ◆' + (card.razza ? '  ·  ' + card.razza : ''), W/2, iy+ih+40);
+  // statistiche 2 colonne
+  const sy = iy+ih+66, rowH = 56, colW = (W-140)/2;
+  card.stats.forEach((st, i) => {
+    const cx0 = 70 + (i%2)*(colW+20), cy0 = sy + Math.floor(i/2)*rowH;
+    ctx.textAlign = 'left'; ctx.font = '26px "Segoe UI", sans-serif';
+    ctx.fillStyle = '#fff'; ctx.fillText(st.icon, cx0, cy0+14);
+    ctx.font = 'bold 21px "Segoe UI", sans-serif'; ctx.fillStyle = '#cfc8e8';
+    ctx.fillText(st.key, cx0+40, cy0+6);
+    ctx.fillStyle = 'rgba(255,255,255,.12)';
+    roundRect(ctx, cx0+40, cy0+18, colW-90, 12, 6); ctx.fill();
+    ctx.fillStyle = col;
+    roundRect(ctx, cx0+40, cy0+18, (colW-90)*st.value/99, 12, 6); ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 22px "Segoe UI", sans-serif'; ctx.textAlign = 'right';
+    ctx.fillText(st.value, cx0+colW-8, cy0+14);
+  });
+  // mosse (3, con stili diversi)
+  const ay = sy + 3*rowH + 10;
+  ctx.fillStyle = 'rgba(0,0,0,.45)';
+  roundRect(ctx, 55, ay, W-110, 124, 16); ctx.fill();
+  ctx.strokeStyle = card.rarity.glow; ctx.lineWidth = 2;
+  roundRect(ctx, 55, ay, W-110, 124, 16); ctx.stroke();
+  const kindIcon = {forte:'💥', rapido:'⚡', astuto:'✨'};
+  const mvs = card.moves || [{name: card.attack, power: card.atkPower, kind: 'forte'}];
+  mvs.forEach((mv, i) => {
+    const my = ay + 22 + i * 38;
+    ctx.fillStyle = '#fff'; ctx.textAlign = 'left'; ctx.font = 'bold 23px "Segoe UI", sans-serif';
+    ctx.fillText(kindIcon[mv.kind] + ' ' + mv.name, 78, my);
+    ctx.fillStyle = col; ctx.textAlign = 'right'; ctx.font = 'bold 25px "Segoe UI", sans-serif';
+    ctx.fillText(mv.power, W-80, my);
+  });
+  // potere speciale
+  if (typeof card.potere === 'number'){
+    ctx.fillStyle = '#ffd166'; ctx.font = 'bold 24px "Segoe UI", sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('🌟 ' + POWERS[card.potere].name, W/2, H-62);
+  }
+  // footer
+  ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.font = '16px "Segoe UI", sans-serif'; ctx.textAlign = 'center';
+  ctx.fillText('CATCARDS  •  #' + card.serial, W/2, H-32);
+}
+
+/* ---------- flusso principale ---------- */
+async function doGenerate(){
+  if (!srcImage) return;
+  if (document.getElementById('cardWrap').style.display === 'flex'){
+    document.getElementById('cardNote').style.color = 'var(--accent)';
+    document.getElementById('cardNote').textContent = '⏳ Rigenero il disegno…';
+  }
+  genBtn.disabled = true;
+  const key = apiKeyEl.value.trim();
+  statusEl.innerHTML = '<span class="spinner"></span>' + (key ? 'L\'AI sta disegnando il tuo gatto…' : 'Applico l\'effetto cartoon…');
+  let art, apiWarn = '';
+  try {
+    if (key) {
+      try { art = await cartoonGemini(srcImage, key); }
+      catch (err) {
+        apiWarn = '⚠️ Cartoon AI non riuscito: ' + err.message + ' — ho usato il filtro integrato.';
+        art = cartoonLocal(srcImage);
+      }
+    } else {
+      await new Promise(r => setTimeout(r, 50)); // lascia dipingere lo spinner
+      art = cartoonLocal(srcImage);
+    }
+    const card = rollCard(hashPixels(srcImage), document.getElementById('catName').value.trim());
+    if (key){
+      statusEl.innerHTML = '<span class="spinner"></span>Analizzo razza, carattere e poteri…';
+      try { Object.assign(card, await analyzeCat(srcImage, key, card.serial)); } catch(e){}
+    }
+    if (typeof card.potere !== 'number') card.potere = (parseInt(card.serial, 16) >>> 0) % POWERS.length;
+    window._lastName = card.name;
+    if (card.valuta){
+      // statistiche basate sull'aspetto reale del gatto (+ un pizzico di variazione dal seed)
+      const vmap = {Forza:'forza', Intelligenza:'intelligenza', Destrezza:'destrezza', 'Velocità':'velocita', Fascino:'fascino', Indifferenza:'indifferenza'};
+      const jr = mulberry32(((parseInt(card.serial, 16) >>> 0) ^ 0x9E3779B9) >>> 0);
+      card.stats = card.stats.map(st => {
+        const v = parseInt(card.valuta[vmap[st.key]], 10);
+        if (v >= 1 && v <= 10){
+          const nv = Math.round(22 + v * 6.5 + card.rarity.bonus + (jr() * 14 - 7));
+          return Object.assign({}, st, {value: Math.max(20, Math.min(99, nv))});
+        }
+        return st;
+      });
+    }
+    drawCard(card, art);
+    document.getElementById('cardHolo').className =
+      (card.rarity.name === 'Epica' || card.rarity.name === 'Leggendaria') ? 'holoWrap' : '';
+    saveCurrentCard(card);
+    // identità musicale (DNA) per la nuova carta, in sottofondo
+    if (key){
+      const ent = collection.find(c2 => c2.serial === card.serial);
+      if (ent && !ent.dna) composeTheme(ent).then(() => {
+        if (ent.annuncio && !ent.voce) synthAnnuncio(ent);
+      });
+    }
+    document.getElementById('cardDesc').textContent = card.descr ? '«' + card.descr + '»' : '';
+    if (apiWarn){
+      document.getElementById('cardNote').style.color = '#ff6b6b';
+      document.getElementById('cardNote').textContent = apiWarn;
+      alert(apiWarn);
+    } else if (key && window._lazy){
+      document.getElementById('cardNote').style.color = 'var(--accent)';
+      document.getElementById('cardNote').textContent = '🤖 L\'AI ha risposto ma il disegno è rimasto troppo fotografico — premi «Rigenera il disegno» per ritentare';
+    } else if (key){
+      document.getElementById('cardNote').style.color = '#51cf66';
+      document.getElementById('cardNote').textContent = '🤖 Illustrazione generata con AI (' + (window._usedModel || 'Gemini') + ')';
+    } else {
+      document.getElementById('cardNote').style.color = 'var(--muted)';
+      document.getElementById('cardNote').textContent = '🎨 Filtro base (nessuna chiave AI inserita)';
+    }
+    document.getElementById('uploadPanel').style.display = 'none';
+    document.getElementById('cardWrap').style.display = 'flex';
+    statusEl.textContent = '';
+  } catch (err) {
+    statusEl.textContent = '❌ Errore: ' + err.message;
+  }
+  genBtn.disabled = false;
+}
+genBtn.addEventListener('click', doGenerate);
+
+function downloadCard(){
+  const a = document.createElement('a');
+  a.download = 'catcard.png';
+  a.href = canvas.toDataURL('image/png');
+  a.click();
+}
+function reset(){
+  document.getElementById('cardWrap').style.display = 'none';
+  document.getElementById('uploadPanel').style.display = 'block';
+  document.getElementById('catName').value = '';
+  document.getElementById('cardDesc').textContent = '';
+  document.getElementById('cardNote').textContent = '';
+  previewEl.style.display = 'none';
+  srcImage = null; fileInput.value = ''; genBtn.disabled = true;
+}
+
+/* ---------- archivio su IndexedDB: spazio praticamente illimitato ---------- */
+let idb = null;
+function idbOpen(){
+  return new Promise(res => {
+    try {
+      const rq = indexedDB.open('catcards', 1);
+      rq.onupgradeneeded = () => rq.result.createObjectStore('kv');
+      rq.onsuccess = () => res(rq.result);
+      rq.onerror = () => res(null);
+    } catch(e){ res(null); }
+  });
+}
+function idbSet(k, v){
+  return new Promise(res => {
+    if (!idb){ res(false); return; }
+    try {
+      const tx = idb.transaction('kv', 'readwrite');
+      tx.objectStore('kv').put(v, k);
+      tx.oncomplete = () => res(true);
+      tx.onerror = () => res(false);
+    } catch(e){ res(false); }
+  });
+}
+function idbGet(k){
+  return new Promise(res => {
+    if (!idb){ res(null); return; }
+    try {
+      const tx = idb.transaction('kv', 'readonly');
+      const rq = tx.objectStore('kv').get(k);
+      rq.onsuccess = () => res(rq.result);
+      rq.onerror = () => res(null);
+    } catch(e){ res(null); }
+  });
+}
+
+/* ---------- collezione ---------- */
+let collection = [];
+try { collection = JSON.parse(localStorage.getItem('catcards_coll') || '[]'); } catch(e){}
+let modalIndex = -1;
+function persistColl(){
+  if (idb){ idbSet('coll', collection); return; }
+  try { localStorage.setItem('catcards_coll', JSON.stringify(collection)); }
+  catch(e){ /* lo spazio vero arriva con IndexedDB all'avvio */ }
+}
+function saveCurrentCard(card){
+  const entry = {
+    serial: card.serial, name: card.name, rarity: card.rarity.name,
+    razza: card.razza || null, descr: card.descr || null, potere: card.potere,
+    melody: card.melody || null, strum: card.strum || null, nick: card.nick || null,
+    statsv: card.stats.map(s => s.value), hp: card.hp, layout: 3,
+    img: canvas.toDataURL('image/jpeg', 0.82), date: Date.now()
+  };
+  const i = collection.findIndex(c => c.serial === entry.serial);
+  if (i >= 0) collection[i] = entry; else collection.unshift(entry);
+  persistColl(); renderCollection();
+}
+function renderCollection(){
+  const grid = document.getElementById('collGrid');
+  const panel = document.getElementById('collPanel');
+  grid.innerHTML = '';
+  panel.style.display = collection.length ? 'block' : 'none';
+  document.getElementById('collCount').textContent = collection.length + (collection.length === 1 ? ' carta salvata' : ' carte salvate');
+  collection.forEach((c, i) => {
+    const wrap = document.createElement('div');
+    wrap.className = 'thumb' + ((c.rarity === 'Epica' || c.rarity === 'Leggendaria') ? ' holoWrap' : '');
+    const im = document.createElement('img');
+    im.src = c.img; im.alt = c.name; im.title = c.name + ' (' + c.rarity + ')';
+    im.onclick = () => openCardModal(i);
+    const del = document.createElement('button');
+    del.className = 'del'; del.textContent = '🗑'; del.title = 'Elimina ' + c.name;
+    del.onclick = (ev) => {
+      ev.stopPropagation();
+      if (confirm('Eliminare la carta di ' + c.name + '? Verranno cancellate anche le sue statistiche di combattimento.')){
+        collection.splice(i, 1);
+        purgeStats(c.serial);
+        persistColl(); renderCollection();
+      }
+    };
+    wrap.appendChild(im); wrap.appendChild(del);
+    grid.appendChild(wrap);
+  });
+  refreshArena();
+}
+function openCardModal(i){
+  const c = collection[i];
+  if (!c) return;
+  modalIndex = i;
+  document.getElementById('modalImg').src = c.img;
+  document.getElementById('modalHolo').className =
+    (c.rarity === 'Epica' || c.rarity === 'Leggendaria') ? 'holoWrap' : '';
+  const bits = [];
+  if (c.nick) bits.push('🥊 «' + c.nick + '»');
+  if (c.razza) bits.push('🐈 ' + c.razza);
+  if (typeof c.potere === 'number') bits.push('🌟 ' + POWERS[c.potere].name);
+  bits.push('🎼 ' + (c.dna ? (c.dna.stile + ' in ' + c.dna.tonalita + ', ' + instrName(c.strum)) : THEME_BANK[bankThemeIndex(c.serial)].name + (c.strum ? ' (' + instrName(c.strum) + ')' : '')));
+  const rl = recordLine(c.serial);
+  if (rl) bits.push('📊 ' + rl);
+  const mvs = rollCard(parseInt(c.serial, 16) >>> 0, c.name).moves;
+  const mvLine = mvs.map(m => (m.kind === 'forte' ? '💥' : m.kind === 'rapido' ? '⚡' : '✨') + ' ' + m.name).join(' · ');
+  document.getElementById('modalCap').innerHTML =
+    (c.descr ? '<em>«' + c.descr + '»</em><br>' : '') + bits.join('  ·  ') + '<br>' + mvLine;
+  document.getElementById('modal').style.display = 'flex';
+}
+function closeModal(){ document.getElementById('modal').style.display = 'none'; }
+function downloadSaved(){
+  if (modalIndex < 0) return;
+  const a = document.createElement('a');
+  a.download = 'catcard-' + collection[modalIndex].name.replace(/\s+/g,'_') + '.jpg';
+  a.href = collection[modalIndex].img; a.click();
+}
+async function playSavedTheme(){
+  if (modalIndex < 0) return;
+  const c = collection[modalIndex];
+  unlockAudio();
+  await loadInstrument(cardInstr(c));   // carica il campione giusto prima di suonare
+  entryJingle({
+    strum: c.strum || null, serial: c.serial, dna: c.dna || null,
+    potere: (typeof c.potere === 'number') ? c.potere : 0
+  });
+}
+function deleteSaved(){
+  if (modalIndex < 0) return;
+  if (!confirm('Eliminare la carta di ' + collection[modalIndex].name + '? Verranno cancellate anche le sue statistiche di combattimento.')) return;
+  const sn = collection[modalIndex].serial;
+  collection.splice(modalIndex, 1);
+  purgeStats(sn);
+  persistColl(); renderCollection(); closeModal();
+}
+function purgeStats(serial){
+  if (battleStats[serial]){
+    delete battleStats[serial];
+    try { localStorage.setItem('catcards_stats', JSON.stringify(battleStats)); } catch(e){}
+  }
+  renderStats();
+}
+/* ---------- poteri speciali ---------- */
+const POWERS = [
+  {name:'Nove Vite',            desc:'la prima volta che va KO resta a 1 HP'},
+  {name:'Agguato Perfetto',     desc:'il suo primo attacco è sempre critico'},
+  {name:'Fusa Rigeneranti',     desc:'recupera HP a ogni suo turno'},
+  {name:'Doppia Zampata',       desc:'25% di probabilità di attaccare due volte'},
+  {name:'Modalità Liquido',     desc:'schiva molto più spesso'},
+  {name:'Sguardo Ipnotico',     desc:'ammalia con il doppio della probabilità'},
+  {name:'Armatura di Pigrizia', desc:'subisce il 20% di danni in meno'},
+  {name:'Caos Felino',          desc:'i suoi danni sono imprevedibili (x0.5–x2)'},
+];
+
+/* ---------- analisi AI: razza, descrizione, potere ---------- */
+const TEXT_MODELS = ['gemini-3-flash-preview', 'gemini-2.5-flash', 'gemini-flash-latest', 'gemini-2.0-flash'];
+async function analyzeCat(img, key, serial){
+  const c = document.createElement('canvas');
+  const W = Math.min(512, img.width);
+  c.width = W; c.height = Math.round(img.height * W / img.width);
+  c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+  const b64 = c.toDataURL('image/jpeg', 0.8).split(',')[1];
+  const prompt = 'Analizza la foto di questo gatto. Rispondi SOLO con JSON valido, senza markdown né altro testo: {"razza":"razza probabile, max 3 parole, in italiano","descr":"descrizione buffa e affettuosa del gatto, max 12 parole, in italiano","potere":N,"valuta":{"forza":1-10,"intelligenza":1-10,"destrezza":1-10,"velocita":1-10,"fascino":1-10,"indifferenza":1-10}}. Per "valuta" giudica DALLA FOTO: forza=stazza e muscolatura (un gatto grosso e robusto merita 8-10, un gattino esile 2-4), destrezza=agilità della posa, velocita=quanto snello e scattante sembra, intelligenza=quanto sveglia è l\'espressione, fascino=bellezza del manto e degli occhi, indifferenza=quanto se ne frega di tutto (un gatto che dorme beato merita 9-10). Usa TUTTA la scala 1-10, sii severo e vario. Per "potere", N è il più adatto al carattere: 1=Nove Vite (sopravvissuto tosto), 2=Agguato Perfetto (predatore all\'erta), 3=Fusa Rigeneranti (coccolone), 4=Doppia Zampata (iperattivo), 5=Modalità Liquido (contorsionista in pose assurde), 6=Sguardo Ipnotico (occhi magnetici), 7=Armatura di Pigrizia (dormiglione totale), 8=Caos Felino (combinaguai). Aggiungi anche al JSON: "soprannome": un soprannome da lottatore unico e divertente per QUESTO gatto (max 4 parole, in italiano, ispirato a ciò che vedi nella foto), "strumento": lo strumento più adatto al carattere, uno tra "pianoforte","tromba","chitarra","archi","organo","marimba", e "melodia": il tema d\'ingresso da lottatore, 12-16 note come array di oggetti {"n":"nota con ottava, es. C4, D#3, A4","d":durata in secondi, solo valori 0.15, 0.3, 0.45 o 0.6}. Componi una VERA melodia: scala pentatonica minore, motivo di 4 note ripetuto con variazione (struttura A-A\'-B-A), inizia e chiudi sulla tonica, durata totale 4-5 secondi.' + (serial ? musicHints(serial) : '');
+  let lastErr = 'nessun modello disponibile';
+  for (const model of TEXT_MODELS){
+    try {
+      const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent?key=' + encodeURIComponent(key), {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({contents: [{parts: [{text: prompt}, {inline_data: {mime_type:'image/jpeg', data: b64}}]}], generationConfig: {temperature: 1.2}})
+      });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const j = await r.json();
+      const t = (((j.candidates || [])[0] || {}).content || {}).parts;
+      const text = (t || []).map(p => p.text || '').join('');
+      const m = text.match(/\{[\s\S]*\}/);
+      if (!m) throw new Error('risposta senza JSON');
+      const o = JSON.parse(m[0]);
+      const out = {};
+      if (o.razza) out.razza = String(o.razza).slice(0, 28);
+      if (o.descr) out.descr = String(o.descr).slice(0, 90);
+      const n = parseInt(o.potere, 10);
+      if (n >= 1 && n <= POWERS.length) out.potere = n - 1;
+      if (o.valuta && typeof o.valuta === 'object') out.valuta = o.valuta;
+      if (Array.isArray(o.melodia) && o.melodia.length >= 6) out.melody = o.melodia.slice(0, 16);
+      if (typeof o.strumento === 'string') out.strum = o.strumento;
+      if (o.soprannome) out.nick = String(o.soprannome).slice(0, 36);
+      return out;
+    } catch(err){ lastErr = err.message; }
+  }
+  throw new Error(lastErr);
+}
+
+/* ---------- rivali importati via codice ---------- */
+let rivals = [];
+try { rivals = JSON.parse(localStorage.getItem('catcards_rivals') || '[]'); } catch(e){}
+function persistRivals(){
+  if (idb){ idbSet('rivals', rivals); return; }
+  try { localStorage.setItem('catcards_rivals', JSON.stringify(rivals)); } catch(e){}
+}
+async function copyChallenge(){
+  if (modalIndex < 0) return;
+  const c = collection[modalIndex];
+  // miniatura compressa della carta, così anche la foto viaggia nel codice
+  let thumb = null;
+  try {
+    thumb = await new Promise((res, rej) => {
+      const im = new Image();
+      im.onload = () => {
+        const tc = document.createElement('canvas');
+        const tw = 220;
+        tc.width = tw; tc.height = Math.round(im.height * tw / im.width);
+        tc.getContext('2d').drawImage(im, 0, 0, tc.width, tc.height);
+        res(tc.toDataURL('image/jpeg', 0.55));
+      };
+      im.onerror = rej;
+      im.src = c.img;
+    });
+  } catch(e){}
+  const code = 'CATCARD:' + btoa(unescape(encodeURIComponent(JSON.stringify(
+    {s: c.serial, n: c.name, p: c.potere, v: c.statsv || null, h: c.hp || null, r: c.rarity || null, i: thumb}
+  ))));
+  const done = () => alert('Codice copiato! Invialo a un amico (es. su WhatsApp): lo incollerà nella sua app per sfidare ' + c.name + '. Nota: il codice è lungo perché contiene anche la foto.');
+  if (navigator.clipboard && navigator.clipboard.writeText)
+    navigator.clipboard.writeText(code).then(done).catch(() => prompt('Copia questo codice:', code));
+  else prompt('Copia questo codice:', code);
+}
+function importRival(){
+  const el = document.getElementById('rivalCode'), msg = document.getElementById('rivalMsg');
+  const t = el.value.trim();
+  if (!t.startsWith('CATCARD:')){ msg.textContent = '❌ Codice non valido.'; return; }
+  try {
+    const o = JSON.parse(decodeURIComponent(escape(atob(t.slice(8)))));
+    if (!o.s || !o.n) throw 0;
+    const entry = {serial: o.s, name: o.n, potere: (typeof o.p === 'number' ? o.p : undefined),
+      statsv: (Array.isArray(o.v) && o.v.length === 6 ? o.v : undefined),
+      hp: (typeof o.h === 'number' && o.h > 0 ? o.h : undefined),
+      rarity: (typeof o.r === 'string' ? o.r : undefined),
+      img: (typeof o.i === 'string' && o.i.indexOf('data:image') === 0 ? o.i : undefined)};
+    const i = rivals.findIndex(r => r.serial === o.s);
+    if (i >= 0) rivals[i] = entry; else rivals.push(entry);
+    persistRivals(); refreshArena();
+    msg.textContent = '✅ ' + o.n + ' è entrato nell\'arena come rivale!';
+    el.value = '';
+  } catch(e){ msg.textContent = '❌ Codice non valido.'; }
+}
+
+/* ---------- arena ---------- */
+function refreshArena(){
+  const panel = document.getElementById('arenaPanel');
+  if (!panel) return;
+  panel.style.display = collection.length ? 'block' : 'none';
+  const selA = document.getElementById('selA'), selB = document.getElementById('selB');
+  const keep = [selA.value, selB.value];
+  selA.innerHTML = ''; selB.innerHTML = '';
+  collection.forEach((c, i) => {
+    selA.add(new Option('🐱 ' + c.name + ' (' + c.rarity + ')', 'c' + i));
+    selB.add(new Option('🐱 ' + c.name + ' (' + c.rarity + ')', 'c' + i));
+  });
+  rivals.forEach((r, i) => { selB.add(new Option('🆚 ' + r.name + ' (rivale)', 'r' + i)); });
+  if (Array.prototype.some.call(selA.options, o => o.value === keep[0])) selA.value = keep[0];
+  if (Array.prototype.some.call(selB.options, o => o.value === keep[1])) selB.value = keep[1];
+  else if (selB.options.length > 1) selB.selectedIndex = selB.options.length - 1;
+}
+function getEntry(v){ return v.charAt(0) === 'c' ? collection[parseInt(v.slice(1), 10)] : rivals[parseInt(v.slice(1), 10)]; }
+
+/* ---------- statistiche combattimenti ---------- */
+let battleStats = {};
+try { battleStats = JSON.parse(localStorage.getItem('catcards_stats') || '{}'); } catch(e){}
+function recordResult(winSerial, loseSerial){
+  if (winSerial === loseSerial) return;   // niente statistiche per gli allenamenti allo specchio
+  battleStats[winSerial]  = battleStats[winSerial]  || {w:0, l:0};
+  battleStats[loseSerial] = battleStats[loseSerial] || {w:0, l:0};
+  battleStats[winSerial].w++;
+  battleStats[loseSerial].l++;
+  battleStats[winSerial].xp  = (battleStats[winSerial].xp  || 0) + 25;
+  battleStats[loseSerial].xp = (battleStats[loseSerial].xp || 0) + 10;
+  try { localStorage.setItem('catcards_stats', JSON.stringify(battleStats)); } catch(e){}
+  renderStats();
+}
+function cardLevel(serial){
+  const s = battleStats[serial];
+  return 1 + Math.floor(((s && s.xp) || 0) / 100);
+}
+function recordLine(serial){
+  const s = battleStats[serial];
+  if (!s || (s.w + s.l === 0)) return null;
+  const pct = Math.round(100 * s.w / (s.w + s.l));
+  return 'Lv.' + cardLevel(serial) + ' · ' + s.w + ' V · ' + s.l + ' S  (' + pct + '%)';
+}
+function renderStats(){
+  const box = document.getElementById('statsBox');
+  const list = document.getElementById('statsList');
+  if (!box) return;
+  const items = [];
+  const push = (icon, name, serial) => {
+    const s = battleStats[serial];
+    if (!s || (s.w + s.l === 0)) return;
+    items.push({icon: icon, name: name, serial: serial, pct: s.w / (s.w + s.l), w: s.w});
+  };
+  collection.forEach(c => push('🐱', c.name, c.serial));
+  rivals.forEach(rv => push('🆚', rv.name, rv.serial));
+  items.sort((x, y) => (y.pct - x.pct) || (y.w - x.w));
+  const medals = ['🥇', '🥈', '🥉'];
+  const rows = items.map((it, i) =>
+    (medals[i] || (i + 1) + '°') + ' ' + it.icon + ' <strong>' + it.name + '</strong> — ' + recordLine(it.serial));
+  box.style.display = rows.length ? 'block' : 'none';
+  list.innerHTML = rows.join('<br>');
+}
+
+function makeFighter(e){
+  const card = rollCard(parseInt(e.serial, 16) >>> 0, e.name);
+  if (Array.isArray(e.statsv) && e.statsv.length === 6)
+    card.stats = card.stats.map((st, i) => Object.assign({}, st, {value: e.statsv[i]}));
+  if (typeof e.hp === 'number' && e.hp > 0) card.hp = e.hp;
+  const g = k => card.stats.find(s => s.key === k).value;
+  const pi = (typeof e.potere === 'number' && e.potere >= 0 && e.potere < POWERS.length)
+    ? e.potere : (parseInt(e.serial, 16) >>> 0) % POWERS.length;
+  const lvl = cardLevel(e.serial);
+  const hpTot = card.hp + (lvl - 1) * 4;   // +4 HP per livello
+  return { name: card.name, serial: e.serial, img: e.img || null, hp: hpTot, maxHp: hpTot, lvl: lvl,
+    melody: e.melody || null, strum: e.strum || null, nick: e.nick || null,
+    dna: e.dna || null, annuncio: e.annuncio || null, voce: e.voce || null,
+    forza: g('Forza'), intel: g('Intelligenza'), destr: g('Destrezza'),
+    vel: g('Velocità'), fas: g('Fascino'), ind: g('Indifferenza'),
+    atk: card.attack, pow: Math.round(card.atkPower * (1 + (lvl - 1) * 0.03)),   // +3% attacco per livello
+    moves: card.moves,
+    potere: pi, charmed: false, nineLives: true, firstHit: true, streak: 0, cornered: false,
+    catnip: false, boxed: false, fish: 0 };
+}
+
+/* ---------- combattimento ---------- */
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+function blog(t, cls){
+  const p = document.createElement('p');
+  if (cls) p.className = cls;
+  p.textContent = t;
+  const b = document.getElementById('blog');
+  b.appendChild(p);
+  b.scrollTop = b.scrollHeight;   // scorre solo il log, le carte restano visibili
+  if (window._evOn) (window._evLog = window._evLog || []).push(t);   // per la telecronaca AI
+}
+function flashText(txt, color){
+  const v = document.getElementById('vsFlash');
+  const s = v.querySelector('span');
+  s.textContent = txt;
+  s.style.color = color || 'var(--accent)';
+  v.style.display = 'flex';
+  s.style.animation = 'none'; void s.offsetWidth; s.style.animation = '';
+  setTimeout(() => { v.style.display = 'none'; }, 1000);
+}
+function vsFlash(){ flashText('VS', ''); }
+function showVsIntro(a, b){
+  const el = document.getElementById('vsIntro');
+  const sideHtml = (f, cls) =>
+    '<div class="side ' + cls + '">' +
+    (f.img ? '<img src="' + f.img + '" alt="">' : '<div class="ph2">🐱</div>') +
+    '<div class="vname">' + f.name + '</div>' +
+    '<div class="vepit">«' + (f.nick || EPITHETS[f.potere]) + '»</div>' +
+    '</div>';
+  el.innerHTML = sideHtml(a, 'L') + '<span class="vstxt">VS</span>' + sideHtml(b, 'R');
+  el.onclick = () => skipIntroNow();   // tocca il VS per saltare la presentazione
+  el.style.display = 'flex';
+}
+function hideVsIntro(){ document.getElementById('vsIntro').style.display = 'none'; }
+// soprannomi da lottatore, uno per potere speciale
+const EPITHETS = ['il Sopravvissuto', 'il Predatore Silenzioso', 'il Re delle Coccole',
+  'la Furia a Quattro Zampe', 'il Liquido Inafferrabile', 'l\'Ipnotizzatore',
+  'la Fortezza Pigra', 'l\'Agente del Caos'];
+function unlockAudio(){
+  try {
+    AC = AC || new (window.AudioContext || window.webkitAudioContext)();
+    if (AC.state === 'suspended') AC.resume();
+    loadBand();
+  } catch(e){}
+}
+
+/* ---------- borsellino punti e scommesse ---------- */
+let points = 100;
+try { points = parseInt(localStorage.getItem('catcards_points') || '100', 10); } catch(e){}
+let currentBet = null;
+function renderWallet(){
+  const el = document.getElementById('wallet');
+  if (el) el.textContent = '💰 I tuoi punti: ' + points;
+}
+function estStrength(e){
+  const card = rollCard(parseInt(e.serial, 16) >>> 0, e.name);
+  const sv = (Array.isArray(e.statsv) && e.statsv.length === 6) ? e.statsv : card.stats.map(s => s.value);
+  const hp = (typeof e.hp === 'number' && e.hp > 0) ? e.hp : card.hp;
+  return sv.reduce((x, y) => x + y, 0) + hp * 0.6 + (cardLevel(e.serial) - 1) * 12;
+}
+function askBet(ea, eb){
+  return new Promise(resolve => {
+    if (points < 10){ currentBet = null; resolve(); return; }
+    const sA = estStrength(ea), sB = estStrength(eb);
+    const pA = sA / (sA + sB);
+    const qA = Math.min(5, Math.max(1.05, Math.round(90 / pA) / 100));
+    const qB = Math.min(5, Math.max(1.05, Math.round(90 / (1 - pA)) / 100));
+    const box = document.getElementById('betBox');
+    const bA = document.getElementById('betA'), bB = document.getElementById('betB'), bS = document.getElementById('betSkip');
+    bA.textContent = '🔴 ' + ea.name + '  —  quota ' + qA.toFixed(2);
+    bB.textContent = '🔵 ' + eb.name + '  —  quota ' + qB.toFixed(2);
+    const done = bet => { currentBet = bet; box.style.display = 'none'; bA.onclick = bB.onclick = bS.onclick = null; resolve(); };
+    bA.onclick = () => done({serial: ea.serial, name: ea.name, quota: qA});
+    bB.onclick = () => done({serial: eb.serial, name: eb.name, quota: qB});
+    bS.onclick = () => done(null);
+    box.style.display = 'flex';
+  });
+}
+function settleBet(winnerSerial){
+  if (!currentBet) return;
+  if (winnerSerial === currentBet.serial){
+    const gain = Math.round(10 * (currentBet.quota - 1));
+    points += gain;
+    blog('🎲 Pronostico azzeccato! Avevi puntato su ' + currentBet.name + ': +' + gain + ' punti (totale: ' + points + ')', 'winner');
+  } else {
+    points -= 10;
+    blog('🎲 Pronostico sbagliato: −10 punti (totale: ' + points + '). Andrà meglio la prossima!');
+  }
+  try { localStorage.setItem('catcards_points', String(points)); } catch(e){}
+  currentBet = null;
+  renderWallet();
+}
+
+/* ---------- musica d'ingresso per gatto ---------- */
+/* ---------- banca di 12 temi scritti a mano: melodie vere e ben distinte ---------- */
+const THEME_BANK = [
+  {name:'Marcia trionfale',    notes:[[0,2],[4,2],[7,2],[12,2],[7,1],[4,1],[7,2],[12,4],[9,2],[7,2],[4,2],[0,2],[4,2],[7,2],[12,4]]},
+  {name:'Tango minaccioso',    notes:[[0,2],[3,2],[7,2],[8,3],[7,1],[3,2],[0,2],[10,2],[8,2],[7,2],[3,2],[2,3],[3,1],[0,4]]},
+  {name:'Ninna nanna',         notes:[[7,3],[5,3],[4,3],[2,3],[4,4],[2,3],[0,3],[4,3],[2,4],[0,6]]},
+  {name:'Rock sprint',         notes:[[0,1],[0,1],[3,1],[5,1],[0,1],[0,1],[6,1],[5,1],[3,1],[5,1],[3,1],[0,1],[10,2],[7,2],[5,1],[3,1],[0,2]]},
+  {name:'Valzer elegante',     notes:[[0,2],[4,1],[7,2],[4,1],[9,2],[7,1],[4,2],[2,1],[0,2],[4,1],[5,2],[4,1],[2,2],[0,4]]},
+  {name:'Mistero orientale',   notes:[[0,2],[1,2],[5,2],[7,2],[8,2],[7,2],[5,2],[1,2],[0,4],[8,2],[7,2],[5,2],[1,2],[0,4]]},
+  {name:'Blues pigro',         notes:[[0,3],[3,2],[5,3],[6,1],[5,2],[3,3],[0,4],[10,3],[7,2],[5,3],[3,2],[0,6]]},
+  {name:'Klezmer scatenato',   notes:[[0,1],[3,1],[6,1],[7,1],[10,1],[7,1],[6,1],[3,1],[7,2],[6,1],[3,1],[4,1],[3,1],[1,1],[0,2],[12,2],[0,2]]},
+  {name:'Fanfara western',     notes:[[0,2],[5,2],[9,2],[12,3],[9,1],[5,2],[9,2],[5,2],[0,2],[5,2],[9,2],[14,4],[12,2],[9,2],[5,2],[0,4]]},
+  {name:'Funky strut',         notes:[[0,1],[0,1],[10,1],[0,1],[3,1],[3,1],[0,1],[5,1],[5,2],[3,1],[0,1],[10,2],[3,1],[5,1],[0,2]]},
+  {name:'Epica dell\'ottava',  notes:[[0,2],[12,3],[11,1],[12,2],[7,2],[9,2],[12,3],[14,1],[12,2],[7,4],[5,2],[7,2],[9,2],[12,4]]},
+  {name:'Giga celtica',        notes:[[0,1],[2,1],[4,1],[5,1],[7,2],[7,1],[9,1],[7,1],[5,1],[4,2],[4,1],[5,1],[4,1],[2,1],[0,2],[7,2],[0,2]]},
+];
+const DEFAULT_INSTR = ['tromba', 'chitarra', 'marimba', 'chitarra', 'archi', 'organo', 'pianoforte', 'organo'];
+function midiToName(m){
+  const names = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+  return names[((m % 12) + 12) % 12] + (Math.floor(m / 12) - 1);
+}
+function bankThemeIndex(serial){ return (parseInt(serial, 16) >>> 0) % THEME_BANK.length; }
+
+/* ---------- generatore musicale: il DNA lo decide l'AI, le note il codice ---------- */
+const SCALES = {
+  minore:     [0,2,3,5,7,8,10],
+  maggiore:   [0,2,4,5,7,9,11],
+  dorica:     [0,2,3,5,7,9,10],
+  frigia:     [0,1,3,5,7,8,10],
+  giapponese: [0,1,5,7,8],
+  blues:      [0,3,5,6,7,10],
+};
+function generateMelody(dna, serial){
+  const r = mulberry32(((parseInt(serial, 16) >>> 0) ^ 0x4D454C) >>> 0);
+  const PC = {'C':0,'C#':1,'DB':1,'D':2,'D#':3,'EB':3,'E':4,'F':5,'F#':6,'GB':6,'G':7,'G#':8,'AB':8,'A':9,'A#':10,'BB':10,'B':11};
+  let ton = String(dna.tonalita || 'A').trim();
+  const isMin = /m$/i.test(ton);
+  ton = ton.replace(/m$/i, '').toUpperCase();
+  const rootPc = (PC[ton] != null) ? PC[ton] : 9;
+  const st = (String(dna.stile || '') + ' ' + String(dna.scala || '')).toLowerCase();
+  const scale = SCALES[String(dna.scala || '').toLowerCase()] || (isMin ? SCALES.minore : SCALES.maggiore);
+  const bpm = Math.min(180, Math.max(70, parseInt(dna.bpm, 10) || 120));
+  const u = 30 / bpm;   // croma in secondi
+  let base = 57;
+  if (/metal|rock|horror|boss|epic/.test(st)) base = 45;         // registro grave e potente
+  if (/chiptune|circus|cartoon|celtic|8 ?bit/.test(st)) base = 64; // registro brillante
+  base = base - (base % 12) + rootPc;
+  if (base < 40) base += 12;
+  const en = Math.min(10, Math.max(1, parseInt(dna.energia, 10) || 6));
+  const durs = en >= 8 ? [1,1,1,2] : en >= 5 ? [1,1,2,2,3] : [2,2,3,4];   // in crome
+  const restP = /horror|jazz/.test(st) ? 0.14 : 0.04;   // pause drammatiche
+  const leapP = /epic|boss|metal|circus/.test(st) ? 0.34 : 0.18;   // salti larghi
+  function phrase(shift, len, endStep){
+    const out = [];
+    let deg = 0;
+    for (let i = 0; i < len; i++){
+      if (r() < restP){ out.push({m: null, d: durs[Math.floor(r() * durs.length)]}); continue; }
+      deg += (r() < leapP) ? (Math.floor(r() * 5) - 2) * 2 : (Math.floor(r() * 3) - 1);
+      deg = Math.max(-3, Math.min(10, deg));
+      const oct = Math.floor(deg / scale.length);
+      out.push({m: base + shift + oct * 12 + scale[((deg % scale.length) + scale.length) % scale.length],
+                d: durs[Math.floor(r() * durs.length)]});
+    }
+    if (endStep != null) out[out.length - 1] = {m: base + shift + endStep, d: 2};
+    return out;
+  }
+  // struttura: motivo A, ripresa A', contrasto B, cadenza finale sulla tonica
+  const A  = phrase(0, 7, scale[Math.min(4, scale.length - 1)]);
+  const A2 = phrase(0, 7, 7);
+  const B  = phrase(/horror|metal/.test(st) ? -5 : 5, 7, null);
+  const FIN = [{m: base + 7, d: 2}, {m: base + (isMin ? 3 : 4), d: 2}, {m: base, d: 4}];
+  const arr = A.concat(A2, B, FIN).map(x => ({n: x.m == null ? 'R' : midiToName(x.m), d: x.d * u}));
+  let tot = arr.reduce((s, x) => s + x.d, 0);
+  if (tot > 7){ const f = 6.5 / tot; arr.forEach(x => { x.d *= f; }); }   // max ~6.5 secondi
+  return arr;
+}
+
+/* ---------- voce dell'annunciatore (sintesi vocale del browser, gratis) ---------- */
+let bestVoice = null;
+function pickVoice(){
+  try {
+    if (!window.speechSynthesis) return;
+    const vs = speechSynthesis.getVoices();
+    if (!vs.length) return;
+    const it = vs.filter(v => (v.lang || '').toLowerCase().indexOf('it') === 0);
+    // preferisci le voci naturali: Google > neurali/online > voci di sistema note > qualsiasi italiana
+    bestVoice = it.find(v => /google/i.test(v.name))
+      || it.find(v => /neural|natural|online|premium/i.test(v.name))
+      || it.find(v => /elsa|isabella|diego|cosimo|alice|federica|luca/i.test(v.name))
+      || it[0] || null;
+  } catch(e){}
+}
+pickVoice();
+if (window.speechSynthesis) speechSynthesis.onvoiceschanged = pickVoice;
+/* ---------- voce neurale registrata una volta sola (Gemini TTS) ---------- */
+const TTS_VOICES = ['Charon', 'Puck', 'Kore', 'Fenrir', 'Aoede', 'Enceladus'];
+function pcmToWavDataUrl(b64, rate){
+  const bin = atob(b64);
+  const len = bin.length;
+  const buf = new ArrayBuffer(44 + len);
+  const v = new DataView(buf);
+  const ws = (o, s) => { for (let i = 0; i < s.length; i++) v.setUint8(o + i, s.charCodeAt(i)); };
+  ws(0, 'RIFF'); v.setUint32(4, 36 + len, true); ws(8, 'WAVE'); ws(12, 'fmt ');
+  v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+  v.setUint32(24, rate, true); v.setUint32(28, rate * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true);
+  ws(36, 'data'); v.setUint32(40, len, true);
+  for (let i = 0; i < len; i++) v.setUint8(44 + i, bin.charCodeAt(i));
+  let s = '';
+  const u8 = new Uint8Array(buf), CH = 0x8000;
+  for (let i = 0; i < u8.length; i += CH) s += String.fromCharCode.apply(null, u8.subarray(i, i + CH));
+  return 'data:audio/wav;base64,' + btoa(s);
+}
+async function synthAnnuncio(e){
+  const key = apiKeyEl.value.trim();
+  if (!key || !e.annuncio) return 'manca la chiave o l\'annuncio';
+  const voice = 'Charon';   // voce unica per tutti: lo speaker ufficiale dell'arena
+  try {
+    const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=' + encodeURIComponent(key), {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        contents: [{parts: [{text: 'Parla in italiano con voce da annunciatore di wrestling, epica, esagerata e roboante: ' + e.annuncio}]}],
+        generationConfig: {responseModalities: ['AUDIO'], speechConfig: {voiceConfig: {prebuiltVoiceConfig: {voiceName: voice}}}}
+      })
+    });
+    if (!r.ok){
+      let msg = 'HTTP ' + r.status;
+      try { const ej = await r.json(); if (ej.error && ej.error.message) msg = ej.error.message.slice(0, 140); } catch(e2){}
+      return msg;
+    }
+    const j = await r.json();
+    const parts = (((j.candidates || [])[0] || {}).content || {}).parts || [];
+    const part = parts.find(p => p.inlineData && p.inlineData.data);
+    if (!part) return 'audio non presente nella risposta';
+    const rm = /rate=(\d+)/.exec(part.inlineData.mimeType || '');
+    e.voce = pcmToWavDataUrl(part.inlineData.data, rm ? parseInt(rm[1], 10) : 24000);
+    persistColl();
+    return null;
+  } catch(err){ return err.message; }
+}
+function playAnnuncio(f, fallbackText){
+  return new Promise(res => {
+    if (!soundOn || skipIntro){ res(); return; }
+    if (f.voce){
+      try {
+        const au = new Audio(f.voce);
+        window._curAud = au;
+        au.onended = () => res();
+        au.onerror = () => { speak(fallbackText).then(res); };
+        au.play().catch(() => speak(fallbackText).then(res));
+        setTimeout(res, 10000);
+        return;
+      } catch(e){}
+    }
+    speak(fallbackText).then(res);
+  });
+}
+function speak(text){
+  return new Promise(res => {
+    try {
+      if (!soundOn || !window.speechSynthesis){ res(); return; }
+      if (!bestVoice) pickVoice();
+      const utt = new SpeechSynthesisUtterance(text);
+      utt.lang = 'it-IT';
+      if (bestVoice) utt.voice = bestVoice;
+      utt.rate = 0.95; utt.pitch = 1.0; utt.volume = 1;   // tono da presentatore, non da robot
+      utt.onend = () => res(); utt.onerror = () => res();
+      speechSynthesis.cancel();
+      speechSynthesis.speak(utt);
+      setTimeout(res, 8000);   // rete di sicurezza
+    } catch(e){ res(); }
+  });
+}
+function bankTheme(serial){
+  const seed = parseInt(serial, 16) >>> 0;
+  const r = mulberry32((seed ^ 0x7A3E) >>> 0);
+  const theme = THEME_BANK[seed % THEME_BANK.length];
+  const base = 50 + Math.floor(r() * 12);        // tonalità propria del gatto (D3..C#4)
+  const tempo = 0.85 + r() * 0.35;               // velocità propria del gatto
+  return theme.notes.map(nd => ({ n: midiToName(base + nd[0]), d: nd[1] * 0.15 * tempo }));
+}
+function entryJingle(f){
+  if (!soundOn || skipIntro) return 0;
+  // se il gatto ha il suo DNA musicale, il generatore compone il tema su misura
+  const mel = (f.dna && typeof f.dna === 'object') ? generateMelody(f.dna, f.serial) : bankTheme(f.serial);
+  return playMelody(mel, cardInstr(f), true);
+}
+
+/* ---------- melodie: composte dall'AI, suonate dal sintetizzatore ---------- */
+function noteToFreq(n){
+  const m = String(n).trim().match(/^([A-Ga-g])(#|b)?(\d)$/);
+  if (!m) return null;
+  const base = {C:0, D:2, E:4, F:5, G:7, A:9, B:11}[m[1].toUpperCase()];
+  let semi = base + (m[2] === '#' ? 1 : m[2] === 'b' ? -1 : 0);
+  const octave = parseInt(m[3], 10);
+  return 440 * Math.pow(2, (semi - 9) / 12 + (octave - 4));
+}
+// aggancia una frequenza alla scala pentatonica minore della tonica: mai stonati
+function snapPentatonic(freq, rootFreq){
+  const semi = Math.round(12 * Math.log2(freq / rootFreq));
+  const oct = Math.floor(semi / 12);
+  let pc = ((semi % 12) + 12) % 12;
+  const pent = [0, 3, 5, 7, 10];
+  let best = 0, bd = 99;
+  for (const p of pent){
+    const d = Math.min(Math.abs(pc - p), 12 - Math.abs(pc - p));
+    if (d < bd){ bd = d; best = p; }
+  }
+  return rootFreq * Math.pow(2, (oct * 12 + best) / 12);
+}
+/* ---------- strumenti reali campionati (WebAudioFont) ---------- */
+const GM_INSTR = {
+  pianoforte: '0000_JCLive_sf2_file',
+  tromba:     '0560_JCLive_sf2_file',
+  chitarra:   '0290_JCLive_sf2_file',
+  archi:      '0480_JCLive_sf2_file',
+  organo:     '0190_JCLive_sf2_file',
+  marimba:    '0120_JCLive_sf2_file',
+};
+const OLD_INSTR_MAP = {square: 'chitarra', triangle: 'marimba', sawtooth: 'tromba', sine: 'pianoforte'};
+let wafPlayer = null;
+const instrCache = {};
+function instrName(s){ return GM_INSTR[s] ? s : (OLD_INSTR_MAP[s] || 'pianoforte'); }
+function loadInstrument(name){
+  name = instrName(name);
+  return new Promise(res => {
+    try {
+      if (!window.WebAudioFontPlayer){ res(null); return; }
+      AC = AC || new (window.AudioContext || window.webkitAudioContext)();
+      wafPlayer = wafPlayer || new WebAudioFontPlayer();
+      if (instrCache[name]){ res(instrCache[name]); return; }
+      const file = GM_INSTR[name];
+      const varName = '_tone_' + file;
+      wafPlayer.loader.startLoad(AC, 'https://surikov.github.io/webaudiofontdata/sound/' + file + '.js', varName);
+      wafPlayer.loader.waitLoad(() => { instrCache[name] = window[varName]; res(window[varName]); });
+      setTimeout(() => res(window[varName] || null), 7000);
+    } catch(e){ res(null); }
+  });
+}
+// bus della musica: tutto il tema passa da qui, così si può azzerare al volo (skip)
+let musicBus = null;
+function mdest(){
+  if (!musicBus){ musicBus = AC.createGain(); musicBus.connect(AC.destination); }
+  return musicBus;
+}
+// sezione ritmica campionata: basso + batteria vera
+const band = {};
+function loadBand(){
+  try {
+    if (!window.WebAudioFontPlayer) return;
+    AC = AC || new (window.AudioContext || window.webkitAudioContext)();
+    wafPlayer = wafPlayer || new WebAudioFontPlayer();
+    const defs = [
+      ['bass',  '0330_JCLive_sf2_file',    '_tone_0330_JCLive_sf2_file'],
+      ['kick',  '12835_0_JCLive_sf2_file', '_drum_35_0_JCLive_sf2_file'],
+      ['snare', '12838_0_JCLive_sf2_file', '_drum_38_0_JCLive_sf2_file'],
+      ['hihat', '12842_0_JCLive_sf2_file', '_drum_42_0_JCLive_sf2_file'],
+    ];
+    defs.forEach(d => {
+      if (band[d[0]]) return;
+      wafPlayer.loader.startLoad(AC, 'https://surikov.github.io/webaudiofontdata/sound/' + d[1] + '.js', d[2]);
+      wafPlayer.loader.waitLoad(() => { band[d[0]] = window[d[2]]; });
+    });
+  } catch(e){}
+}
+// strumento effettivo di una carta/combattente (coerente tra precarica e riproduzione)
+function cardInstr(x){
+  return instrName(x.strum || DEFAULT_INSTR[(typeof x.potere === 'number' ? x.potere : 0) % DEFAULT_INSTR.length]);
+}
+function noteToMidi(n){
+  const m = String(n).trim().match(/^([A-Ga-g])(#|b)?(\d)$/);
+  if (!m) return null;
+  const base = {C:0, D:2, E:4, F:5, G:7, A:9, B:11}[m[1].toUpperCase()];
+  return base + (m[2] === '#' ? 1 : m[2] === 'b' ? -1 : 0) + (parseInt(m[3], 10) + 1) * 12;
+}
+function snapPentMidi(midi, root){
+  const rel = midi - root;
+  const oct = Math.floor(rel / 12);
+  let pc = ((rel % 12) + 12) % 12;
+  const pent = [0, 3, 5, 7, 10];
+  let best = 0, bd = 99;
+  for (const p of pent){
+    const d = Math.min(Math.abs(pc - p), 12 - Math.abs(pc - p));
+    if (d < bd){ bd = d; best = p; }
+  }
+  return root + oct * 12 + best;
+}
+function perc(ts, idx){
+  // tick + cassa discreti per dare il ritmo
+  const tb = AC.createBuffer(1, Math.floor(AC.sampleRate * 0.03), AC.sampleRate);
+  const td = tb.getChannelData(0);
+  for (let i = 0; i < td.length; i++) td[i] = Math.random() * 2 - 1;
+  const tick = AC.createBufferSource(); tick.buffer = tb;
+  const tbp = AC.createBiquadFilter(); tbp.type = 'highpass'; tbp.frequency.value = 6000;
+  const tg = AC.createGain();
+  tg.gain.setValueAtTime(0.05, ts);
+  tg.gain.exponentialRampToValueAtTime(0.001, ts + 0.03);
+  tick.connect(tbp); tbp.connect(tg); tg.connect(mdest());
+  tick.start(ts);
+  if (idx % 4 === 0){
+    const k = AC.createOscillator(), kg = AC.createGain();
+    k.type = 'sine';
+    k.frequency.setValueAtTime(110, ts);
+    k.frequency.exponentialRampToValueAtTime(45, ts + 0.1);
+    kg.gain.setValueAtTime(0.3, ts);
+    kg.gain.exponentialRampToValueAtTime(0.001, ts + 0.12);
+    k.connect(kg); kg.connect(mdest());
+    k.start(ts); k.stop(ts + 0.13);
+  }
+}
+function playMelodyFont(mel, preset, noSnap){
+  const GRID = 0.15;
+  let rootM = null;
+  for (const n of mel){ const mm = noteToMidi(n.n); if (mm != null){ rootM = mm; break; } }
+  if (rootM == null) return 0;
+  const haveBand = band.bass && band.kick && band.snare && band.hihat;
+  const t0 = AC.currentTime + 0.05;
+  let ts = t0, total = 0, idx = 0;
+  for (const note of mel.slice(0, 40)){
+    let d = parseFloat(note.d);
+    if (!(d > 0.05)) d = 0.3;
+    d = noSnap ? Math.min(0.9, d) : Math.max(GRID, Math.min(0.6, Math.round(d / GRID) * GRID));
+    const mm = noteToMidi(note.n);
+    if (mm != null)
+      wafPlayer.queueWaveTable(AC, mdest(), preset, ts, noSnap ? mm : snapPentMidi(mm, rootM), d * 1.3, 0.65);
+    if (!haveBand) perc(ts, idx);
+    ts += d; total += d; idx++;
+  }
+  // sezione ritmica da band: batteria vera + basso che segue la tonica
+  if (haveBand){
+    const beat = 0.3;
+    const nBeats = Math.ceil(total / beat);
+    for (let b = 0; b < nBeats; b++){
+      const tb = t0 + b * beat;
+      wafPlayer.queueWaveTable(AC, mdest(), band.hihat, tb, 42, 0.25, 0.14);
+      if (b % 4 === 0) wafPlayer.queueWaveTable(AC, mdest(), band.kick, tb, 35, 0.4, 0.75);
+      if (b % 4 === 2){
+        wafPlayer.queueWaveTable(AC, mdest(), band.kick, tb, 35, 0.4, 0.55);
+        wafPlayer.queueWaveTable(AC, mdest(), band.snare, tb, 38, 0.4, 0.5);
+      }
+      if (b % 2 === 0){
+        const bp = (b % 8 < 4) ? rootM - 12 : rootM - 12 + 7;   // tonica / quinta
+        wafPlayer.queueWaveTable(AC, mdest(), band.bass, tb, bp, beat * 1.9, 0.55);
+      }
+    }
+    // colpo finale insieme
+    wafPlayer.queueWaveTable(AC, mdest(), band.kick, t0 + total, 35, 0.5, 0.85);
+    wafPlayer.queueWaveTable(AC, mdest(), band.snare, t0 + total, 38, 0.5, 0.6);
+    wafPlayer.queueWaveTable(AC, mdest(), band.bass, t0 + total, rootM - 12, 0.8, 0.6);
+  }
+  return Math.round(total * 1000 + 300);
+}
+function playMelody(mel, instrument, noSnap){
+  if (!soundOn || !Array.isArray(mel) || !mel.length) return 0;
+  try {
+    AC = AC || new (window.AudioContext || window.webkitAudioContext)();
+    if (AC.state === 'suspended') AC.resume();
+    // se lo strumento campionato è pronto, suona quello
+    const nm = instrName(instrument);
+    if (window.WebAudioFontPlayer && instrCache[nm]){
+      wafPlayer = wafPlayer || new WebAudioFontPlayer();
+      return playMelodyFont(mel, instrCache[nm], noSnap);
+    }
+    loadInstrument(nm);   // scaldalo per la prossima volta
+    return playMelodySynth(mel, instrument, noSnap);
+  } catch(e){ return 0; }
+}
+function playMelodySynth(mel, instrument, noSnap){
+  if (!soundOn || !Array.isArray(mel) || !mel.length) return 0;
+  try {
+    AC = AC || new (window.AudioContext || window.webkitAudioContext)();
+    if (AC.state === 'suspended') AC.resume();
+    const SYNTH_TYPE = {pianoforte:'triangle', tromba:'sawtooth', chitarra:'square', archi:'sawtooth', organo:'square', marimba:'sine'};
+    const type = ['square','triangle','sawtooth','sine'].indexOf(instrument) >= 0 ? instrument : (SYNTH_TYPE[instrument] || 'triangle');
+    // catena master: filtro morbido + eco d'ambiente
+    const master = AC.createGain(); master.gain.value = 0.9;
+    const lp = AC.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 2400;
+    const delay = AC.createDelay(); delay.delayTime.value = 0.22;
+    const fb = AC.createGain(); fb.gain.value = 0.25;
+    const wet = AC.createGain(); wet.gain.value = 0.16;
+    lp.connect(master); master.connect(mdest());
+    lp.connect(delay); delay.connect(fb); fb.connect(delay); delay.connect(wet); wet.connect(mdest());
+    // tonica dal primo suono valido
+    let root = null;
+    for (const n of mel){ const f = noteToFreq(n.n); if (f){ root = f; break; } }
+    if (!root) return 0;
+    const GRID = 0.15;
+    let ts = AC.currentTime + 0.05, total = 0, idx = 0;
+    for (const note of mel.slice(0, 40)){
+      let d = parseFloat(note.d);
+      if (!(d > 0.05)) d = 0.3;
+      d = noSnap ? Math.min(0.9, d) : Math.max(GRID, Math.min(0.6, Math.round(d / GRID) * GRID));
+      let f = noteToFreq(note.n);
+      if (f){
+        if (!noSnap) f = snapPentatonic(f, root);
+        const ng = AC.createGain();
+        ng.gain.setValueAtTime(0.0001, ts);
+        ng.gain.linearRampToValueAtTime(0.26, ts + 0.02);               // attacco morbido
+        ng.gain.setValueAtTime(0.26, ts + d * 0.55);
+        ng.gain.exponentialRampToValueAtTime(0.001, ts + d * 1.15);     // coda che lega le note
+        ng.connect(lp);
+        // voce principale + coro scordato + basso un'ottava sotto
+        const o1 = AC.createOscillator(); o1.type = type; o1.frequency.value = f;
+        const o2 = AC.createOscillator(); o2.type = type; o2.frequency.value = f; o2.detune.value = 8;
+        const g2 = AC.createGain(); g2.gain.value = 0.5;
+        const o3 = AC.createOscillator(); o3.type = 'sine'; o3.frequency.value = f / 2;
+        const g3 = AC.createGain(); g3.gain.value = 0.4;
+        o1.connect(ng); o2.connect(g2); g2.connect(ng); o3.connect(g3); g3.connect(ng);
+        o1.start(ts); o1.stop(ts + d * 1.2);
+        o2.start(ts); o2.stop(ts + d * 1.2);
+        o3.start(ts); o3.stop(ts + d * 1.2);
+      }
+      // percussioni discrete: tick su ogni nota, "cassa" ogni 4
+      const tick = AC.createBufferSource();
+      const tb = AC.createBuffer(1, Math.floor(AC.sampleRate * 0.03), AC.sampleRate);
+      const td = tb.getChannelData(0);
+      for (let i = 0; i < td.length; i++) td[i] = Math.random() * 2 - 1;
+      tick.buffer = tb;
+      const tbp = AC.createBiquadFilter(); tbp.type = 'highpass'; tbp.frequency.value = 6000;
+      const tg = AC.createGain(); tg.gain.setValueAtTime(0.05, ts);
+      tg.gain.exponentialRampToValueAtTime(0.001, ts + 0.03);
+      tick.connect(tbp); tbp.connect(tg); tg.connect(AC.destination);
+      tick.start(ts);
+      if (idx % 4 === 0){
+        const k = AC.createOscillator(), kg = AC.createGain();
+        k.type = 'sine';
+        k.frequency.setValueAtTime(110, ts);
+        k.frequency.exponentialRampToValueAtTime(45, ts + 0.1);
+        kg.gain.setValueAtTime(0.3, ts);
+        kg.gain.exponentialRampToValueAtTime(0.001, ts + 0.12);
+        k.connect(kg); kg.connect(AC.destination);
+        k.start(ts); k.stop(ts + 0.13);
+      }
+      ts += d; total += d; idx++;
+    }
+    return Math.round(total * 1000 + 300);
+  } catch(e){ return 0; }
+}
+function fighterHtml(f, side){
+  const rec = recordLine(f.serial);
+  return (f.img ? '<img src="' + f.img + '" alt="">' : '<div class="ph">🐱</div>') +
+    '<div class="fname">' + f.name + ' <span style="color:var(--accent); font-size:.8rem;">Lv.' + f.lvl + '</span></div>' +
+    '<div class="fhp" id="hp' + side + '">' + f.hp + ' / ' + f.maxHp + ' HP</div>' +
+    '<div class="hpbar"><div id="bar' + side + '"></div></div>' +
+    '<div class="fhp">🌟 ' + POWERS[f.potere].name + '</div>' +
+    (rec ? '<div class="fhp">📊 ' + rec + '</div>' : '');
+}
+function updateBars(a, b){
+  [['A', a], ['B', b]].forEach(([s, f]) => {
+    const pct = Math.max(0, 100 * f.hp / f.maxHp);
+    const bar = document.getElementById('bar' + s);
+    bar.style.width = pct + '%';
+    bar.style.background = pct > 50 ? '#51cf66' : pct > 25 ? '#ffb703' : '#e63946';
+    document.getElementById('hp' + s).textContent = Math.max(0, f.hp) + ' / ' + f.maxHp + ' HP';
+  });
+}
+function fx(side, cls, ms){
+  const el = document.getElementById('f' + side);
+  el.classList.remove(cls); void el.offsetWidth;
+  el.classList.add(cls);
+  setTimeout(() => el.classList.remove(cls), ms || 650);
+}
+function dmgFloat(side, txt, kind){
+  const el = document.getElementById('f' + side);
+  const s = document.createElement('span');
+  s.className = 'dmgfloat' + (kind ? ' ' + kind : '');
+  s.textContent = txt;
+  el.appendChild(s);
+  setTimeout(() => s.remove(), 1100);
+}
+let battleOn = false;
+let skipIntro = false;
+function introSleep(ms){
+  return new Promise(res => {
+    const t0 = Date.now();
+    const iv = setInterval(() => {
+      if (skipIntro || !battleOn || Date.now() - t0 >= ms){ clearInterval(iv); res(); }
+    }, 80);
+  });
+}
+function skipIntroNow(){
+  skipIntro = true;
+  try { speechSynthesis.cancel(); } catch(e){}
+  try { if (window._curAud) window._curAud.pause(); } catch(e){}
+  try { if (musicBus && AC) musicBus.gain.setValueAtTime(0, AC.currentTime); } catch(e){}
+  hideVsIntro();
+  document.getElementById('skipBtn').style.display = 'none';
+  blog('⏭️ Presentazione saltata: dritti al sodo!');
+}
+function closeBattle(){
+  battleOn = false;
+  document.getElementById('battleScreen').style.display = 'none';
+  document.getElementById('bracket').style.display = 'none';
+  document.getElementById('bracketBtn').style.display = 'none';
+}
+async function startBattle(){
+  if (battleOn) return;
+  const ea = getEntry(document.getElementById('selA').value);
+  const eb = getEntry(document.getElementById('selB').value);
+  if (!ea || !eb) return;
+  if (ea.serial === eb.serial){
+    alert('Un gatto non può combattere contro sé stesso! Scegli due carte diverse.');
+    return;
+  }
+  unlockAudio();
+  loadInstrument(cardInstr(ea)); loadInstrument(cardInstr(eb));   // pre-carica i campioni GIUSTI durante la scommessa
+  bracketState = null;
+  document.getElementById('bracket').style.display = 'none';
+  document.getElementById('bracketBtn').style.display = 'none';
+  await askBet(ea, eb);
+  document.getElementById('battleScreen').style.display = 'flex';
+  await runBattle(ea, eb, null);
+}
+async function runBattle(ea, eb, title){
+  const a = makeFighter(ea), b = makeFighter(eb);
+  battleOn = true;
+  window._evLog = []; window._evOn = true;
+  document.getElementById('fA').innerHTML = fighterHtml(a, 'A');
+  document.getElementById('fB').innerHTML = fighterHtml(b, 'B');
+  document.getElementById('fA').className = 'fighter';
+  document.getElementById('fB').className = 'fighter';
+  document.getElementById('blog').innerHTML = '';
+  document.getElementById('battleScreen').scrollTop = 0;
+  if (title) blog('🏟️ — ' + title + ' —', 'winner');
+  updateBars(a, b);
+  const rng = mulberry32((Date.now() & 0xffffffff) >>> 0);
+  const side = f => f === a ? 'A' : 'B';
+  // presentazione stile MMA (saltabile con il pulsante ⏭️ o toccando il VS)
+  skipIntro = false;
+  if (musicBus && AC){ try { musicBus.gain.setValueAtTime(1, AC.currentTime); } catch(e){} }
+  document.getElementById('skipBtn').style.display = 'block';
+  const recA = recordLine(a.serial), recB = recordLine(b.serial);
+  if (!title && !skipIntro){ sfx('crowd'); blog('🎤 SIGNORE E SIGNORIIII… benvenuti all\'Arena CatCards!'); await introSleep(1100); if (!battleOn) return null; }
+  if (!skipIntro){
+    blog('🔴 Angolo rosso: ' + a.name.toUpperCase() + ', «' + (a.nick || EPITHETS[a.potere]) + '»! ' + (recA || 'Al suo debutto in arena!'));
+    await playAnnuncio(a, a.annuncio || ('Dall\'angolo rosso... ' + a.name + '... ' + (a.nick || EPITHETS[a.potere]) + '!'));
+    if (!battleOn) return null;
+  }
+  if (!skipIntro){
+    blog('🎵 Risuona il tema d\'ingresso di ' + a.name + '…');
+    const dA = entryJingle(a);
+    await introSleep(Math.max(1500, dA + 300)); if (!battleOn) return null;
+  }
+  if (!skipIntro){
+    blog('🔵 Angolo blu: ' + b.name.toUpperCase() + ', «' + (b.nick || EPITHETS[b.potere]) + '»! ' + (recB || 'Al suo debutto in arena!'));
+    await playAnnuncio(b, b.annuncio || ('Dall\'angolo blu... ' + b.name + '... ' + (b.nick || EPITHETS[b.potere]) + '!'));
+    if (!battleOn) return null;
+  }
+  if (!skipIntro){
+    blog('🎵 Risuona il tema d\'ingresso di ' + b.name + '…');
+    const dB = entryJingle(b);
+    await introSleep(Math.max(1500, dB + 300)); if (!battleOn) return null;
+  }
+  if (!skipIntro){
+    // faccia a faccia: le due foto entrano in scena con il VS
+    showVsIntro(a, b); sfx('crowd'); sfx('crit');
+    await introSleep(2400);
+    hideVsIntro();
+    if (!battleOn) return null;
+  }
+  document.getElementById('skipBtn').style.display = 'none';
+  if (musicBus && AC){ try { musicBus.gain.setValueAtTime(1, AC.currentTime); } catch(e){} }
+  sfx('bell');
+  blog('🔔 DING DING DING!');
+  await sleep(900); if (!battleOn) return null;
+  // iniziativa probabilistica: il più veloce parte più spesso, ma mai sempre
+  const first = rng() < a.vel / (a.vel + b.vel) ? a : b;
+  const second = first === a ? b : a;
+  await sleep(800);
+  blog(first.vel >= second.vel
+    ? '⚡ ' + first.name + ' è più veloce e attacca per primo!'
+    : '😼 ' + first.name + ' sorprende tutti e parte per primo!');
+  let turn = 0;
+  let finalBlow = null;
+  while (a.hp > 0 && b.hp > 0 && turn < 60 && battleOn){
+    const att = turn % 2 === 0 ? first : second;
+    const def = att === first ? second : first;
+    turn++;
+    // fine round ogni 8 turni: campanella e respiro agli angoli
+    if (turn > 1 && (turn - 1) % 8 === 0){
+      sfx('bell');
+      blog('🔔 Fine del round ' + ((turn - 1) / 8) + '! I gatti tornano agli angoli a leccarsi il pelo…');
+      await sleep(1300);
+      if (!battleOn) return;
+    }
+    await sleep(950);
+    if (!battleOn) return;
+    if (att.charmed){ att.charmed = false; blog('😍 ' + att.name + ' è ammaliato e perde il turno!'); continue; }
+    // coro del pubblico ogni tanto
+    if (rng() < 0.06) blog('🎺 Dagli spalti: «' + att.name.toUpperCase() + '! ' + att.name.toUpperCase() + '!»');
+    if (att.fish > 0) att.fish--;
+    // power-up dall'arena
+    if (rng() < 0.10){
+      const it = Math.floor(rng() * 4);
+      if (it === 0 && att.hp < att.maxHp){
+        const h = Math.min(15, att.maxHp - att.hp);
+        att.hp += h; dmgFloat(side(att), '+' + h, 'heal'); sfx('heal');
+        blog('🧶 Un gomitolo rotola nell\'arena! ' + att.name + ' ci gioca e recupera ' + h + ' HP');
+        updateBars(a, b);
+      } else if (it === 1){
+        att.catnip = true;
+        blog('🌿 Erba gatta nell\'arena! ' + att.name + ' è su di giri: prossimo colpo RADDOPPIATO (ma è un po\' sballato…)');
+      } else if (it === 2){
+        att.boxed = true;
+        blog('📦 Una scatola di cartone! ' + att.name + ' non resiste e ci si infila: salta il turno ma è IMPRENDIBILE!');
+        await sleep(600);
+        continue;
+      } else if (it === 3){
+        att.fish = 3;
+        blog('🐟 Un pesce fresco vola nell\'arena! ' + att.name + ' guizza di energia: +agilità per 3 turni');
+      }
+    }
+    if (att.potere === 2 && att.hp < att.maxHp){
+      const h = Math.max(1, Math.round(att.maxHp * 0.04));
+      att.hp = Math.min(att.maxHp, att.hp + h);
+      dmgFloat(side(att), '+' + h, 'heal');
+      sfx('heal');
+      blog('💗 ' + att.name + ' fa le fusa e recupera ' + h + ' HP');
+      updateBars(a, b);
+    }
+    const hits = (att.potere === 3 && rng() < 0.25) ? 2 : 1;
+    for (let h = 0; h < hits && def.hp > 0; h++){
+      if (h === 1) blog('🐾 Doppia Zampata! ' + att.name + ' attacca ancora!');
+      // scelta della mossa: quando è alle corde, osa quella potente
+      let mv = att.moves[Math.floor(rng() * att.moves.length)];
+      if (att.hp < att.maxHp * 0.3 && rng() < 0.5)
+        mv = att.moves.find(m => m.kind === 'forte') || mv;
+      const mvIcon = mv.kind === 'forte' ? '💥' : mv.kind === 'rapido' ? '⚡' : '✨';
+      // avversario nascosto nella scatola: imprendibile per questo colpo
+      if (def.boxed){
+        def.boxed = false;
+        dmgFloat(side(def), 'MISS', 'miss'); sfx('miss');
+        blog('📦 ' + def.name + ' è rintanato nella scatola: il colpo di ' + att.name + ' va a vuoto!');
+        continue;
+      }
+      fx(side(att), side(att) === 'A' ? 'atkL' : 'atkR');
+      let dodge = def.destr / 320 + (def.potere === 4 ? 0.15 : 0) + (def.fish > 0 ? 0.10 : 0);
+      if (mv.kind === 'forte') dodge += 0.12;        // potente ma telefonata
+      if (mv.kind === 'rapido') dodge *= 0.35;        // quasi impossibile da schivare
+      if (att.catnip) dodge += 0.15;                  // sballato dall'erba gatta
+      if (rng() < dodge){
+        dmgFloat(side(def), 'MISS', 'miss');
+        sfx('miss');
+        att.streak = 0;
+        blog('💨 ' + att.name + ' tenta ' + mv.name + ' ma ' + def.name + ' schiva!');
+        continue;
+      }
+      let crit = rng() < att.intel / 280 + (mv.kind === 'rapido' ? 0.10 : 0);
+      if (att.potere === 1 && att.firstHit) crit = true;
+      att.firstHit = false;
+      let mult = crit ? 1.6 : 1;
+      mult *= mv.kind === 'forte' ? 1.45 : mv.kind === 'rapido' ? 0.7 : 1;
+      let catnipHit = false;
+      if (att.catnip){ mult *= 2; att.catnip = false; catnipHit = true; }
+      if (att.potere === 7) mult *= 0.5 + rng() * 1.5;
+      let dmg = (mv.power * 0.7 + att.forza * 0.45) * mult * (100 / (100 + def.ind)) * (0.75 + rng() * 0.5);
+      if (def.potere === 6) dmg *= 0.8;
+      dmg = Math.max(1, Math.round(dmg));
+      dmg = Math.min(dmg, Math.round(def.maxHp * 0.38));   // nessun colpo può togliere più del 38% degli HP
+      // colpo finale al rallentatore
+      if (def.hp - dmg <= 0 && !(def.potere === 0 && def.nineLives)){
+        blog('⏱️ Il tempo rallenta… COLPO FINALE!');
+        await sleep(1000); if (!battleOn) return;
+        finalBlow = {att: att, def: def, dmg: dmg, crit: crit};
+      }
+      def.hp -= dmg;
+      fx(side(def), 'hit');
+      sfx(crit ? 'crit' : 'hit');
+      dmgFloat(side(def), '−' + dmg, crit ? 'crit' : null);
+      blog(mvIcon + ' ' + att.name + ' usa ' + mv.name + '!' + (crit ? ' 💥 CRITICO!' : '') + (catnipHit ? ' 🌿 POTENZIATO!' : '') + '  −' + dmg + ' HP');
+      if (dmg >= def.maxHp * 0.3 && def.hp > 0)
+        blog(['😱 Colpo devastante!', '🎙️ Il pubblico è in delirio!', '💢 Che potenza impressionante!'][Math.floor(rng() * 3)]);
+      att.streak++;
+      if (att.streak === 3) blog('🔥 ' + att.name + ' è ON FIRE! Tre colpi a segno di fila!');
+      if (def.hp > 0 && def.hp < def.maxHp * 0.25 && !def.cornered){
+        def.cornered = true;
+        blog('🎙️ ' + def.name + ' è alle corde! Il pubblico trattiene il fiato…');
+      }
+      if (mv.kind === 'astuto' && def.hp > 0 && rng() < 0.25 && !def.charmed){
+        def.charmed = true;
+        blog('✨ Mossa astuta! ' + def.name + ' resta confuso e perderà il turno!');
+      }
+      if (def.hp <= 0 && def.potere === 0 && def.nineLives){
+        def.nineLives = false; def.hp = 1;
+        blog('🐈 ' + def.name + ' sfrutta una delle sue Nove Vite e resta in piedi con 1 HP!');
+      }
+      updateBars(a, b);
+    }
+    if (def.hp <= 0) break;
+    const charm = att.fas / 450 * (att.potere === 5 ? 2 : 1);
+    if (rng() < charm){ def.charmed = true; sfx('charm'); blog('✨ ' + def.name + ' resta ammaliato dal fascino di ' + att.name + '!'); }
+  }
+  if (!battleOn) return;
+  await sleep(700);
+  const w = a.hp <= 0 ? b : b.hp <= 0 ? a : (a.hp / a.maxHp >= b.hp / b.maxHp ? a : b);
+  const loser = w === a ? b : a;
+  document.getElementById('f' + side(loser)).classList.add('ko');
+  if (loser.hp <= 0){ flashText('K.O.!', '#e63946'); sfx('crowd'); await sleep(1100); }
+  // replay al rallentatore del colpo finale
+  if (loser.hp <= 0 && finalBlow){
+    blog('📹 REPLAY del colpo finale…');
+    const fs = document.querySelector('.fighters');
+    fs.classList.add('replay');
+    await sleep(400);
+    fx(side(finalBlow.att), side(finalBlow.att) === 'A' ? 'atkLslow' : 'atkRslow', 1450);
+    await sleep(1000);
+    fx(side(finalBlow.def), 'hitSlow', 1350);
+    dmgFloat(side(finalBlow.def), '−' + finalBlow.dmg, finalBlow.crit ? 'crit' : null);
+    await sleep(1400);
+    fs.classList.remove('replay');
+  }
+  blog('🏆 ' + w.name + ' vince il combattimento!', 'winner');
+  sfx('win');
+  recordResult(w.serial, loser.serial);
+  settleBet(w.serial);
+  window._evOn = false;
+  battleOn = false;
+  return w === a ? ea : eb;
+}
+renderStats();
+
+/* ---------- backup ---------- */
+function exportBackup(){
+  const data = {v: 2, collection: collection, rivals: rivals, stats: battleStats};
+  const blob = new Blob([JSON.stringify(data)], {type: 'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'catcards-backup.json';
+  a.click();
+}
+function importBackup(ev){
+  const f = ev.target.files[0];
+  if (!f) return;
+  const rd = new FileReader();
+  rd.onload = () => {
+    try {
+      const d = JSON.parse(rd.result);
+      if (!Array.isArray(d.collection)) throw 0;
+      if (!confirm('Importare il backup? Sostituirà collezione, rivali e statistiche attuali (' + d.collection.length + ' carte nel backup).')) return;
+      collection = d.collection;
+      rivals = Array.isArray(d.rivals) ? d.rivals : [];
+      battleStats = (d.stats && typeof d.stats === 'object') ? d.stats : {};
+      persistColl(); persistRivals();
+      try { localStorage.setItem('catcards_stats', JSON.stringify(battleStats)); } catch(e){}
+      renderCollection(); renderStats();
+      alert('Backup importato: ' + collection.length + ' carte.');
+    } catch(e){ alert('File di backup non valido.'); }
+  };
+  rd.readAsText(f);
+  ev.target.value = '';
+}
+
+/* ---------- condivisione diretta ---------- */
+async function shareImage(src, name){
+  try {
+    let blob;
+    if (src instanceof HTMLCanvasElement) blob = await new Promise(r => src.toBlob(r, 'image/png'));
+    else blob = await (await fetch(src)).blob();
+    const file = new File([blob], 'catcard-' + name.replace(/\s+/g,'_') + '.png', {type: blob.type});
+    if (navigator.canShare && navigator.canShare({files: [file]})){
+      await navigator.share({files: [file], title: 'CatCards', text: 'La carta di ' + name + '! 🐱⚔️'});
+    } else {
+      alert('La condivisione diretta non è supportata da questo browser: usa «Scarica» e allega l\'immagine.');
+    }
+  } catch(e){}
+}
+function shareCurrent(){ shareImage(canvas, window._lastName || 'gatto'); }
+function shareSaved(){ if (modalIndex >= 0) shareImage(collection[modalIndex].img, collection[modalIndex].name); }
+
+/* ---------- suoni (sintetizzati, nessun file) ---------- */
+let soundOn = true, AC = null;
+// miagolio sintetizzato con formanti vocali: la corda vocale (sawtooth) passa
+// per un filtro che disegna le vocali "m-i-a-o" — molto più simile a un vero miao
+function meowSound(f0, f1, f2, dur, type, vol){
+  const t = AC.currentTime;
+  const o = AC.createOscillator(); o.type = 'sawtooth';
+  const fl = AC.createBiquadFilter(); fl.type = 'bandpass'; fl.Q.value = 6;
+  const g = AC.createGain();
+  // intonazione
+  o.frequency.setValueAtTime(f0, t);
+  o.frequency.linearRampToValueAtTime(f1, t + dur * 0.4);
+  o.frequency.linearRampToValueAtTime(f2, t + dur);
+  // formante: bocca che si apre ("i"→"a") e si richiude ("o")
+  fl.frequency.setValueAtTime(650, t);
+  fl.frequency.linearRampToValueAtTime(2300, t + dur * 0.35);
+  fl.frequency.linearRampToValueAtTime(950, t + dur * 0.75);
+  fl.frequency.linearRampToValueAtTime(520, t + dur);
+  // vibrato felino
+  const lfo = AC.createOscillator(), lg = AC.createGain();
+  lfo.frequency.value = 28; lg.gain.value = f1 * 0.05;
+  lfo.connect(lg); lg.connect(o.frequency);
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(vol || 0.3, t + dur * 0.12);
+  g.gain.setValueAtTime(vol || 0.3, t + dur * 0.68);
+  g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+  o.connect(fl); fl.connect(g); g.connect(AC.destination);
+  o.start(t); o.stop(t + dur + 0.02);
+  lfo.start(t); lfo.stop(t + dur + 0.02);
+}
+// soffio di gatto: rumore bianco filtrato
+function hissSound(dur, freq, vol){
+  const t = AC.currentTime;
+  const buf = AC.createBuffer(1, Math.max(1, Math.floor(AC.sampleRate * dur)), AC.sampleRate);
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+  const src = AC.createBufferSource(); src.buffer = buf;
+  const bp = AC.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = freq; bp.Q.value = 0.8;
+  const g = AC.createGain();
+  g.gain.setValueAtTime(vol, t);
+  g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+  src.connect(bp); bp.connect(g); g.connect(AC.destination);
+  src.start(t); src.stop(t + dur);
+}
+function sfx(type){
+  if (!soundOn) return;
+  try {
+    AC = AC || new (window.AudioContext || window.webkitAudioContext)();
+    if (AC.state === 'suspended') AC.resume();
+    const t = AC.currentTime;
+    if (type === 'hit'){
+      hissSound(0.12, 3200, 0.18);                      // soffio secco
+      meowSound(210, 340, 150, 0.26, null, 0.45);       // "mao!" secco e arrabbiato
+    } else if (type === 'crit'){
+      hissSound(0.28, 4000, 0.2);
+      meowSound(320, 680, 190, 0.58, null, 0.55);       // strillo lungo da lite tra gatti
+    } else if (type === 'miss'){
+      hissSound(0.22, 1400, 0.12);                       // swoosh leggero
+    } else if (type === 'heal'){
+      // fusa: tono basso modulato a 25 Hz
+      const o = AC.createOscillator(), g = AC.createGain();
+      const lfo = AC.createOscillator(), lg = AC.createGain();
+      o.type = 'triangle'; o.frequency.value = 85;
+      lfo.frequency.value = 25; lg.gain.value = 0.09;
+      lfo.connect(lg); lg.connect(g.gain);
+      g.gain.setValueAtTime(0.1, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.6);
+      o.connect(g); g.connect(AC.destination);
+      o.start(t); o.stop(t + 0.62); lfo.start(t); lfo.stop(t + 0.62);
+    } else if (type === 'charm'){
+      meowSound(300, 560, 420, 0.5, null, 0.35);         // miagolio dolce "miaaao?"
+    } else if (type === 'crowd'){
+      // boato del pubblico: rumore che cresce e sfuma
+      const buf = AC.createBuffer(1, Math.floor(AC.sampleRate * 1.6), AC.sampleRate);
+      const dd = buf.getChannelData(0);
+      for (let i = 0; i < dd.length; i++) dd[i] = Math.random() * 2 - 1;
+      const src = AC.createBufferSource(); src.buffer = buf;
+      const lp = AC.createBiquadFilter(); lp.type = 'bandpass'; lp.frequency.value = 800; lp.Q.value = 0.4;
+      const g = AC.createGain();
+      g.gain.setValueAtTime(0.001, t);
+      g.gain.exponentialRampToValueAtTime(0.3, t + 0.35);
+      g.gain.setValueAtTime(0.3, t + 0.9);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 1.6);
+      src.connect(lp); lp.connect(g); g.connect(AC.destination);
+      src.start(t); src.stop(t + 1.6);
+    } else if (type === 'bell'){
+      // campanella: DING DING DING
+      for (let k = 0; k < 3; k++){
+        [1568, 2093, 2637].forEach(f => {
+          const o = AC.createOscillator(), g = AC.createGain();
+          o.type = 'sine'; o.frequency.value = f;
+          g.gain.setValueAtTime(0.28, t + k * 0.3);
+          g.gain.exponentialRampToValueAtTime(0.001, t + k * 0.3 + 0.28);
+          o.connect(g); g.connect(AC.destination);
+          o.start(t + k * 0.3); o.stop(t + k * 0.3 + 0.3);
+        });
+      }
+    } else if (type === 'win'){
+      [523, 659, 784, 1047].forEach((f, i) => {
+        const o = AC.createOscillator(), g = AC.createGain();
+        o.connect(g); g.connect(AC.destination);
+        o.type = 'triangle'; o.frequency.value = f;
+        g.gain.setValueAtTime(.18, t + i*0.15);
+        g.gain.exponentialRampToValueAtTime(.001, t + i*0.15 + 0.3);
+        o.start(t + i*0.15); o.stop(t + i*0.15 + 0.32);
+      });
+      setTimeout(() => { try { meowSound(320, 640, 460, 0.55, null, 0.4); } catch(e){} }, 650);
+    }
+  } catch(e){}
+}
+function toggleSound(btn){
+  soundOn = !soundOn;
+  btn.textContent = soundOn ? '🔊 Suoni: ON' : '🔇 Suoni: OFF';
+}
+
+/* ---------- torneo a 4 o 8 con tabellone a comparsa ---------- */
+let bracketState = null;
+function renderBracket(){
+  if (!bracketState) return;
+  const {rounds, totalRounds, n} = bracketState;
+  const el = document.getElementById('bwrap');
+  el.innerHTML = '';
+  const labels = totalRounds === 3 ? ['Quarti', 'Semifinali', 'Finale'] : ['Semifinali', 'Finale'];
+  for (let r = 0; r < totalRounds; r++){
+    const col = document.createElement('div');
+    col.className = 'round';
+    const lab = document.createElement('div');
+    lab.className = 'rlabel'; lab.textContent = labels[r] || '';
+    col.appendChild(lab);
+    const expected = n / Math.pow(2, r + 1);
+    const matches = rounds[r] || [];
+    for (let m = 0; m < expected; m++){
+      const mt = matches[m];
+      const box = document.createElement('div');
+      box.className = 'match' + (mt && mt.current ? ' current' : '');
+      const mkP = (entry, winSerial) => {
+        const p = document.createElement('div');
+        p.className = 'p' + (entry && winSerial ? (winSerial === entry.serial ? ' win' : ' lose') : '');
+        p.textContent = entry ? entry.name : '···';
+        return p;
+      };
+      box.appendChild(mkP(mt && mt.a, mt && mt.w));
+      box.appendChild(mkP(mt && mt.b, mt && mt.w));
+      col.appendChild(box);
+    }
+    el.appendChild(col);
+  }
+}
+function showBracket(){
+  if (!bracketState) return;
+  renderBracket();
+  document.getElementById('bracket').style.display = 'flex';
+}
+function hideBracket(){ document.getElementById('bracket').style.display = 'none'; }
+async function startTournament(n){
+  if (battleOn) return;
+  const seen = {};
+  const pool = collection.concat(rivals).filter(e => (seen[e.serial] ? false : (seen[e.serial] = true)));
+  if (pool.length < n){
+    alert('Servono almeno ' + n + ' carte diverse (collezione + rivali) per questo torneo. Ne hai ' + pool.length + '.');
+    return;
+  }
+  unlockAudio();
+  let players = pool.slice().sort(() => Math.random() - 0.5).slice(0, n);
+  players.forEach(p => loadInstrument(cardInstr(p)));   // pre-carica i campioni giusti di tutti
+  const totalRounds = Math.round(Math.log2(n));
+  const rounds = [];
+  bracketState = {rounds: rounds, totalRounds: totalRounds, n: n};
+  document.getElementById('bracketBtn').style.display = 'block';
+  document.getElementById('battleScreen').style.display = 'flex';
+  let ri = 0;
+  while (players.length > 1){
+    const roundName = players.length === 8 ? 'QUARTI DI FINALE' : players.length === 4 ? 'SEMIFINALE' : 'FINALE';
+    rounds[ri] = [];
+    for (let i = 0; i < players.length; i += 2)
+      rounds[ri].push({a: players[i], b: players[i + 1], w: null, current: false});
+    const next = [];
+    for (let m = 0; m < rounds[ri].length; m++){
+      const match = rounds[ri][m];
+      match.current = true;
+      // mostra il tabellone aggiornato prima dell'incontro, poi lascia spazio alla battaglia
+      showBracket();
+      await sleep(2200);
+      hideBracket();
+      const t = roundName + (rounds[ri].length > 1 ? ' ' + (m + 1) : '');
+      const w = await runBattle(match.a, match.b, t);
+      if (!w){ hideBracket(); return; }
+      match.w = w.serial; match.current = false;
+      next.push(w);
+      await sleep(1200);
+    }
+    players = next; ri++;
+  }
+  showBracket();
+  blog('👑 ' + players[0].name + ' è il CAMPIONE del torneo!', 'winner');
+  sfx('win');
+}
+
+renderCollection();
+renderWallet();
+
+/* ---------- migrazione carte esistenti al layout con 3 mosse ---------- */
+async function migrateCards(){
+  let changed = false;
+  for (const e of collection){
+    if (e.layout === 3) continue;
+    try {
+      const im = await new Promise((res, rej) => {
+        const i = new Image();
+        i.onload = () => res(i); i.onerror = rej;
+        i.src = e.img;
+      });
+      // ritaglia l'illustrazione dalla vecchia carta (finestra a 55,128 di 640x500 su 750x1050)
+      const sx = 55 * im.width / 750,  sy = 128 * im.height / 1050;
+      const sw = 640 * im.width / 750, sh = 500 * im.height / 1050;
+      const artC = document.createElement('canvas'); artC.width = 640; artC.height = 500;
+      artC.getContext('2d').drawImage(im, sx, sy, sw, sh, 0, 0, 640, 500);
+      // ricostruisci i dati della carta dai valori salvati
+      const card = rollCard(parseInt(e.serial, 16) >>> 0, e.name);
+      if (Array.isArray(e.statsv) && e.statsv.length === 6)
+        card.stats = card.stats.map((st, i2) => Object.assign({}, st, {value: e.statsv[i2]}));
+      if (typeof e.hp === 'number' && e.hp > 0) card.hp = e.hp;
+      card.potere = (typeof e.potere === 'number') ? e.potere : (parseInt(e.serial, 16) >>> 0) % POWERS.length;
+      if (e.razza) card.razza = e.razza;
+      drawCard(card, artC);
+      e.img = canvas.toDataURL('image/jpeg', 0.82);
+      e.layout = 3;
+      if (!e.statsv) e.statsv = card.stats.map(s => s.value);
+      if (!e.hp) e.hp = card.hp;
+      if (typeof e.potere !== 'number') e.potere = card.potere;
+      changed = true;
+    } catch(err){}
+  }
+  if (changed){
+    persistColl();
+    renderCollection();
+  }
+}
+
+/* ---------- rigenerazione completa delle melodie (v3: vincoli musicali per gatto) ---------- */
+try {
+  if (localStorage.getItem('catcards_melv') !== '3'){
+    collection.forEach(e => { e.melody = null; e.strum = null; });
+    persistColl();
+    localStorage.setItem('catcards_melv', '3');
+  }
+} catch(e){}
+
+// vincoli musicali unici e deterministici per ogni gatto: tonalità, tempo e registro diversi
+function musicHints(serial){
+  const r = mulberry32(((parseInt(serial, 16) >>> 0) ^ 0x51ED) >>> 0);
+  const keys = ['Do', 'Re', 'Mi bemolle', 'Fa', 'Sol', 'La', 'Si bemolle'];
+  const tonica = keys[Math.floor(r() * keys.length)];
+  const tempi = [
+    'incalzante: usa quasi solo note da 0.15 e 0.3 secondi',
+    'moderato: mescola note da 0.3 e 0.45 secondi',
+    'solenne e lento: usa note da 0.45 e 0.6 secondi',
+  ];
+  const tempo = tempi[Math.floor(r() * 3)];
+  const registro = r() < 0.5 ? 'registro medio-grave (ottave 2 e 3)' : 'registro medio-acuto (ottave 4 e 5)';
+  return ' Vincoli musicali OBBLIGATORI e caratteristici di questo gatto: tonalità di ' + tonica + ' minore, ritmo ' + tempo + ', ' + registro + '.';
+}
+
+/* ---------- composizione AI di un tema (usata da migrazione e pulsante) ---------- */
+async function composeTheme(e){
+  const key = apiKeyEl.value.trim();
+  if (!key) return 'manca la chiave API (inseriscila nelle Impostazioni AI)';
+  const pot = (typeof e.potere === 'number') ? e.potere : 0;
+  const prompt = 'Sei il direttore artistico di un gioco di carte di gatti combattenti. Personaggio: nome ' + e.name +
+    (e.razza ? ', razza ' + e.razza : '') +
+    (e.descr ? ', carattere: ' + e.descr : '') +
+    ', archetipo: ' + EPITHETS[pot] + '. ' +
+    'Crea la sua IDENTITÀ da ring, unica e coerente col personaggio. Rispondi SOLO con JSON valido, senza markdown né altro testo: ' +
+    '{"soprannome":"soprannome da lottatore unico e divertente, max 4 parole, in italiano",' +
+    '"annuncio":"frase dell\'annunciatore del ring per presentarlo, max 15 parole, in italiano, teatrale e divertente",' +
+    '"stile":"uno tra: rock, metal, jazz, blues, epico orchestrale, horror, western, pirata, orientale, medievale, celtico, chiptune, boss battle, circus, tango, flamenco, funk",' +
+    '"energia":1-10,"bpm":70-180,"tonalita":"es. Em, C, F#m, Bb","scala":"una tra: minore, maggiore, dorica, frigia, giapponese, blues",' +
+    '"strumento":"uno tra: pianoforte, tromba, chitarra, archi, organo, marimba"}. ' +
+    'Scegli combinazioni DIVERSE e caratterizzanti: un dormiglione può essere blues lento in tonalità grave, un predatore metal frigio veloce, un giocherellone circus chiptune.';
+  let lastErr = 'nessun modello disponibile';
+  for (const model of TEXT_MODELS){
+    try {
+      const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent?key=' + encodeURIComponent(key), {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({contents: [{parts: [{text: prompt}]}], generationConfig: {temperature: 1.6, topP: 0.95}})
+      });
+      if (!r.ok){
+        let msg = 'HTTP ' + r.status;
+        try { const ej = await r.json(); if (ej.error && ej.error.message) msg = ej.error.message.slice(0, 140); } catch(e2){}
+        throw new Error(msg);
+      }
+      const j = await r.json();
+      const parts = (((j.candidates || [])[0] || {}).content || {}).parts || [];
+      const text = parts.map(p => p.text || '').join('');
+      const m = text.match(/\{[\s\S]*\}/);
+      if (!m) throw new Error('risposta senza JSON');
+      const o = JSON.parse(m[0]);
+      if (!o.stile || !o.tonalita) throw new Error('identità musicale incompleta');
+      e.dna = {stile: String(o.stile), energia: o.energia, bpm: o.bpm, tonalita: String(o.tonalita), scala: String(o.scala || 'minore')};
+      e.strum = (typeof o.strumento === 'string') ? o.strumento : 'pianoforte';
+      if (o.annuncio) e.annuncio = String(o.annuncio).slice(0, 140);
+      if (o.soprannome && !e.nick) e.nick = String(o.soprannome).slice(0, 36);
+      persistColl();
+      return null;
+    } catch(err){ lastErr = err.message; }
+  }
+  return lastErr;
+}
+
+/* ---------- pulsante: rigenera e suona il tema della carta aperta ---------- */
+async function regenTheme(){
+  if (modalIndex < 0) return;
+  const c = collection[modalIndex];
+  unlockAudio();
+  document.getElementById('modalCap').innerHTML += '<br>🎼 Compongo il tema di ' + c.name + '…';
+  const err = await composeTheme(c);
+  if (err){ alert('Composizione fallita: ' + err); openCardModal(modalIndex); return; }
+  openCardModal(modalIndex);   // aggiorna l'etichetta "tema AI"
+  await loadInstrument(c.strum);
+  entryJingle({melody: c.melody, strum: c.strum, serial: c.serial, potere: (typeof c.potere === 'number') ? c.potere : 0});
+}
+
+/* ---------- migrazione: temi e soprannomi per tutte le carte senza ---------- */
+async function migrateMelodies(){
+  const st = document.getElementById('melStatus');
+  const todo = collection.filter(e => !e.dna || !e.nick || (e.annuncio && !e.voce && !e.vtried));
+  if (!todo.length) return;
+  if (!apiKeyEl.value.trim()){
+    if (st) st.textContent = '🎼 Temi AI non ancora composti: inserisci la chiave API e ricarica.';
+    return;
+  }
+  let ok = 0, lastErr = '';
+  for (let i = 0; i < todo.length; i++){
+    const e = todo[i];
+    if (st) st.textContent = '🎼 Compongo identità musicale: ' + (i + 1) + '/' + todo.length + ' (' + e.name + ')…';
+    let err = null;
+    if (!e.dna || !e.nick) err = await composeTheme(e);
+    if (!err && e.annuncio && !e.voce && !e.vtried){
+      if (st) st.textContent = '🎙️ Registro la voce dell\'annunciatore: ' + (i + 1) + '/' + todo.length + ' (' + e.name + ')…';
+      const verr = await synthAnnuncio(e);
+      if (!verr){ e.vtried = 1; persistColl(); }   // segna solo se riuscito: gli errori (es. quota) si ritentano
+      else lastErr = 'voce: ' + verr;
+    }
+    if (err){ lastErr = err; if (st) st.textContent = '⚠️ Problema con ' + e.name + ': ' + err; }
+    else ok++;
+    await new Promise(r => setTimeout(r, 500));   // gentile con i limiti dell'API
+  }
+  if (st) st.textContent = ok === todo.length
+    ? '✅ Temi e soprannomi AI pronti per tutte le carte! (' + ok + ')'
+    : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
+}
+/* ---------- voci v2: riregistra tutti gli annunci con la voce unica ---------- */
+function unifyVoices(){
+  try {
+    if (localStorage.getItem('catcards_vocev') !== '2'){
+      collection.forEach(e => { e.voce = null; e.vtried = 0; });
+      persistColl();
+      localStorage.setItem('catcards_vocev', '2');
+    }
+  } catch(e){}
+}
+
+/* ---------- avvio: carica da IndexedDB (con travaso automatico dalla vecchia memoria) ---------- */
+(async function initStore(){
+  idb = await idbOpen();
+  if (idb){
+    const storedColl = await idbGet('coll');
+    if (Array.isArray(storedColl) && storedColl.length >= collection.length && storedColl.length > 0){
+      collection = storedColl;
+    } else if (collection.length){
+      await idbSet('coll', collection);   // travaso iniziale
+    }
+    const storedRiv = await idbGet('rivals');
+    if (Array.isArray(storedRiv) && storedRiv.length >= rivals.length){
+      rivals = storedRiv;
+    } else if (rivals.length){
+      await idbSet('rivals', rivals);
+    }
+    // libera la vecchia memoria piena: ora i dati vivono in IndexedDB
+    try { localStorage.removeItem('catcards_coll'); localStorage.removeItem('catcards_rivals'); } catch(e){}
+  }
+  unifyVoices();
+  renderCollection();
+  renderStats();
+  renderWallet();
+  migrateCards();
+  migrateMelodies();
+})();
+</script>
+</body>
+</html>
