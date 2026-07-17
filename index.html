@@ -146,7 +146,7 @@
 </head>
 <body>
   <h1>🐱 Cat<span>Cards</span></h1>
-  <p class="tag">Fotografa il tuo gatto e trasformalo in una carta da collezione · <strong style="color:var(--accent)">v4.6</strong></p>
+  <p class="tag">Fotografa il tuo gatto e trasformalo in una carta da collezione · <strong style="color:var(--accent)">v5.0</strong></p>
 
   <div class="panel" id="uploadPanel">
     <div class="drop" onclick="document.getElementById('fileInput').click()">
@@ -217,6 +217,20 @@
       <button class="btn secondary" onclick="importRival()" style="margin-top:10px;">Importa rivale</button>
       <p id="rivalMsg" class="count" style="margin-top:6px;"></p>
     </details>
+  </div>
+
+  <div class="panel" id="onlinePanel" style="margin-top:20px; display:none;">
+    <h2>🌍 Arena Mondiale</h2>
+    <label class="small">Il tuo nome giocatore</label>
+    <input type="text" id="playerName" placeholder="Es. Antonio" maxlength="20">
+    <button class="btn" onclick="publishCards()">📤 Pubblica le mie carte online</button>
+    <p class="count" id="onlineMsg" style="margin-top:6px;"></p>
+    <label class="small">La tua carta per le sfide online</label>
+    <select id="selMine"></select>
+    <button class="btn secondary" onclick="loadWorldCards()" style="margin-top:10px;">🔄 Cerca sfidanti nel mondo</button>
+    <div id="worldList" style="margin-top:10px;"></div>
+    <button class="btn secondary" onclick="loadLeaderboard()" style="margin-top:10px;">🏅 Classifica mondiale</button>
+    <div id="leaderList" class="count" style="line-height:2; margin-top:8px;"></div>
   </div>
 
   <div class="battle" id="battleScreen">
@@ -765,8 +779,10 @@ function renderCollection(){
   const grid = document.getElementById('collGrid');
   const panel = document.getElementById('collPanel');
   grid.innerHTML = '';
-  panel.style.display = collection.length ? 'block' : 'none';
-  document.getElementById('collCount').textContent = collection.length + (collection.length === 1 ? ' carta salvata' : ' carte salvate');
+  panel.style.display = 'block';   // sempre visibile: serve anche per importare il primo backup
+  document.getElementById('collCount').textContent = collection.length
+    ? collection.length + (collection.length === 1 ? ' carta salvata' : ' carte salvate')
+    : 'Nessuna carta ancora: creane una con una foto, o importa un backup qui sotto.';
   collection.forEach((c, i) => {
     const wrap = document.createElement('div');
     wrap.className = 'thumb' + ((c.rarity === 'Epica' || c.rarity === 'Leggendaria') ? ' holoWrap' : '');
@@ -957,6 +973,14 @@ function refreshArena(){
     selB.add(new Option('🐱 ' + c.name + ' (' + c.rarity + ')', 'c' + i));
   });
   rivals.forEach((r, i) => { selB.add(new Option('🆚 ' + r.name + ' (rivale)', 'r' + i)); });
+  const selMine = document.getElementById('selMine');
+  if (selMine){
+    const keepM = selMine.value;
+    selMine.innerHTML = '';
+    collection.forEach((c, i) => selMine.add(new Option('🐱 ' + c.name + ' (' + c.rarity + ')', String(i))));
+    if (Array.prototype.some.call(selMine.options, o => o.value === keepM)) selMine.value = keepM;
+    document.getElementById('onlinePanel').style.display = 'block';
+  }
   if (Array.prototype.some.call(selA.options, o => o.value === keep[0])) selA.value = keep[0];
   if (Array.prototype.some.call(selB.options, o => o.value === keep[1])) selB.value = keep[1];
   else if (selB.options.length > 1) selB.selectedIndex = selB.options.length - 1;
@@ -2240,6 +2264,153 @@ async function migrateMelodies(){
     ? '✅ Temi e soprannomi AI pronti per tutte le carte! (' + ok + ')'
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
+/* ---------- Arena Mondiale (Supabase) ---------- */
+const SUPA_URL = 'https://jcopltczbhbmmjpvchqd.supabase.co';
+const SUPA_KEY = 'sb_publishable_8NwuK7oV1TqnKdJsiStUZA_kCZB487O';
+function supaHeaders(extra){
+  return Object.assign({apikey: SUPA_KEY, Authorization: 'Bearer ' + SUPA_KEY, 'Content-Type': 'application/json'}, extra || {});
+}
+const playerNameEl = document.getElementById('playerName');
+try { playerNameEl.value = localStorage.getItem('catcards_player') || ''; } catch(e){}
+playerNameEl.addEventListener('input', () => { try { localStorage.setItem('catcards_player', playerNameEl.value.trim()); } catch(e){} });
+function makeThumb(dataUrl, w){
+  return new Promise((res, rej) => {
+    const im = new Image();
+    im.onload = () => {
+      const tc = document.createElement('canvas');
+      tc.width = w; tc.height = Math.round(im.height * w / im.width);
+      tc.getContext('2d').drawImage(im, 0, 0, tc.width, tc.height);
+      res(tc.toDataURL('image/jpeg', 0.55));
+    };
+    im.onerror = rej;
+    im.src = dataUrl;
+  });
+}
+async function publishCards(){
+  const msg = document.getElementById('onlineMsg');
+  const owner = playerNameEl.value.trim();
+  if (!owner){ msg.textContent = '⚠️ Scrivi prima il tuo nome giocatore.'; return; }
+  if (!collection.length){ msg.textContent = '⚠️ Non hai ancora carte da pubblicare.'; return; }
+  msg.textContent = '📤 Pubblico ' + collection.length + ' carte…';
+  try {
+    const rows = [];
+    for (const e of collection){
+      let thumb = null;
+      try { thumb = await makeThumb(e.img, 220); } catch(err){}
+      rows.push({
+        serial: e.serial, name: e.name, owner: owner,
+        nick: e.nick || null, rarity: e.rarity || null, razza: e.razza || null, descr: e.descr || null,
+        potere: (typeof e.potere === 'number') ? e.potere : null,
+        statsv: e.statsv || null, hp: e.hp || null,
+        dna: e.dna || null, strum: e.strum || null, annuncio: e.annuncio || null,
+        img: thumb
+      });
+    }
+    const r = await fetch(SUPA_URL + '/rest/v1/cards', {
+      method: 'POST',
+      headers: supaHeaders({Prefer: 'resolution=merge-duplicates'}),
+      body: JSON.stringify(rows)
+    });
+    if (!r.ok){
+      let t = 'HTTP ' + r.status;
+      try { const j = await r.json(); if (j.message) t = j.message.slice(0, 140); } catch(e2){}
+      throw new Error(t);
+    }
+    msg.textContent = '✅ ' + rows.length + ' carte pubblicate nell\'Arena Mondiale!';
+  } catch(err){
+    msg.textContent = '❌ Pubblicazione fallita: ' + err.message;
+  }
+}
+let worldCards = [];
+async function loadWorldCards(){
+  const msg = document.getElementById('onlineMsg');
+  const list = document.getElementById('worldList');
+  msg.textContent = '🔎 Cerco sfidanti…';
+  try {
+    const r = await fetch(SUPA_URL + '/rest/v1/cards?select=serial,name,owner,nick,rarity,potere,statsv,hp,dna,strum,annuncio,img,wins,losses&order=created_at.desc&limit=40', {headers: supaHeaders()});
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const all = await r.json();
+    const mine = {};
+    collection.forEach(c => { mine[c.serial] = true; });
+    worldCards = all.filter(c => !mine[c.serial]);
+    list.innerHTML = '';
+    if (!worldCards.length){
+      msg.textContent = 'Nessuno sfidante trovato (oltre alle tue carte). Invita qualcuno a pubblicare!';
+      return;
+    }
+    msg.textContent = worldCards.length + ' sfidanti trovati:';
+    worldCards.forEach((c, i) => {
+      const row = document.createElement('div');
+      row.style.cssText = 'display:flex; align-items:center; gap:10px; padding:8px; border:1px solid #363057; border-radius:10px; margin-top:8px;';
+      const im = document.createElement('img');
+      im.style.cssText = 'width:46px; border-radius:6px; flex-shrink:0;';
+      if (c.img) im.src = c.img; else im.style.display = 'none';
+      const info = document.createElement('div');
+      info.style.cssText = 'flex:1; min-width:0; font-size:.85rem;';
+      info.innerHTML = '<strong>' + c.name + '</strong> di ' + (c.owner || 'anonimo') +
+        '<br><span style="color:var(--muted)">' + (c.rarity || '') + ' · ' + (c.wins || 0) + ' V / ' + (c.losses || 0) + ' S</span>';
+      const btn = document.createElement('button');
+      btn.className = 'btn secondary';
+      btn.style.cssText = 'width:auto; margin:0; padding:10px 14px;';
+      btn.textContent = '⚔️ Sfida';
+      btn.onclick = () => fightWorld(i);
+      row.appendChild(im); row.appendChild(info); row.appendChild(btn);
+      list.appendChild(row);
+    });
+  } catch(err){
+    msg.textContent = '❌ Errore di rete: ' + err.message;
+  }
+}
+async function fightWorld(i){
+  if (battleOn) return;
+  const remote = worldCards[i];
+  const v = document.getElementById('selMine').value;
+  const mineEntry = collection[parseInt(v, 10)];
+  if (!mineEntry){ alert('Scegli prima la tua carta per le sfide online.'); return; }
+  const remoteEntry = {
+    serial: remote.serial, name: remote.name, nick: remote.nick,
+    potere: (typeof remote.potere === 'number') ? remote.potere : undefined,
+    statsv: Array.isArray(remote.statsv) ? remote.statsv : undefined,
+    hp: remote.hp || undefined, dna: remote.dna || null, strum: remote.strum || null,
+    annuncio: remote.annuncio || null, img: remote.img || null
+  };
+  unlockAudio();
+  loadInstrument(cardInstr(mineEntry)); loadInstrument(cardInstr(remoteEntry));
+  bracketState = null;
+  document.getElementById('bracket').style.display = 'none';
+  document.getElementById('bracketBtn').style.display = 'none';
+  await askBet(mineEntry, remoteEntry);
+  document.getElementById('battleScreen').style.display = 'flex';
+  const w = await runBattle(mineEntry, remoteEntry, 'SFIDA MONDIALE');
+  if (!w) return;
+  // riporta il risultato al server (aggiorna vittorie/sconfitte mondiali)
+  const winSerial = w.serial, loseSerial = (w.serial === mineEntry.serial) ? remoteEntry.serial : mineEntry.serial;
+  try {
+    await fetch(SUPA_URL + '/rest/v1/rpc/record_result', {
+      method: 'POST', headers: supaHeaders(),
+      body: JSON.stringify({winner: winSerial, loser: loseSerial})
+    });
+    blog('🌍 Risultato registrato nell\'Arena Mondiale!');
+  } catch(err){}
+}
+async function loadLeaderboard(){
+  const el = document.getElementById('leaderList');
+  el.textContent = 'Carico la classifica…';
+  try {
+    const r = await fetch(SUPA_URL + '/rest/v1/cards?select=name,owner,wins,losses&order=wins.desc&limit=10', {headers: supaHeaders()});
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const rows = await r.json();
+    const medals = ['🥇', '🥈', '🥉'];
+    el.innerHTML = rows.filter(x => (x.wins + x.losses) > 0).map((x, i) => {
+      const pct = Math.round(100 * x.wins / Math.max(1, x.wins + x.losses));
+      return (medals[i] || (i + 1) + '°') + ' <strong>' + x.name + '</strong> di ' + (x.owner || 'anonimo') +
+        ' — ' + x.wins + ' V / ' + x.losses + ' S (' + pct + '%)';
+    }).join('<br>') || 'Nessun incontro mondiale ancora disputato.';
+  } catch(err){
+    el.textContent = '❌ Errore: ' + err.message;
+  }
+}
+
 /* ---------- voci v2: riregistra tutti gli annunci con la voce unica ---------- */
 function unifyVoices(){
   try {
