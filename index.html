@@ -7,7 +7,9 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="CatCards">
-<link rel="manifest" href='data:application/manifest+json,{"name":"CatCards","short_name":"CatCards","display":"standalone","background_color":"%2314121f","theme_color":"%2314121f","start_url":"."}'>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
 <title>CatCards — Trasforma il tuo gatto in una carta</title>
 <script src="https://cdn.jsdelivr.net/npm/webaudiofont@3.0.4/npm/dist/WebAudioFontPlayer.js"></script>
 <style>
@@ -144,7 +146,7 @@
 </head>
 <body>
   <h1>🐱 Cat<span>Cards</span></h1>
-  <p class="tag">Fotografa il tuo gatto e trasformalo in una carta da collezione · <strong style="color:var(--accent)">v4.5</strong></p>
+  <p class="tag">Fotografa il tuo gatto e trasformalo in una carta da collezione · <strong style="color:var(--accent)">v4.6</strong></p>
 
   <div class="panel" id="uploadPanel">
     <div class="drop" onclick="document.getElementById('fileInput').click()">
@@ -152,7 +154,7 @@
       <strong>Tocca per scattare o caricare una foto</strong>
       <p>JPG o PNG — meglio se il gatto è ben visibile</p>
     </div>
-    <input type="file" id="fileInput" accept="image/*" capture="environment">
+    <input type="file" id="fileInput" accept="image/*">
     <img id="preview" class="preview" alt="anteprima">
     <label class="small">Nome del gatto (opzionale)</label>
     <input type="text" id="catName" placeholder="Es. Briciola" maxlength="16">
