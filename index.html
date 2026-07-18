@@ -171,14 +171,16 @@
 </head>
 <body>
   <h1>🐱 Cat<span>Cards</span></h1>
-  <p class="tag">Fotografa il tuo gatto e trasformalo in una carta da collezione · <strong style="color:var(--accent)">v8.0</strong></p>
+  <p class="tag">Fotografa il tuo gatto e trasformalo in una carta da collezione · <strong style="color:var(--accent)">v8.2</strong></p>
+  <p id="bootErr" style="display:none; color:#ff6b6b; font-size:.8rem; max-width:440px; text-align:center; margin-bottom:10px;"></p>
 
   <div id="tabs" style="display:flex; gap:8px; width:100%; max-width:440px; margin-bottom:6px;">
     <button class="tabBtn" data-tab="crea" onclick="showTab('crea')">📸 Crea</button>
     <button class="tabBtn" data-tab="coll" onclick="showTab('coll')" id="collTabBtn">📚 Carte</button>
     <button class="tabBtn" data-tab="arena" onclick="showTab('arena')">⚔️ Arena</button>
     <button class="tabBtn" data-tab="mondo" onclick="showTab('mondo')">🌍 Mondo<span id="mondoDot" style="display:none; width:9px; height:9px; background:#e63946; border-radius:50%; margin-left:5px; vertical-align:middle;"></span></button>
-    <button class="tabBtn" data-tab="med" onclick="showTab('med')" style="flex:0 0 46px;">🏋️</button>
+    <button class="tabBtn" data-tab="pal" onclick="showTab('pal')" style="flex:0 0 46px;">🏋️</button>
+    <button class="tabBtn" data-tab="med" onclick="showTab('med')" style="flex:0 0 46px;">🏅</button>
     <button class="tabBtn" data-tab="opz" onclick="showTab('opz')" style="flex:0 0 46px;">⚙️</button>
   </div>
 
@@ -272,7 +274,7 @@
   </div>
   </div>
 
-  <div id="tab-med" style="width:100%; max-width:440px; display:none;">
+  <div id="tab-pal" style="width:100%; max-width:440px; display:none;">
   <div class="panel" style="margin-top:20px;">
     <h2>🏋️ Palestra</h2>
     <div style="display:flex; gap:12px; align-items:center; margin-top:12px;">
@@ -291,6 +293,9 @@
     <div id="foodGrid" style="display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:8px;"></div>
     <p class="count" data-wallet style="margin-top:10px;"></p>
   </div>
+  </div>
+
+  <div id="tab-med" style="width:100%; max-width:440px; display:none;">
   <div class="panel" style="margin-top:20px;">
     <h2>🏅 Medagliere</h2>
     <div id="medalList" style="display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-top:12px;"></div>
@@ -386,6 +391,13 @@
 
 <script>
 "use strict";
+// spia errori: se qualcosa si rompe, lo dice invece di azzerare l'app in silenzio
+window.onerror = function(msg, src, line){
+  try {
+    const el = document.getElementById('bootErr');
+    if (el){ el.style.display = 'block'; el.textContent = '⚠️ Errore interno: ' + msg + ' (riga ' + line + ') — segnalalo!'; }
+  } catch(e){}
+};
 const fileInput = document.getElementById('fileInput');
 const previewEl = document.getElementById('preview');
 const genBtn    = document.getElementById('genBtn');
@@ -903,7 +915,7 @@ function renderCollection(){
   const ctb = document.getElementById('collTabBtn');
   if (ctb) ctb.textContent = '📚 Carte' + (collection.length ? ' · ' + collection.length : '');
   renderPubList();
-  if (typeof renderGym === 'function') renderGym();
+  try { renderGym(); } catch(e){}
   collection.forEach((c, i) => {
     const wrap = document.createElement('div');
     wrap.className = 'thumb' + ((c.rarity === 'Epica' || c.rarity === 'Leggendaria') ? ' holoWrap' : '');
@@ -965,7 +977,7 @@ function stepCard(d){
 
 /* ---------- navigazione a schede ---------- */
 function showTab(t){
-  ['crea', 'coll', 'arena', 'mondo', 'med', 'opz'].forEach(k => {
+  ['crea', 'coll', 'arena', 'mondo', 'pal', 'med', 'opz'].forEach(k => {
     const el = document.getElementById('tab-' + k);
     if (el) el.style.display = (k === t) ? 'block' : 'none';
   });
@@ -2505,8 +2517,7 @@ async function startTournament(n){
   }
 }
 
-renderCollection();
-renderWallet();
+/* (il primo disegno dell'interfaccia avviene in initStore, dopo il caricamento dell'archivio) */
 
 /* ---------- migrazione carte esistenti al layout con 3 mosse ---------- */
 async function migrateCards(){
