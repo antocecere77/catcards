@@ -142,12 +142,34 @@
   .modal{position:fixed; inset:0; background:rgba(0,0,0,.88); display:none; align-items:center; justify-content:flex-start; flex-direction:column; padding:16px 16px 40px; z-index:10; overflow-y:auto;}
   .modal img{max-width:88%; max-height:52vh; border-radius:14px; box-shadow:0 20px 60px rgba(0,0,0,.7); flex-shrink:0;}
   .modal .btn{max-width:320px; margin-top:10px; flex-shrink:0;}
+  .tabBtn{
+    flex:1; padding:11px 4px; border-radius:10px; background:var(--panel); color:var(--muted);
+    border:1px solid #363057; font-size:.85rem; cursor:pointer; transition:.15s;
+  }
+  .tabBtn.active{background:var(--accent); color:#1a1200; font-weight:700; border-color:var(--accent);}
+  .mnav{
+    position:absolute; top:42%; width:46px; height:66px; background:rgba(0,0,0,.6);
+    border:1px solid #4d4477; color:#fff; font-size:1.7rem; border-radius:10px; cursor:pointer; z-index:3;
+  }
+  #mClose{
+    position:absolute; top:10px; right:10px; width:44px; height:44px; border-radius:50%;
+    background:rgba(0,0,0,.65); border:1px solid #4d4477; color:#fff; font-size:1.2rem; cursor:pointer; z-index:3;
+  }
 </style>
 </head>
 <body>
   <h1>🐱 Cat<span>Cards</span></h1>
-  <p class="tag">Fotografa il tuo gatto e trasformalo in una carta da collezione · <strong style="color:var(--accent)">v5.0</strong></p>
+  <p class="tag">Fotografa il tuo gatto e trasformalo in una carta da collezione · <strong style="color:var(--accent)">v5.2</strong></p>
 
+  <div id="tabs" style="display:flex; gap:8px; width:100%; max-width:440px; margin-bottom:6px;">
+    <button class="tabBtn" data-tab="crea" onclick="showTab('crea')">📸 Crea</button>
+    <button class="tabBtn" data-tab="coll" onclick="showTab('coll')" id="collTabBtn">📚 Carte</button>
+    <button class="tabBtn" data-tab="arena" onclick="showTab('arena')">⚔️ Arena</button>
+    <button class="tabBtn" data-tab="mondo" onclick="showTab('mondo')">🌍 Mondo<span id="mondoDot" style="display:none; width:9px; height:9px; background:#e63946; border-radius:50%; margin-left:5px; vertical-align:middle;"></span></button>
+    <button class="tabBtn" data-tab="opz" onclick="showTab('opz')" style="flex:0 0 46px;">⚙️</button>
+  </div>
+
+  <div id="tab-crea" style="width:100%; max-width:440px;">
   <div class="panel" id="uploadPanel">
     <div class="drop" onclick="document.getElementById('fileInput').click()">
       <div class="cat">📸🐈</div>
@@ -160,16 +182,6 @@
     <input type="text" id="catName" placeholder="Es. Briciola" maxlength="16">
     <button class="btn" id="genBtn" disabled>✨ Genera la carta</button>
     <div id="status"></div>
-    <details>
-      <summary>⚙️ Impostazioni AI (opzionale)</summary>
-      <p>Senza chiave API uso un filtro cartoon integrato e gratuito.
-      Con una chiave <strong>Google Gemini</strong> il cartoon è generato dall'AI (qualità molto superiore).
-      Creala gratis su <strong>aistudio.google.com</strong> → «Get API key».</p>
-      <label class="small">Chiave API Gemini</label>
-      <input type="password" id="apiKey" placeholder="AIza...">
-      <button class="btn secondary" id="testKeyBtn" type="button" style="margin-top:10px;">🧪 Prova la chiave</button>
-      <p id="keyStatus" style="margin-top:8px; font-size:.85rem; min-height:18px;"></p>
-    </details>
   </div>
 
   <div id="cardWrap">
@@ -181,19 +193,18 @@
     <button class="btn secondary" onclick="doGenerate()">🔁 Rigenera il disegno</button>
     <button class="btn secondary" onclick="reset()">🔄 Nuova carta</button>
   </div>
+  </div>
 
+  <div id="tab-coll" style="width:100%; max-width:440px; display:none;">
   <div class="panel" id="collPanel" style="margin-top:20px; display:none;">
     <h2>📚 La tua collezione</h2>
     <p class="count" id="collCount"></p>
     <p class="count" id="melStatus"></p>
     <div class="collGrid" id="collGrid"></div>
-    <div style="display:flex; gap:10px;">
-      <button class="btn secondary" onclick="exportBackup()" style="margin-top:12px;">💾 Esporta backup</button>
-      <button class="btn secondary" onclick="document.getElementById('backupFile').click()" style="margin-top:12px;">📂 Importa backup</button>
-    </div>
-    <input type="file" id="backupFile" accept="application/json,.json" style="display:none" onchange="importBackup(event)">
+  </div>
   </div>
 
+  <div id="tab-arena" style="width:100%; max-width:440px; display:none;">
   <div class="panel" id="arenaPanel" style="margin-top:20px; display:none;">
     <h2>⚔️ Arena</h2>
     <p class="count" id="wallet"></p>
@@ -218,9 +229,12 @@
       <p id="rivalMsg" class="count" style="margin-top:6px;"></p>
     </details>
   </div>
+  </div>
 
+  <div id="tab-mondo" style="width:100%; max-width:440px; display:none;">
   <div class="panel" id="onlinePanel" style="margin-top:20px; display:none;">
     <h2>🌍 Arena Mondiale</h2>
+    <div id="newsList" class="count" style="line-height:1.9;"></div>
     <label class="small">Il tuo nome giocatore</label>
     <input type="text" id="playerName" placeholder="Es. Antonio" maxlength="20">
     <button class="btn" onclick="publishCards()">📤 Pubblica le mie carte online</button>
@@ -232,6 +246,31 @@
     <button class="btn secondary" onclick="loadLeaderboard()" style="margin-top:10px;">🏅 Classifica mondiale</button>
     <div id="leaderList" class="count" style="line-height:2; margin-top:8px;"></div>
   </div>
+  </div>
+
+  <div id="tab-opz" style="width:100%; max-width:440px; display:none;">
+  <div class="panel" style="margin-top:20px;">
+    <h2>⚙️ Opzioni</h2>
+    <details open style="margin-top:10px;">
+      <summary>🤖 Impostazioni AI</summary>
+      <p>Senza chiave API uso un filtro cartoon integrato e gratuito.
+      Con una chiave <strong>Google Gemini</strong> il cartoon è generato dall'AI (qualità molto superiore).
+      Creala gratis su <strong>aistudio.google.com</strong> → «Get API key».</p>
+      <label class="small">Chiave API Gemini</label>
+      <input type="password" id="apiKey" placeholder="AIza...">
+      <button class="btn secondary" id="testKeyBtn" type="button" style="margin-top:10px;">🧪 Prova la chiave</button>
+      <p id="keyStatus" style="margin-top:8px; font-size:.85rem; min-height:18px;"></p>
+    </details>
+    <label class="small" style="margin-top:18px;">Backup della collezione</label>
+    <div style="display:flex; gap:10px;">
+      <button class="btn secondary" onclick="exportBackup()" style="margin-top:4px;">💾 Esporta backup</button>
+      <button class="btn secondary" onclick="document.getElementById('backupFile').click()" style="margin-top:4px;">📂 Importa backup</button>
+    </div>
+    <input type="file" id="backupFile" accept="application/json,.json" style="display:none" onchange="importBackup(event)">
+    <label class="small" style="margin-top:18px;">Audio</label>
+    <button class="btn secondary" data-snd onclick="toggleSound(this)" style="margin-top:4px;">🔊 Suoni: ON</button>
+  </div>
+  </div>
 
   <div class="battle" id="battleScreen">
     <div class="fighters">
@@ -241,7 +280,7 @@
     <button class="btn secondary" id="skipBtn" onclick="skipIntroNow()" style="max-width:320px; display:none;">⏭️ Salta la presentazione</button>
     <div id="blog"></div>
     <button class="btn secondary" id="bracketBtn" onclick="showBracket()" style="max-width:320px; display:none;">📋 Tabellone</button>
-    <button class="btn secondary" onclick="toggleSound(this)" style="max-width:320px;">🔊 Suoni: ON</button>
+    <button class="btn secondary" data-snd onclick="toggleSound(this)" style="max-width:320px;">🔊 Suoni: ON</button>
     <button class="btn secondary" onclick="closeBattle()" style="max-width:320px;">✖ Chiudi</button>
     <div id="vsFlash"><span>VS</span></div>
     <div id="vsIntro"></div>
@@ -260,11 +299,13 @@
   </div>
 
   <div class="modal" id="modal" onclick="if(event.target===this)closeModal()">
+    <button class="mnav" id="mPrev" style="left:6px;" onclick="stepCard(-1)">‹</button>
+    <button class="mnav" id="mNext" style="right:6px;" onclick="stepCard(1)">›</button>
+    <button id="mClose" onclick="closeModal()">✕</button>
     <div id="modalHolo"><img id="modalImg" alt="carta" style="max-width:100%; max-height:52vh; border-radius:14px;"></div>
     <p id="modalCap" style="color:var(--text); text-align:center; max-width:360px; font-size:.92rem; margin-top:8px; line-height:1.5;"></p>
     <button class="btn" onclick="downloadSaved()">⬇️ Scarica</button>
     <button class="btn secondary" onclick="playSavedTheme()">▶️ Ascolta il tema</button>
-    <button class="btn secondary" onclick="regenTheme()">🎼 Rigenera tema (AI)</button>
     <button class="btn secondary" onclick="shareSaved()">📤 Condividi</button>
     <button class="btn secondary" onclick="copyChallenge()">🔗 Copia codice sfida</button>
     <button class="btn secondary" onclick="deleteSaved()">🗑️ Elimina</button>
@@ -779,10 +820,12 @@ function renderCollection(){
   const grid = document.getElementById('collGrid');
   const panel = document.getElementById('collPanel');
   grid.innerHTML = '';
-  panel.style.display = 'block';   // sempre visibile: serve anche per importare il primo backup
+  panel.style.display = 'block';
   document.getElementById('collCount').textContent = collection.length
     ? collection.length + (collection.length === 1 ? ' carta salvata' : ' carte salvate')
-    : 'Nessuna carta ancora: creane una con una foto, o importa un backup qui sotto.';
+    : 'Nessuna carta ancora: creane una nella scheda 📸 Crea, o importa un backup da ⚙️ Opzioni.';
+  const ctb = document.getElementById('collTabBtn');
+  if (ctb) ctb.textContent = '📚 Carte' + (collection.length ? ' · ' + collection.length : '');
   collection.forEach((c, i) => {
     const wrap = document.createElement('div');
     wrap.className = 'thumb' + ((c.rarity === 'Epica' || c.rarity === 'Leggendaria') ? ' holoWrap' : '');
@@ -825,6 +868,72 @@ function openCardModal(i){
   document.getElementById('modal').style.display = 'flex';
 }
 function closeModal(){ document.getElementById('modal').style.display = 'none'; }
+function stepCard(d){
+  if (!collection.length) return;
+  openCardModal((modalIndex + d + collection.length) % collection.length);
+}
+// swipe destra/sinistra per scorrere le carte
+(function(){
+  const m = document.getElementById('modal');
+  let x0 = null;
+  m.addEventListener('touchstart', e => { x0 = e.touches[0].clientX; }, {passive: true});
+  m.addEventListener('touchend', e => {
+    if (x0 == null) return;
+    const dx = e.changedTouches[0].clientX - x0;
+    if (Math.abs(dx) > 60) stepCard(dx < 0 ? 1 : -1);
+    x0 = null;
+  }, {passive: true});
+})();
+
+/* ---------- navigazione a schede ---------- */
+function showTab(t){
+  ['crea', 'coll', 'arena', 'mondo', 'opz'].forEach(k => {
+    const el = document.getElementById('tab-' + k);
+    if (el) el.style.display = (k === t) ? 'block' : 'none';
+  });
+  document.querySelectorAll('.tabBtn').forEach(b => b.classList.toggle('active', b.dataset.tab === t));
+  if (t === 'mondo') openMondoNews();
+}
+
+/* ---------- notiziario: cosa è successo alle tue carte mentre eri via ---------- */
+async function checkWorldNews(){
+  if (!collection.length) return;
+  try {
+    const serials = collection.map(c => c.serial).join(',');
+    const r = await fetch(SUPA_URL + '/rest/v1/cards?select=serial,name,wins,losses&serial=in.(' + serials + ')', {headers: supaHeaders()});
+    if (!r.ok) return;
+    const rows = await r.json();
+    let base = {};
+    try { base = JSON.parse(localStorage.getItem('catcards_worldbase') || '{}'); } catch(e){}
+    const news = [];
+    rows.forEach(x => {
+      const b = base[x.serial];
+      if (b && (x.wins !== b.w || x.losses !== b.l)){
+        const dw = x.wins - b.w, dl = x.losses - b.l;
+        const parts = [];
+        if (dw > 0) parts.push('+' + dw + (dw === 1 ? ' vittoria' : ' vittorie'));
+        if (dl > 0) parts.push('+' + dl + (dl === 1 ? ' sconfitta' : ' sconfitte'));
+        if (parts.length) news.push('🐱 <strong>' + x.name + '</strong>: ' + parts.join(', ') + ' nell\'Arena Mondiale');
+      }
+    });
+    window._worldNews = news;
+    window._worldRows = rows;
+    if (news.length) document.getElementById('mondoDot').style.display = 'inline-block';
+  } catch(e){}
+}
+function openMondoNews(){
+  const el = document.getElementById('newsList');
+  if (!el) return;
+  const news = window._worldNews || [];
+  el.innerHTML = news.length ? '📰 <strong>Mentre eri via:</strong><br>' + news.join('<br>') : '';
+  if (window._worldRows){
+    const base = {};
+    window._worldRows.forEach(x => { base[x.serial] = {w: x.wins, l: x.losses}; });
+    try { localStorage.setItem('catcards_worldbase', JSON.stringify(base)); } catch(e){}
+  }
+  window._worldNews = [];
+  document.getElementById('mondoDot').style.display = 'none';
+}
 function downloadSaved(){
   if (modalIndex < 0) return;
   const a = document.createElement('a');
@@ -2025,7 +2134,9 @@ function sfx(type){
 }
 function toggleSound(btn){
   soundOn = !soundOn;
-  btn.textContent = soundOn ? '🔊 Suoni: ON' : '🔇 Suoni: OFF';
+  document.querySelectorAll('[data-snd]').forEach(b => {
+    b.textContent = soundOn ? '🔊 Suoni: ON' : '🔇 Suoni: OFF';
+  });
 }
 
 /* ---------- torneo a 4 o 8 con tabellone a comparsa ---------- */
@@ -2445,6 +2556,8 @@ function unifyVoices(){
   renderCollection();
   renderStats();
   renderWallet();
+  showTab(collection.length ? 'coll' : 'crea');   // apertura intelligente: carte se ne hai, foto se no
+  checkWorldNews();
   migrateCards();
   migrateMelodies();
 })();
