@@ -12,7 +12,7 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <title>CatCards — Trasforma il tuo gatto in una carta</title>
 <script src="https://cdn.jsdelivr.net/npm/webaudiofont@3.0.4/npm/dist/WebAudioFontPlayer.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs@master/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <style>
   :root{
@@ -173,7 +173,7 @@
 </head>
 <body>
   <h1>🐱 Cat<span>Cards</span></h1>
-  <p class="tag">Fotografa il tuo gatto e trasformalo in una carta da collezione · <strong style="color:var(--accent)">v9.3</strong></p>
+  <p class="tag">Fotografa il tuo gatto e trasformalo in una carta da collezione · <strong style="color:var(--accent)">v9.4</strong></p>
   <p id="bootErr" style="display:none; color:#ff6b6b; font-size:.8rem; max-width:440px; text-align:center; margin-bottom:10px;"></p>
 
   <div id="tabs" style="display:flex; flex-direction:column; gap:8px; width:100%; max-width:440px; margin-bottom:6px;">
@@ -3774,14 +3774,13 @@ function showQr(){
   if (!e){ alert('Scegli prima la tua carta nel menu «La tua carta».'); return; }
   const rest = coolLeft(e);
   if (rest > 0){ alert('😴 ' + e.name + ' sta riposando: torna tra ' + Math.ceil(rest / 60000) + ' minuti.'); return; }
-  if (typeof QRCode === 'undefined'){ alert('Generatore QR non caricato: serve internet.'); return; }
+  if (typeof QRCode === 'undefined'){ alert('Generatore QR non caricato: ricarica la pagina con internet attivo.'); return; }
   const holder = document.getElementById('qrHolder');
   holder.innerHTML = '';
   document.getElementById('qrName').textContent = '🐱 ' + e.name + ' attende sfidanti!';
-  QRCode.toCanvas(qrPayload(e), {width: 260, margin: 1}, (err, cv) => {
-    if (err || !cv){ holder.textContent = 'Errore nella generazione del QR.'; return; }
-    holder.appendChild(cv);
-  });
+  try {
+    new QRCode(holder, {text: qrPayload(e), width: 260, height: 260, correctLevel: QRCode.CorrectLevel.M});
+  } catch(err){ holder.textContent = 'Errore nella generazione del QR: ' + err.message; }
   document.getElementById('qrModal').style.display = 'flex';
 }
 let scanStream = null, scanRAF = null;
