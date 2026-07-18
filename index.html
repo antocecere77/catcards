@@ -161,7 +161,7 @@
 </head>
 <body>
   <h1>🐱 Cat<span>Cards</span></h1>
-  <p class="tag">Fotografa il tuo gatto e trasformalo in una carta da collezione · <strong style="color:var(--accent)">v6.6</strong></p>
+  <p class="tag">Fotografa il tuo gatto e trasformalo in una carta da collezione · <strong style="color:var(--accent)">v6.7</strong></p>
 
   <div id="tabs" style="display:flex; gap:8px; width:100%; max-width:440px; margin-bottom:6px;">
     <button class="tabBtn" data-tab="crea" onclick="showTab('crea')">📸 Crea</button>
@@ -317,6 +317,7 @@
     <button class="btn secondary" onclick="playSavedTheme()">▶️ Ascolta il tema</button>
     <button class="btn secondary" onclick="shareSaved()">📤 Condividi</button>
     <button class="btn secondary" onclick="copyChallenge()">🔗 Copia codice sfida</button>
+    <button class="btn secondary" onclick="retireCard()">🚪 Ritira dal mondo</button>
     <button class="btn secondary" onclick="deleteSaved()">🗑️ Elimina</button>
     <button class="btn secondary" onclick="closeModal()">✖ Chiudi</button>
   </div>
@@ -992,6 +993,23 @@ async function playSavedTheme(){
     strum: c.strum || null, serial: c.serial, dna: c.dna || null,
     potere: (typeof c.potere === 'number') ? c.potere : 0
   });
+}
+async function retireCard(){
+  if (modalIndex < 0) return;
+  const c = collection[modalIndex];
+  if (!session || !session.access_token){ alert('Per ritirare una carta dal mondo devi prima accedere (scheda 🌍 Mondo).'); return; }
+  if (!confirm('Ritirare ' + c.name + ' dall\'Arena Mondiale? Resterà in classifica con il suo record come «ritirata», ma nessuno potrà più sfidarla. (Ripubblicandola tornerà in attività.)')) return;
+  await refreshSessionIfNeeded();
+  try {
+    const r = await fetch(SUPA_URL + '/rest/v1/cards?serial=eq.' + encodeURIComponent(c.serial), {
+      method: 'PATCH', headers: supaHeaders({Prefer: 'return=representation'}),
+      body: JSON.stringify({retired: true})
+    });
+    const rows = r.ok ? await r.json() : [];
+    if (!r.ok) alert('Errore: HTTP ' + r.status);
+    else if (!rows.length) alert('Questa carta non risulta pubblicata (o non è tua).');
+    else alert('🚪 ' + c.name + ' si è ritirata dal mondo con onore. Il suo record resta in classifica.');
+  } catch(err){ alert('Errore di rete: ' + err.message); }
 }
 function deleteSaved(){
   if (modalIndex < 0) return;
@@ -2603,7 +2621,7 @@ async function publishCards(){
         potere: (typeof e.potere === 'number') ? e.potere : null,
         statsv: e.statsv || null, hp: e.hp || null,
         dna: e.dna || null, strum: e.strum || null, annuncio: e.annuncio || null,
-        img: thumb
+        img: thumb, retired: false
       });
     }
     const r = await fetch(SUPA_URL + '/rest/v1/cards', {
@@ -2628,7 +2646,7 @@ async function loadWorldCards(){
   const list = document.getElementById('worldList');
   msg.textContent = '🔎 Cerco sfidanti…';
   try {
-    const r = await fetch(SUPA_URL + '/rest/v1/cards?select=serial,name,owner,nick,rarity,potere,statsv,hp,dna,strum,annuncio,img,wins,losses&order=created_at.desc&limit=40', {headers: supaHeaders()});
+    const r = await fetch(SUPA_URL + '/rest/v1/cards?select=serial,name,owner,nick,rarity,potere,statsv,hp,dna,strum,annuncio,img,wins,losses&retired=not.is.true&order=created_at.desc&limit=40', {headers: supaHeaders()});
     if (!r.ok) throw new Error('HTTP ' + r.status);
     const all = await r.json();
     const mine = {};
@@ -2717,14 +2735,15 @@ async function loadLeaderboard(){
   const el = document.getElementById('leaderList');
   el.textContent = 'Carico la classifica…';
   try {
-    const r = await fetch(SUPA_URL + '/rest/v1/cards?select=name,owner,wins,losses&order=wins.desc&limit=10', {headers: supaHeaders()});
+    const r = await fetch(SUPA_URL + '/rest/v1/cards?select=name,owner,wins,losses,retired&order=wins.desc&limit=10', {headers: supaHeaders()});
     if (!r.ok) throw new Error('HTTP ' + r.status);
     const rows = await r.json();
     const medals = ['🥇', '🥈', '🥉'];
     el.innerHTML = rows.filter(x => (x.wins + x.losses) > 0).map((x, i) => {
       const pct = Math.round(100 * x.wins / Math.max(1, x.wins + x.losses));
       return (medals[i] || (i + 1) + '°') + ' <strong>' + x.name + '</strong> di ' + (x.owner || 'anonimo') +
-        ' — ' + x.wins + ' V / ' + x.losses + ' S (' + pct + '%)';
+        ' — ' + x.wins + ' V / ' + x.losses + ' S (' + pct + '%)' +
+        (x.retired ? ' · 🚪 <em>ritirata</em>' : '');
     }).join('<br>') || 'Nessun incontro mondiale ancora disputato.';
   } catch(err){
     el.textContent = '❌ Errore: ' + err.message;
