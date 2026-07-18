@@ -171,7 +171,7 @@
 </head>
 <body>
   <h1>🐱 Cat<span>Cards</span></h1>
-  <p class="tag">Fotografa il tuo gatto e trasformalo in una carta da collezione · <strong style="color:var(--accent)">v7.3</strong></p>
+  <p class="tag">Fotografa il tuo gatto e trasformalo in una carta da collezione · <strong style="color:var(--accent)">v7.4</strong></p>
 
   <div id="tabs" style="display:flex; gap:8px; width:100%; max-width:440px; margin-bottom:6px;">
     <button class="tabBtn" data-tab="crea" onclick="showTab('crea')">📸 Crea</button>
@@ -331,7 +331,8 @@
   <div class="modal" id="betBox" style="z-index:26;">
     <div class="panel" style="max-width:340px; margin-top:40px;">
       <h2>🎲 Pronostico</h2>
-      <p class="count" id="betInfo" style="margin-top:6px;">Punti la tua scommessa (10 punti). Se indovini, vinci in base alla quota!</p>
+      <p class="count" id="betInfo" style="margin-top:6px;">Scegli la puntata e su chi scommettere. Se sbagli, perdi la puntata.</p>
+      <div id="stakeRow" style="display:flex; gap:8px; margin:10px 0 2px;"></div>
       <button class="btn" id="betA"></button>
       <button class="btn" id="betB"></button>
       <button class="btn secondary" id="betSkip">Non scommetto, via al match!</button>
@@ -939,6 +940,7 @@ function showTab(t){
     if (el) el.style.display = (k === t) ? 'block' : 'none';
   });
   document.querySelectorAll('.tabBtn').forEach(b => b.classList.toggle('active', b.dataset.tab === t));
+  window._curTab = t;
   if (t === 'mondo') openMondoNews();
 }
 
@@ -1411,27 +1413,49 @@ function askBet(ea, eb){
     const pA = sA / (sA + sB);
     const qA = Math.min(5, Math.max(1.05, Math.round(90 / pA) / 100));
     const qB = Math.min(5, Math.max(1.05, Math.round(90 / (1 - pA)) / 100));
+    const favA = qA <= qB;
+    let stake = 10;
     const box = document.getElementById('betBox');
     const bA = document.getElementById('betA'), bB = document.getElementById('betB'), bS = document.getElementById('betSkip');
-    bA.textContent = '🔴 ' + ea.name + '  —  quota ' + qA.toFixed(2);
-    bB.textContent = '🔵 ' + eb.name + '  —  quota ' + qB.toFixed(2);
+    const row = document.getElementById('stakeRow');
+    const chips = [10, 25, 50, 100].filter(v => v <= points);
+    function renderBtns(){
+      bA.innerHTML = '🔴 ' + ea.name + (favA ? ' ⭐ favorito' : ' 🐾 underdog') + ' — quota ' + qA.toFixed(2) +
+        '<br><span style="font-size:.8rem; font-weight:400;">se vince: +' + Math.round(stake * (qA - 1)) + ' punti</span>';
+      bB.innerHTML = '🔵 ' + eb.name + (favA ? ' 🐾 underdog' : ' ⭐ favorito') + ' — quota ' + qB.toFixed(2) +
+        '<br><span style="font-size:.8rem; font-weight:400;">se vince: +' + Math.round(stake * (qB - 1)) + ' punti</span>';
+    }
+    function renderChips(){
+      row.innerHTML = '';
+      chips.forEach(v => {
+        const c = document.createElement('button');
+        c.className = 'btn secondary';
+        c.style.cssText = 'margin:0; padding:10px 0; flex:1;' +
+          (v === stake ? ' border-color:var(--accent); color:var(--accent); font-weight:700;' : '');
+        c.textContent = v;
+        c.onclick = () => { stake = v; renderChips(); renderBtns(); };
+        row.appendChild(c);
+      });
+    }
+    renderChips(); renderBtns();
     const done = bet => { currentBet = bet; box.style.display = 'none'; bA.onclick = bB.onclick = bS.onclick = null; resolve(); };
-    bA.onclick = () => done({serial: ea.serial, name: ea.name, quota: qA});
-    bB.onclick = () => done({serial: eb.serial, name: eb.name, quota: qB});
+    bA.onclick = () => done({serial: ea.serial, name: ea.name, quota: qA, stake: stake});
+    bB.onclick = () => done({serial: eb.serial, name: eb.name, quota: qB, stake: stake});
     bS.onclick = () => done(null);
     box.style.display = 'flex';
   });
 }
 function settleBet(winnerSerial){
   if (!currentBet) return;
+  const st = currentBet.stake || 10;
   if (winnerSerial === currentBet.serial){
-    const gain = Math.round(10 * (currentBet.quota - 1));
+    const gain = Math.round(st * (currentBet.quota - 1));
     points += gain;
     counters.betWins++; saveCounters();
-    blog('🎲 Pronostico azzeccato! Avevi puntato su ' + currentBet.name + ': +' + gain + ' punti (totale: ' + points + ')', 'winner');
+    blog('🎲 Pronostico azzeccato! Avevi puntato ' + st + ' su ' + currentBet.name + ': +' + gain + ' punti (totale: ' + points + ')', 'winner');
   } else {
-    points -= 10;
-    blog('🎲 Pronostico sbagliato: −10 punti (totale: ' + points + '). Andrà meglio la prossima!');
+    points -= st;
+    blog('🎲 Pronostico sbagliato: −' + st + ' punti (totale: ' + points + '). Andrà meglio la prossima!');
   }
   try { localStorage.setItem('catcards_points', String(points)); } catch(e){}
   currentBet = null;
@@ -1928,6 +1952,7 @@ function skipIntroNow(){
 }
 function closeBattle(){
   battleOn = false;
+  currentBet = null;   // battaglia interrotta = scommessa annullata (nessuna perdita)
   document.getElementById('battleScreen').style.display = 'none';
   document.getElementById('bracket').style.display = 'none';
   document.getElementById('bracketBtn').style.display = 'none';
@@ -1943,6 +1968,7 @@ async function startBattle(){
   }
   unlockAudio();
   window._mineSerial = ea.serial;
+  currentBet = null;
   loadInstrument(cardInstr(ea)); loadInstrument(cardInstr(eb));
   bracketState = null;
   document.getElementById('bracket').style.display = 'none';
@@ -2157,7 +2183,8 @@ async function runBattle(ea, eb, title){
   blog('🏆 ' + w.name + ' vince il combattimento!', 'winner');
   sfx('win');
   recordResult(w.serial, loser.serial);
-  settleBet(w.serial);
+  if (title === 'SFIDA MONDIALE') settleBet(w.serial);
+  else currentBet = null;   // nessuna scommessa fuori dal mondiale: mai puntate "appese"
   // contatori per il medagliere: contano SOLO le sfide mondiali (il locale è allenamento)
   if (window._mineSerial && title === 'SFIDA MONDIALE'){
     if (w.serial === window._mineSerial){
@@ -2389,6 +2416,7 @@ async function startTournament(n){
   }
   unlockAudio();
   window._mineSerial = null;   // nei tornei giocano le carte, non tu: niente contatori personali
+  currentBet = null;
   let players = pool.slice().sort(() => Math.random() - 0.5).slice(0, n);
   players.forEach(p => loadInstrument(cardInstr(p)));   // pre-carica i campioni giusti di tutti
   const totalRounds = Math.round(Math.log2(n));
@@ -3160,6 +3188,10 @@ async function buyFrame(){
   checkAchievements();
   checkWorldNews();
   setInterval(checkWorldNews, 60000);   // controlla novità ogni minuto anche senza ricaricare
+  setInterval(() => {
+    // il mondo cambia di continuo: con la scheda Mondo aperta, tutto si rinfresca da solo
+    if (window._curTab === 'mondo'){ loadLeaderboard(); loadMyWorldCards(); }
+  }, 30000);
   migrateCards();
   migrateMelodies();
 })();
