@@ -161,7 +161,7 @@
 </head>
 <body>
   <h1>🐱 Cat<span>Cards</span></h1>
-  <p class="tag">Fotografa il tuo gatto e trasformalo in una carta da collezione · <strong style="color:var(--accent)">v6.7</strong></p>
+  <p class="tag">Fotografa il tuo gatto e trasformalo in una carta da collezione · <strong style="color:var(--accent)">v6.8</strong></p>
 
   <div id="tabs" style="display:flex; gap:8px; width:100%; max-width:440px; margin-bottom:6px;">
     <button class="tabBtn" data-tab="crea" onclick="showTab('crea')">📸 Crea</button>
@@ -247,6 +247,8 @@
       </details>
       <button class="btn" id="pubBtn" onclick="publishCards()">📤 Pubblica le carte selezionate</button>
       <p class="count" id="onlineMsg" style="margin-top:6px;"></p>
+      <label class="small" style="margin-top:14px;">🐱 Le tue carte nel mondo</label>
+      <div id="myWorldList" class="count" style="line-height:1.9;"></div>
       <label class="small">La tua carta per le sfide online</label>
       <select id="selMine"></select>
       <button class="btn secondary" onclick="loadWorldCards()" style="margin-top:10px;">🔄 Cerca sfidanti nel mondo</button>
@@ -296,6 +298,10 @@
   </div>
 
   <div id="bracket" onclick="hideBracket()"><div class="bwrap" id="bwrap"></div></div>
+
+  <div class="modal" id="worldModal" style="z-index:27;" onclick="if(event.target===this)this.style.display='none'">
+    <div class="panel" style="max-width:360px; margin-top:30px;" id="worldModalBody"></div>
+  </div>
 
   <div class="modal" id="betBox" style="z-index:26;">
     <div class="panel" style="max-width:340px; margin-top:40px;">
@@ -958,6 +964,7 @@ async function openMondoNews(){
   window._worldNews = [];
   document.getElementById('mondoDot').style.display = 'none';
   el.innerHTML = html;
+  loadMyWorldCards();
   // storico dettagliato dal registro incontri
   try {
     if (!collection.length) return;
@@ -993,6 +1000,55 @@ async function playSavedTheme(){
     strum: c.strum || null, serial: c.serial, dna: c.dna || null,
     potere: (typeof c.potere === 'number') ? c.potere : 0
   });
+}
+/* ---------- le tue carte pubblicate nel mondo ---------- */
+async function loadMyWorldCards(){
+  const el = document.getElementById('myWorldList');
+  if (!el) return;
+  if (!session || !session.access_token){ el.textContent = ''; return; }
+  try {
+    const r = await fetch(SUPA_URL + '/rest/v1/cards?select=serial,name,wins,losses,retired&owner_id=eq.' + session.user_id + '&order=wins.desc', {headers: supaHeaders()});
+    if (!r.ok){ el.textContent = ''; return; }
+    const rows = await r.json();
+    myPublished = new Set(rows.map(x => x.serial));
+    renderPubList();   // la lista di pubblicazione mostra solo le carte non ancora online
+    if (!rows.length){ el.textContent = 'Nessuna tua carta è ancora pubblicata.'; return; }
+    el.innerHTML = '';
+    rows.forEach(x => {
+      const div = document.createElement('div');
+      div.style.cssText = 'display:flex; align-items:center; gap:8px; padding:4px 0;';
+      const span = document.createElement('span');
+      span.style.cssText = 'flex:1; min-width:0;';
+      span.innerHTML = '<strong>' + x.name + '</strong> — ' + (x.wins || 0) + ' V / ' + (x.losses || 0) + ' S' + (x.retired ? ' · 🚪 ritirata' : '');
+      div.appendChild(span);
+      if (!x.retired){
+        const u = document.createElement('button');
+        u.className = 'btn secondary';
+        u.style.cssText = 'width:auto; margin:0; padding:8px 10px; font-size:.75rem;';
+        u.textContent = '🔄';
+        u.title = 'Aggiorna la carta pubblicata (statistiche e disegno attuali)';
+        u.onclick = () => republishOne(x.serial);
+        div.appendChild(u);
+      }
+      const b = document.createElement('button');
+      b.className = 'btn secondary';
+      b.style.cssText = 'width:auto; margin:0; padding:8px 10px; font-size:.75rem;';
+      b.textContent = x.retired ? '↩️ Riattiva' : '🚪 Ritira';
+      b.onclick = () => toggleRetire(x.serial, !x.retired);
+      div.appendChild(b);
+      el.appendChild(div);
+    });
+  } catch(e){}
+}
+async function toggleRetire(serial, retire){
+  await refreshSessionIfNeeded();
+  try {
+    await fetch(SUPA_URL + '/rest/v1/cards?serial=eq.' + encodeURIComponent(serial), {
+      method: 'PATCH', headers: supaHeaders(),
+      body: JSON.stringify({retired: retire})
+    });
+  } catch(e){}
+  loadMyWorldCards();
 }
 async function retireCard(){
   if (modalIndex < 0) return;
@@ -2523,14 +2579,21 @@ function isPub(serial){ return pubSel.has(serial); }
 function updatePubBtn(){
   const btn = document.getElementById('pubBtn');
   if (!btn) return;
-  const n = collection.filter(c => pubSel.has(c.serial)).length;
+  const n = collection.filter(c => pubSel.has(c.serial) && !myPublished.has(c.serial)).length;
   btn.textContent = '📤 Pubblica le carte selezionate (' + n + ')';
 }
+let myPublished = new Set();
 function renderPubList(){
   const el = document.getElementById('pubList');
   if (!el) return;
   el.innerHTML = '';
-  collection.forEach(c => {
+  const unpublished = collection.filter(c => !myPublished.has(c.serial));
+  if (collection.length && !unpublished.length){
+    el.innerHTML = '<p class="count">Tutte le tue carte sono già pubblicate: le trovi qui sotto in «Le tue carte nel mondo».</p>';
+    updatePubBtn();
+    return;
+  }
+  unpublished.forEach(c => {
     const lab = document.createElement('label');
     lab.style.cssText = 'display:flex; align-items:center; gap:8px; font-size:.85rem; padding:5px 0; color:var(--text); cursor:pointer;';
     const cb = document.createElement('input');
@@ -2588,6 +2651,34 @@ function makeThumb(dataUrl, w){
     im.src = dataUrl;
   });
 }
+async function makeCardRow(e, owner){
+  let thumb = null;
+  try { thumb = await makeThumb(e.img, 220); } catch(err){}
+  return {
+    serial: e.serial, name: e.name, owner: owner, owner_id: session.user_id,
+    nick: e.nick || null, rarity: e.rarity || null, razza: e.razza || null, descr: e.descr || null,
+    potere: (typeof e.potere === 'number') ? e.potere : null,
+    statsv: e.statsv || null, hp: e.hp || null,
+    dna: e.dna || null, strum: e.strum || null, annuncio: e.annuncio || null,
+    img: thumb, retired: false
+  };
+}
+async function republishOne(serial){
+  if (!session || !session.access_token) return;
+  await refreshSessionIfNeeded();
+  const e = collection.find(c => c.serial === serial);
+  if (!e){ alert('Questa carta non è più nella tua collezione locale.'); return; }
+  const owner = playerNameEl.value.trim() || 'anonimo';
+  try {
+    const row = await makeCardRow(e, owner);
+    const r = await fetch(SUPA_URL + '/rest/v1/cards', {
+      method: 'POST', headers: supaHeaders({Prefer: 'resolution=merge-duplicates'}),
+      body: JSON.stringify([row])
+    });
+    if (!r.ok) alert('Aggiornamento fallito: HTTP ' + r.status);
+  } catch(err){ alert('Errore di rete: ' + err.message); }
+  loadMyWorldCards();
+}
 async function publishCards(){
   const msg = document.getElementById('onlineMsg');
   const owner = playerNameEl.value.trim();
@@ -2601,7 +2692,7 @@ async function publishCards(){
   playerNameEl.style.borderColor = '';
   if (!collection.length){ msg.textContent = '⚠️ Non hai ancora carte da pubblicare.'; return; }
   await refreshSessionIfNeeded();
-  const toPub = collection.filter(c => isPub(c.serial));
+  const toPub = collection.filter(c => isPub(c.serial) && !myPublished.has(c.serial));
   if (!toPub.length){
     msg.textContent = '⚠️ Nessuna carta selezionata: spunta qui sopra quelle da pubblicare.';
     const det = document.getElementById('pubDetails');
@@ -2613,16 +2704,7 @@ async function publishCards(){
   try {
     const rows = [];
     for (const e of toPub){
-      let thumb = null;
-      try { thumb = await makeThumb(e.img, 220); } catch(err){}
-      rows.push({
-        serial: e.serial, name: e.name, owner: owner, owner_id: session.user_id,
-        nick: e.nick || null, rarity: e.rarity || null, razza: e.razza || null, descr: e.descr || null,
-        potere: (typeof e.potere === 'number') ? e.potere : null,
-        statsv: e.statsv || null, hp: e.hp || null,
-        dna: e.dna || null, strum: e.strum || null, annuncio: e.annuncio || null,
-        img: thumb, retired: false
-      });
+      rows.push(await makeCardRow(e, owner));
     }
     const r = await fetch(SUPA_URL + '/rest/v1/cards', {
       method: 'POST',
@@ -2634,8 +2716,14 @@ async function publishCards(){
       try { const j = await r.json(); if (j.message) t = j.message.slice(0, 140); } catch(e2){}
       throw new Error(t);
     }
-    msg.textContent = '✅ ' + rows.length + ' carte pubblicate nell\'Arena Mondiale!';
+    msg.textContent = '✅ ' + rows.length + (rows.length === 1 ? ' carta pubblicata' : ' carte pubblicate') + ' nell\'Arena Mondiale!';
+    pubSel.clear();
+    try { localStorage.setItem('catcards_pubsel', '[]'); } catch(e2){}
+    renderPubList();
+    const det = document.getElementById('pubDetails');
+    if (det) det.open = false;
     syncWorldBase();
+    loadMyWorldCards();
   } catch(err){
     msg.textContent = '❌ Pubblicazione fallita: ' + err.message;
   }
@@ -2662,12 +2750,14 @@ async function loadWorldCards(){
       const row = document.createElement('div');
       row.style.cssText = 'display:flex; align-items:center; gap:10px; padding:8px; border:1px solid #363057; border-radius:10px; margin-top:8px;';
       const im = document.createElement('img');
-      im.style.cssText = 'width:46px; border-radius:6px; flex-shrink:0;';
+      im.style.cssText = 'width:46px; border-radius:6px; flex-shrink:0; cursor:pointer;';
       if (c.img) im.src = c.img; else im.style.display = 'none';
+      im.onclick = () => showWorldCard(i);
       const info = document.createElement('div');
-      info.style.cssText = 'flex:1; min-width:0; font-size:.85rem;';
+      info.style.cssText = 'flex:1; min-width:0; font-size:.85rem; cursor:pointer;';
+      info.onclick = () => showWorldCard(i);
       info.innerHTML = '<strong>' + c.name + '</strong> di ' + (c.owner || 'anonimo') +
-        '<br><span style="color:var(--muted)">' + (c.rarity || '') + ' · ' + (c.wins || 0) + ' V / ' + (c.losses || 0) + ' S</span>';
+        '<br><span style="color:var(--muted)">' + (c.rarity || '') + ' · ' + (c.wins || 0) + ' V / ' + (c.losses || 0) + ' S · tocca per la scheda</span>';
       const btn = document.createElement('button');
       btn.className = 'btn secondary';
       btn.style.cssText = 'width:auto; margin:0; padding:10px 14px;';
@@ -2679,6 +2769,32 @@ async function loadWorldCards(){
   } catch(err){
     msg.textContent = '❌ Errore di rete: ' + err.message;
   }
+}
+function showWorldCard(i){
+  const c = worldCards[i];
+  if (!c) return;
+  const body = document.getElementById('worldModalBody');
+  const lvl = 1 + Math.floor(((c.wins || 0) * 25 + (c.losses || 0) * 10) / 100);   // livello stimato dal record mondiale
+  const statKeys = ['💪 Forza', '🧠 Intelligenza', '🎯 Destrezza', '⚡ Velocità', '✨ Fascino', '😼 Indifferenza'];
+  let statsHtml = '';
+  if (Array.isArray(c.statsv) && c.statsv.length === 6){
+    statsHtml = statKeys.map((k, j) =>
+      '<div style="display:flex; justify-content:space-between; font-size:.85rem; padding:2px 0;"><span>' + k + '</span><strong>' + c.statsv[j] + '</strong></div>'
+    ).join('');
+  }
+  const mvs = rollCard(parseInt(c.serial, 16) >>> 0, c.name).moves;
+  const mvLine = mvs.map(m => (m.kind === 'forte' ? '💥' : m.kind === 'rapido' ? '⚡' : '✨') + ' ' + m.name + ' (' + m.power + ')').join('<br>');
+  body.innerHTML =
+    (c.img ? '<img src="' + c.img + '" style="width:100%; border-radius:12px;">' : '') +
+    '<h2 style="margin-top:10px;">' + c.name + (c.nick ? ' <span style="color:var(--muted); font-size:.85rem;">«' + c.nick + '»</span>' : '') + '</h2>' +
+    '<p class="count">di ' + (c.owner || 'anonimo') + ' · ' + (c.rarity || '') + ' · Lv.' + lvl + ' · ' + (c.wins || 0) + ' V / ' + (c.losses || 0) + ' S' +
+    (c.hp ? ' · ' + c.hp + ' HP' : '') + '</p>' +
+    (statsHtml ? '<div style="margin-top:10px;">' + statsHtml + '</div>' : '') +
+    ((typeof c.potere === 'number') ? '<p style="color:#ffd166; font-size:.9rem; margin-top:8px;">🌟 ' + POWERS[c.potere].name + ' — ' + POWERS[c.potere].desc + '</p>' : '') +
+    '<p style="font-size:.85rem; margin-top:8px; line-height:1.6;">' + mvLine + '</p>' +
+    '<button class="btn" onclick="document.getElementById(\'worldModal\').style.display=\'none\'; fightWorld(' + i + ')">⚔️ Sfida ' + c.name + '</button>' +
+    '<button class="btn secondary" onclick="document.getElementById(\'worldModal\').style.display=\'none\'">✖ Chiudi</button>';
+  document.getElementById('worldModal').style.display = 'flex';
 }
 async function fightWorld(i){
   if (battleOn) return;
