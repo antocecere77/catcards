@@ -48,7 +48,7 @@
   .btn.secondary{background:var(--panel2); color:var(--text); border:1px solid #4d4477;}
   .preview{width:100%; border-radius:12px; margin-top:14px; display:none; max-height:300px; object-fit:cover;}
   label.small{display:block; color:var(--muted); font-size:.85rem; margin:14px 0 6px;}
-  input[type=text], input[type=password]{
+  input[type=text], input[type=password], input[type=email]{
     width:100%; padding:12px; border-radius:10px; border:1px solid #4d4477;
     background:var(--panel2); color:var(--text); font-size:1rem;
   }
@@ -159,7 +159,7 @@
 </head>
 <body>
   <h1>🐱 Cat<span>Cards</span></h1>
-  <p class="tag">Fotografa il tuo gatto e trasformalo in una carta da collezione · <strong style="color:var(--accent)">v6.0</strong></p>
+  <p class="tag">Fotografa il tuo gatto e trasformalo in una carta da collezione · <strong style="color:var(--accent)">v6.1</strong></p>
 
   <div id="tabs" style="display:flex; gap:8px; width:100%; max-width:440px; margin-bottom:6px;">
     <button class="tabBtn" data-tab="crea" onclick="showTab('crea')">📸 Crea</button>
@@ -236,7 +236,7 @@
     <h2>🌍 Arena Mondiale</h2>
     <div id="authBox" style="margin-top:8px;"></div>
     <div id="newsList" class="count" style="line-height:1.9;"></div>
-    <label class="small">Il tuo nome giocatore</label>
+    <label class="small">Il tuo nome giocatore (obbligatorio, min 3 lettere)</label>
     <input type="text" id="playerName" placeholder="Es. Antonio" maxlength="20">
     <button class="btn" onclick="publishCards()">📤 Pubblica le mie carte online</button>
     <p class="count" id="onlineMsg" style="margin-top:6px;"></p>
@@ -2518,7 +2518,13 @@ async function publishCards(){
   const msg = document.getElementById('onlineMsg');
   const owner = playerNameEl.value.trim();
   if (!session || !session.access_token){ msg.textContent = '🔑 Prima accedi con la tua email (qui sopra).'; return; }
-  if (!owner){ msg.textContent = '⚠️ Scrivi prima il tuo nome giocatore.'; return; }
+  if (owner.length < 3){
+    msg.textContent = '⚠️ Il nome giocatore è obbligatorio (almeno 3 lettere): è il nome che vedranno gli sfidanti.';
+    playerNameEl.style.borderColor = '#e63946';
+    playerNameEl.focus();
+    return;
+  }
+  playerNameEl.style.borderColor = '';
   if (!collection.length){ msg.textContent = '⚠️ Non hai ancora carte da pubblicare.'; return; }
   await refreshSessionIfNeeded();
   msg.textContent = '📤 Pubblico ' + collection.length + ' carte…';
