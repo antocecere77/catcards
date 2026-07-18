@@ -159,7 +159,7 @@
 </head>
 <body>
   <h1>🐱 Cat<span>Cards</span></h1>
-  <p class="tag">Fotografa il tuo gatto e trasformalo in una carta da collezione · <strong style="color:var(--accent)">v5.2</strong></p>
+  <p class="tag">Fotografa il tuo gatto e trasformalo in una carta da collezione · <strong style="color:var(--accent)">v5.3</strong></p>
 
   <div id="tabs" style="display:flex; gap:8px; width:100%; max-width:440px; margin-bottom:6px;">
     <button class="tabBtn" data-tab="crea" onclick="showTab('crea')">📸 Crea</button>
@@ -919,6 +919,19 @@ async function checkWorldNews(){
     window._worldNews = news;
     window._worldRows = rows;
     if (news.length) document.getElementById('mondoDot').style.display = 'inline-block';
+  } catch(e){}
+}
+async function syncWorldBase(){
+  // allinea il punto di riferimento: le TUE azioni non generano notifiche a te stesso
+  try {
+    if (!collection.length) return;
+    const serials = collection.map(c => c.serial).join(',');
+    const r = await fetch(SUPA_URL + '/rest/v1/cards?select=serial,wins,losses&serial=in.(' + serials + ')', {headers: supaHeaders()});
+    if (!r.ok) return;
+    const rows = await r.json();
+    const base = {};
+    rows.forEach(x => { base[x.serial] = {w: x.wins, l: x.losses}; });
+    localStorage.setItem('catcards_worldbase', JSON.stringify(base));
   } catch(e){}
 }
 function openMondoNews(){
@@ -2229,18 +2242,19 @@ renderWallet();
 async function migrateCards(){
   let changed = false;
   for (const e of collection){
-    if (e.layout === 3) continue;
+    if (e.layout === 4) continue;
     try {
       const im = await new Promise((res, rej) => {
         const i = new Image();
         i.onload = () => res(i); i.onerror = rej;
         i.src = e.img;
       });
-      // ritaglia l'illustrazione dalla vecchia carta (finestra a 55,128 di 640x500 su 750x1050)
+      // ritaglia l'illustrazione dalla carta esistente (l'arte in alto è sempre intatta)
+      const oldH = (e.layout === 3) ? 470 : 500;
       const sx = 55 * im.width / 750,  sy = 128 * im.height / 1050;
-      const sw = 640 * im.width / 750, sh = 500 * im.height / 1050;
-      const artC = document.createElement('canvas'); artC.width = 640; artC.height = 500;
-      artC.getContext('2d').drawImage(im, sx, sy, sw, sh, 0, 0, 640, 500);
+      const sw = 640 * im.width / 750, sh = oldH * im.height / 1050;
+      const artC = document.createElement('canvas'); artC.width = 640; artC.height = oldH;
+      artC.getContext('2d').drawImage(im, sx, sy, sw, sh, 0, 0, 640, oldH);
       // ricostruisci i dati della carta dai valori salvati
       const card = rollCard(parseInt(e.serial, 16) >>> 0, e.name);
       if (Array.isArray(e.statsv) && e.statsv.length === 6)
@@ -2250,7 +2264,7 @@ async function migrateCards(){
       if (e.razza) card.razza = e.razza;
       drawCard(card, artC);
       e.img = canvas.toDataURL('image/jpeg', 0.82);
-      e.layout = 3;
+      e.layout = 4;
       if (!e.statsv) e.statsv = card.stats.map(s => s.value);
       if (!e.hp) e.hp = card.hp;
       if (typeof e.potere !== 'number') e.potere = card.potere;
@@ -2428,6 +2442,7 @@ async function publishCards(){
       throw new Error(t);
     }
     msg.textContent = '✅ ' + rows.length + ' carte pubblicate nell\'Arena Mondiale!';
+    syncWorldBase();
   } catch(err){
     msg.textContent = '❌ Pubblicazione fallita: ' + err.message;
   }
@@ -2502,6 +2517,7 @@ async function fightWorld(i){
       body: JSON.stringify({winner: winSerial, loser: loseSerial})
     });
     blog('🌍 Risultato registrato nell\'Arena Mondiale!');
+    syncWorldBase();
   } catch(err){}
 }
 async function loadLeaderboard(){
@@ -2558,6 +2574,7 @@ function unifyVoices(){
   renderWallet();
   showTab(collection.length ? 'coll' : 'crea');   // apertura intelligente: carte se ne hai, foto se no
   checkWorldNews();
+  setInterval(checkWorldNews, 60000);   // controlla novità ogni minuto anche senza ricaricare
   migrateCards();
   migrateMelodies();
 })();
