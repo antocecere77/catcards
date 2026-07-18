@@ -159,7 +159,7 @@
 </head>
 <body>
   <h1>🐱 Cat<span>Cards</span></h1>
-  <p class="tag">Fotografa il tuo gatto e trasformalo in una carta da collezione · <strong style="color:var(--accent)">v6.1</strong></p>
+  <p class="tag">Fotografa il tuo gatto e trasformalo in una carta da collezione · <strong style="color:var(--accent)">v6.2</strong></p>
 
   <div id="tabs" style="display:flex; gap:8px; width:100%; max-width:440px; margin-bottom:6px;">
     <button class="tabBtn" data-tab="crea" onclick="showTab('crea')">📸 Crea</button>
@@ -235,15 +235,21 @@
   <div class="panel" id="onlinePanel" style="margin-top:20px; display:none;">
     <h2>🌍 Arena Mondiale</h2>
     <div id="authBox" style="margin-top:8px;"></div>
-    <div id="newsList" class="count" style="line-height:1.9;"></div>
-    <label class="small">Il tuo nome giocatore (obbligatorio, min 3 lettere)</label>
-    <input type="text" id="playerName" placeholder="Es. Antonio" maxlength="20">
-    <button class="btn" onclick="publishCards()">📤 Pubblica le mie carte online</button>
-    <p class="count" id="onlineMsg" style="margin-top:6px;"></p>
-    <label class="small">La tua carta per le sfide online</label>
-    <select id="selMine"></select>
-    <button class="btn secondary" onclick="loadWorldCards()" style="margin-top:10px;">🔄 Cerca sfidanti nel mondo</button>
-    <div id="worldList" style="margin-top:10px;"></div>
+    <div id="mondoMember" style="display:none;">
+      <div id="newsList" class="count" style="line-height:1.9;"></div>
+      <label class="small">Il tuo nome giocatore (obbligatorio, min 3 lettere)</label>
+      <input type="text" id="playerName" placeholder="Es. Antonio" maxlength="20">
+      <details style="margin-top:12px;">
+        <summary>🗂️ Scegli quali carte pubblicare</summary>
+        <div id="pubList" style="margin-top:8px;"></div>
+      </details>
+      <button class="btn" onclick="publishCards()">📤 Pubblica le carte selezionate</button>
+      <p class="count" id="onlineMsg" style="margin-top:6px;"></p>
+      <label class="small">La tua carta per le sfide online</label>
+      <select id="selMine"></select>
+      <button class="btn secondary" onclick="loadWorldCards()" style="margin-top:10px;">🔄 Cerca sfidanti nel mondo</button>
+      <div id="worldList" style="margin-top:10px;"></div>
+    </div>
     <button class="btn secondary" onclick="loadLeaderboard()" style="margin-top:10px;">🏅 Classifica mondiale</button>
     <div id="leaderList" class="count" style="line-height:2; margin-top:8px;"></div>
   </div>
@@ -827,6 +833,7 @@ function renderCollection(){
     : 'Nessuna carta ancora: creane una nella scheda 📸 Crea, o importa un backup da ⚙️ Opzioni.';
   const ctb = document.getElementById('collTabBtn');
   if (ctb) ctb.textContent = '📚 Carte' + (collection.length ? ' · ' + collection.length : '');
+  renderPubList();
   collection.forEach((c, i) => {
     const wrap = document.createElement('div');
     wrap.className = 'thumb' + ((c.rarity === 'Epica' || c.rarity === 'Leggendaria') ? ' holoWrap' : '');
@@ -2485,7 +2492,40 @@ async function loginRequest(){
 function logout(){
   session = null; saveSession(); renderAuth();
 }
+/* ---------- scelta delle carte da pubblicare ---------- */
+let pubSel = null;   // null = tutte selezionate
+try {
+  const arr = JSON.parse(localStorage.getItem('catcards_pubsel') || 'null');
+  if (Array.isArray(arr)) pubSel = new Set(arr);
+} catch(e){}
+function isPub(serial){ return !pubSel || pubSel.has(serial); }
+function renderPubList(){
+  const el = document.getElementById('pubList');
+  if (!el) return;
+  el.innerHTML = '';
+  collection.forEach(c => {
+    const lab = document.createElement('label');
+    lab.style.cssText = 'display:flex; align-items:center; gap:8px; font-size:.85rem; padding:5px 0; color:var(--text); cursor:pointer;';
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.checked = isPub(c.serial);
+    cb.onchange = () => {
+      if (!pubSel) pubSel = new Set(collection.map(x => x.serial));
+      if (cb.checked) pubSel.add(c.serial); else pubSel.delete(c.serial);
+      try { localStorage.setItem('catcards_pubsel', JSON.stringify(Array.from(pubSel))); } catch(e){}
+    };
+    lab.appendChild(cb);
+    lab.appendChild(document.createTextNode(' ' + c.name + ' (' + c.rarity + ')'));
+    el.appendChild(lab);
+  });
+}
+
 function renderAuth(){
+  const member = document.getElementById('mondoMember');
+  if (member){
+    member.style.display = (session && session.access_token) ? 'block' : 'none';
+    renderPubList();
+  }
   const box = document.getElementById('authBox');
   if (!box) return;
   if (session && session.access_token){
@@ -2527,10 +2567,12 @@ async function publishCards(){
   playerNameEl.style.borderColor = '';
   if (!collection.length){ msg.textContent = '⚠️ Non hai ancora carte da pubblicare.'; return; }
   await refreshSessionIfNeeded();
-  msg.textContent = '📤 Pubblico ' + collection.length + ' carte…';
+  const toPub = collection.filter(c => isPub(c.serial));
+  if (!toPub.length){ msg.textContent = '⚠️ Nessuna carta selezionata: spunta almeno una carta in «Scegli quali carte pubblicare».'; return; }
+  msg.textContent = '📤 Pubblico ' + toPub.length + (toPub.length === 1 ? ' carta…' : ' carte…');
   try {
     const rows = [];
-    for (const e of collection){
+    for (const e of toPub){
       let thumb = null;
       try { thumb = await makeThumb(e.img, 220); } catch(err){}
       rows.push({
