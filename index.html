@@ -171,7 +171,7 @@
 </head>
 <body>
   <h1>🐱 Cat<span>Cards</span></h1>
-  <p class="tag">Fotografa il tuo gatto e trasformalo in una carta da collezione · <strong style="color:var(--accent)">v8.3</strong></p>
+  <p class="tag">Fotografa il tuo gatto e trasformalo in una carta da collezione · <strong style="color:var(--accent)">v8.4</strong></p>
   <p id="bootErr" style="display:none; color:#ff6b6b; font-size:.8rem; max-width:440px; text-align:center; margin-bottom:10px;"></p>
 
   <div id="tabs" style="display:flex; flex-direction:column; gap:8px; width:100%; max-width:440px; margin-bottom:6px;">
@@ -358,6 +358,7 @@
       <h2 id="gameTitle"></h2>
       <p class="count" id="gameDesc" style="text-align:left; line-height:1.7; margin-top:8px;"></p>
       <button class="btn" id="gameStart">▶️ Inizia l'allenamento!</button>
+      <button class="btn secondary" id="gameCancel">✖ Annulla (punti restituiti)</button>
       <div id="gameArea" style="position:relative; height:260px; background:var(--panel2); border-radius:12px; margin-top:10px; overflow:hidden; touch-action:manipulation; display:none;"></div>
       <p style="margin-top:8px;"><strong id="gameScore">0</strong> punti · <span id="gameTime">–</span>s</p>
     </div>
@@ -902,7 +903,14 @@ function saveCurrentCard(card){
     img: canvas.toDataURL('image/jpeg', 0.82), date: Date.now()
   };
   const i = collection.findIndex(c => c.serial === entry.serial);
-  if (i >= 0){ entry.frame = collection[i].frame || null; collection[i] = entry; }
+  if (i >= 0){
+    // preserva ciò che la carta si è guadagnata: cornice, allenamento, riposo
+    entry.frame = collection[i].frame || null;
+    entry.trainUsed = collection[i].trainUsed || 0;
+    entry.trainAt = collection[i].trainAt || 0;
+    entry.restAt = collection[i].restAt || 0;
+    collection[i] = entry;
+  }
   else collection.unshift(entry);
   persistColl(); renderCollection();
   checkAchievements();
@@ -1299,8 +1307,9 @@ function refreshArena(){
   const keep = [selA.value, selB.value];
   selA.innerHTML = ''; selB.innerHTML = '';
   collection.forEach((c, i) => {
-    selA.add(new Option('🐱 ' + c.name + ' (' + c.rarity + ')', 'c' + i));
-    selB.add(new Option('🐱 ' + c.name + ' (' + c.rarity + ')', 'c' + i));
+    const rest = coolLeft(c) > 0 ? ' 😴' : '';
+    selA.add(new Option('🐱 ' + c.name + ' (' + c.rarity + ')' + rest, 'c' + i));
+    selB.add(new Option('🐱 ' + c.name + ' (' + c.rarity + ')' + rest, 'c' + i));
   });
   rivals.forEach((r, i) => { selB.add(new Option('🆚 ' + r.name + ' (rivale)', 'r' + i)); });
   const selMine = document.getElementById('selMine');
@@ -2018,6 +2027,9 @@ async function startBattle(){
     alert('Un gatto non può combattere contro sé stesso! Scegli due carte diverse.');
     return;
   }
+  const restA = coolLeft(ea), restB = coolLeft(eb);
+  if (restA > 0){ alert('😴 ' + ea.name + ' sta riposando: torna tra ' + Math.ceil(restA / 60000) + ' minuti (un\'ora di recupero dopo ogni incontro o allenamento).'); return; }
+  if (restB > 0){ alert('😴 ' + eb.name + ' sta riposando: torna tra ' + Math.ceil(restB / 60000) + ' minuti.'); return; }
   unlockAudio();
   window._mineSerial = ea.serial;
   currentBet = null;
@@ -2237,16 +2249,25 @@ async function runBattle(ea, eb, title){
   recordResult(w.serial, loser.serial);
   if (title === 'SFIDA MONDIALE') settleBet(w.serial);
   else currentBet = null;   // nessuna scommessa fuori dal mondiale: mai puntate "appese"
-  // contatori per il medagliere: contano SOLO le sfide mondiali (il locale è allenamento)
-  if (window._mineSerial && title === 'SFIDA MONDIALE'){
+  // contatori per il medagliere: contano le sfide mondiali e dal vivo (il locale è allenamento)
+  const seria = (title === 'SFIDA MONDIALE' || title === 'SFIDA DAL VIVO');
+  if (window._mineSerial && seria){
     if (w.serial === window._mineSerial){
       counters.wins++; counters.winStreak = (counters.winStreak || 0) + 1; counters.lossStreak = 0;
       counters.worldWins++;
+      points += 5;   // premio base: nessuno resta mai a secco di punti
+      try { localStorage.setItem('catcards_points', String(points)); } catch(e){}
+      renderWallet();
+      blog('💰 +5 punti per la vittoria!');
     } else if (loser.serial === window._mineSerial){
       counters.losses++; counters.lossStreak++; counters.winStreak = 0;
     }
     saveCounters();
     checkAchievements();
+  }
+  // dopo un incontro vero (locale 1v1, mondiale o dal vivo) i gatti coinvolti riposano un'ora
+  if (title === null || seria){
+    restCollectionCards([a.serial, b.serial]);
   }
   window._evOn = false;
   battleOn = false;
@@ -3009,6 +3030,8 @@ async function fightWorld(i){
   const v = document.getElementById('selMine').value;
   const mineEntry = collection[parseInt(v, 10)];
   if (!mineEntry){ alert('Per sfidare online serve una TUA carta pubblicata e attiva: pubblicane una da «Scegli quali carte pubblicare».'); return; }
+  const restM = coolLeft(mineEntry);
+  if (restM > 0){ alert('😴 ' + mineEntry.name + ' sta riposando: torna tra ' + Math.ceil(restM / 60000) + ' minuti (un\'ora di recupero dopo ogni incontro o allenamento).'); return; }
   const remoteEntry = {
     serial: remote.serial, name: remote.name, nick: remote.nick,
     potere: (typeof remote.potere === 'number') ? remote.potere : undefined,
@@ -3232,7 +3255,7 @@ const FOODS = [
   {id: 'pesce',   ic: '🐟', nm: 'Pesce',       cost: 25, stat: 3,    tgt: 'Velocità',     game: 'gomitolo'},
   {id: 'chicche', ic: '🧀', nm: 'Chicche',     cost: 25, stat: 4,    tgt: 'Fascino',      game: 'piuma'},
 ];
-const TRAIN_COOLDOWN = 3600000;   // 1 ora di riposo tra un pasto e l'altro
+const TRAIN_COOLDOWN = 3600000;   // 1 ora di riposo dopo OGNI incontro o allenamento
 function gymCat(){
   const v = document.getElementById('gymCat');
   return v ? collection[parseInt(v.value, 10)] : null;
@@ -3240,8 +3263,17 @@ function gymCat(){
 function trainCap(e){ return (cardLevel(e.serial) - 1) * 3; }   // +3 di margine per livello
 function trainAvail(e){ return Math.max(0, trainCap(e) - (e.trainUsed || 0)); }
 function coolLeft(e){
-  if (!e.trainAt) return 0;
-  return Math.max(0, TRAIN_COOLDOWN - (Date.now() - e.trainAt));
+  const last = Math.max(e.trainAt || 0, e.restAt || 0);
+  if (!last) return 0;
+  return Math.max(0, TRAIN_COOLDOWN - (Date.now() - last));
+}
+function restCollectionCards(serials){
+  let changed = false;
+  serials.forEach(sn => {
+    const ce = collection.find(c => c.serial === sn);
+    if (ce){ ce.restAt = Date.now(); changed = true; }
+  });
+  if (changed){ persistColl(); try { renderGym(); refreshArena(); } catch(e){} }
 }
 function renderGym(){
   const sel = document.getElementById('gymCat');
@@ -3264,14 +3296,21 @@ function renderGym(){
   const grid = document.getElementById('foodGrid');
   if (grid){
     grid.innerHTML = '';
+    const blocked = e && (trainAvail(e) <= 0 || coolLeft(e) > 0);
     FOODS.forEach(f => {
       const b = document.createElement('button');
       b.className = 'btn secondary';
-      b.style.cssText = 'margin:0; padding:10px 4px; font-size:.78rem; line-height:1.3;';
+      b.style.cssText = 'margin:0; padding:10px 4px; font-size:.78rem; line-height:1.3;' + (blocked ? ' opacity:.35;' : '');
       b.innerHTML = f.ic + ' ' + f.nm + '<br><span style="color:var(--muted)">' + f.tgt + ' · ' + f.cost + ' pt · ' + (GAMES[f.game] || GAMES.gomitolo).ic + '</span>';
       b.onclick = () => buyFood(f.id);
       grid.appendChild(b);
     });
+    if (e && trainAvail(e) <= 0){
+      const warn = document.createElement('p');
+      warn.style.cssText = 'grid-column:1/-1; color:#ffb703; font-size:.85rem; margin:4px 0 0; line-height:1.5;';
+      warn.textContent = '😼 Coach Baffo: «Niente cibo per ' + e.name + ': margine di allenamento esaurito. Vinci incontri per salire di livello (+3 di margine a livello), poi si torna a tavola.»';
+      grid.appendChild(warn);
+    }
   }
 }
 /* ---------- i tre esercizi della palestra ---------- */
@@ -3291,24 +3330,28 @@ function playSkillGame(gid){
     document.getElementById('gameDesc').innerHTML = '<strong>Allena:</strong> ' + g.allena + '<br><br>' + g.desc;
     const area = document.getElementById('gameArea');
     const start = document.getElementById('gameStart');
+    const cancel = document.getElementById('gameCancel');
     area.style.display = 'none'; area.innerHTML = '';
     start.style.display = 'block';
+    start.textContent = '▶️ Inizia l\'allenamento!';
+    cancel.style.display = 'block';
     document.getElementById('gameScore').textContent = '0';
     document.getElementById('gameTime').textContent = '–';
     modal.style.display = 'flex';
     unlockAudio();
+    cancel.onclick = () => { modal.style.display = 'none'; resolve(null); };
     start.onclick = () => {
       start.style.display = 'none';
+      cancel.style.display = 'none';
       area.style.display = 'block';
       g.run(resolve);
     };
   });
 }
 function endGame(done, score, t1, t2){
-  setTimeout(() => {
-    document.getElementById('gameModal').style.display = 'none';
-    done({score: score, gain: score >= t2 ? 2 : score >= t1 ? 1 : 0});
-  }, 700);
+  // non chiude la finestra: il risultato viene mostrato subito dopo, ben chiaro
+  document.getElementById('gameArea').style.display = 'none';
+  done({score: score, gain: score >= t2 ? 2 : score >= t1 ? 1 : 0});
 }
 function runGomitolo(done){
   const area = document.getElementById('gameArea');
@@ -3421,27 +3464,43 @@ function runPiuma(done){
 async function buyFood(id){
   const f = FOODS.find(x => x.id === id);
   const e = gymCat();
-  if (!e){ alert('Scegli prima un allievo.'); return; }
+  if (!e){ toast('⚠️ Scegli prima un allievo.'); return; }
   const cl = coolLeft(e);
-  if (cl > 0){ coachSayMsg('😴 ' + e.name + ' sta digerendo: torna tra ' + Math.ceil(cl / 60000) + ' minuti. La fretta rovina i campioni.'); return; }
-  if (trainAvail(e) <= 0){ coachSayMsg('📈 ' + e.name + ' ha esaurito il margine di allenamento: mandalo a vincere nel mondo per salire di livello, poi si torna in palestra.'); return; }
-  if (points < f.cost){ alert('Servono ' + f.cost + ' punti (ne hai ' + points + '). Vinci sfide mondiali e scommesse!'); return; }
-  const gameNm = (GAMES[f.game] || GAMES.gomitolo).nm;
-  if (!confirm(f.ic + ' ' + f.nm + ' per ' + e.name + ' (' + f.cost + ' punti)? Poi dovrà guadagnarselo con «' + gameNm + '» — le regole te le spiego prima di iniziare!')) return;
+  if (cl > 0){
+    toast('😴 ' + e.name + ' sta riposando: torna tra ' + Math.ceil(cl / 60000) + ' minuti.');
+    coachSayMsg('😴 ' + e.name + ' sta riposando (dopo ogni incontro o allenamento serve un\'ora di recupero). La fretta rovina i campioni.');
+    return;
+  }
+  if (trainAvail(e) <= 0){
+    toast('📈 Margine esaurito: ' + e.name + ' deve salire di livello vincendo incontri.');
+    coachSayMsg('📈 ' + e.name + ' ha esaurito il margine di allenamento: ogni livello (vinto combattendo) sblocca +3 punti di crescita.');
+    return;
+  }
+  if (points < f.cost){ toast('💰 Servono ' + f.cost + ' punti (ne hai ' + points + '): vincile nel mondo!'); return; }
   spendPoints(f.cost);
   const res = await playSkillGame(f.game);
+  if (res === null){
+    spendPoints(-f.cost);   // annullato prima di iniziare: rimborso completo
+    toast('↩️ Allenamento annullato: ' + f.cost + ' punti restituiti.');
+    return;
+  }
   const score = res.score;
   let gain = res.gain;
   if (!gain){
     e.trainAt = Date.now();
     persistColl(); renderGym();
-    coachSayMsg('🙀 Solo ' + score + ' punti?! Cibo sprecato. Ai miei tempi ci si allenava pure bendati.');
+    finishTrainUI('🙀 Cibo sprecato!',
+      'Punteggio: <strong>' + score + '</strong> — sotto la soglia minima.<br><br>' +
+      f.ic + ' Il ' + f.nm.toLowerCase() + ' è andato perso e ' + e.name + ' ora riposa per un\'ora.<br><br>' +
+      '😼 <em>«Ai miei tempi ci si allenava pure bendati.»</em>');
+    coachSayMsg('🙀 Solo ' + score + ' punti?! Cibo sprecato.');
     return;
   }
   gain = Math.min(gain, trainAvail(e));
   if (!Array.isArray(e.statsv) || e.statsv.length !== 6){
     e.statsv = rollCard(parseInt(e.serial, 16) >>> 0, e.name).stats.map(s => s.value);
   }
+  const gainTxt = f.stat === 'hp' ? '+' + (gain * 2) + ' HP' : '+' + gain + ' ' + f.tgt;
   if (f.stat === 'hp'){
     e.hp = Math.min(150, (e.hp || 80) + gain * 2);
   } else {
@@ -3452,11 +3511,29 @@ async function buyFood(id){
   await redrawEntry(e);
   persistColl(); renderCollection(); renderGym();
   sfx('win');
-  toast(f.ic + ' +' + (f.stat === 'hp' ? (gain * 2) + ' HP' : gain + ' ' + f.tgt) + ' per ' + e.name + '! (' + score + ' punti)');
+  const online = myPublished.has(e.serial) && session && session.access_token;
+  if (online) republishOne(e.serial);   // la carta nel mondo si aggiorna da sola
+  finishTrainUI(gain >= 2 ? '🌟 Allenamento perfetto!' : '✅ Allenamento riuscito!',
+    'Punteggio: <strong>' + score + '</strong>' + (gain >= 2 ? ' — bonus raddoppiato!' : '') + '<br><br>' +
+    '<span style="font-size:1.3rem;">' + f.ic + ' <strong>' + gainTxt + '</strong> per ' + e.name + '</span><br><br>' +
+    (online ? '🌍 Carta aggiornata anche nell\'Arena Mondiale.<br>' : '') +
+    '😴 Ora un\'ora di riposo: i muscoli crescono dormendo.');
   coachSayMsg(gain >= 2
-    ? '😼 ' + score + ' punti! ' + e.name + ' ha la stoffa del campione. Bonus raddoppiato, e non dirlo agli altri allievi.'
-    : '👍 ' + score + ' punti, onesto lavoro. ' + e.name + ' cresce. Ora a nanna: si torna tra un\'ora.');
-  if (myActive.has(e.serial)) coachSayMsg(document.getElementById('coachSay').textContent + ' (Ricorda il 🔄 nella scheda Mondo per aggiornare la carta online!)');
+    ? '😼 ' + score + ' punti! ' + e.name + ' ha la stoffa del campione.'
+    : '👍 ' + score + ' punti, onesto lavoro. ' + e.name + ' cresce.');
+}
+function finishTrainUI(title, html){
+  const modal = document.getElementById('gameModal');
+  document.getElementById('gameTitle').textContent = title;
+  document.getElementById('gameDesc').innerHTML = html;
+  document.getElementById('gameArea').style.display = 'none';
+  const cancel = document.getElementById('gameCancel');
+  if (cancel) cancel.style.display = 'none';
+  const start = document.getElementById('gameStart');
+  start.style.display = 'block';
+  start.textContent = '✔️ OK';
+  start.onclick = () => { modal.style.display = 'none'; };
+  modal.style.display = 'flex';
 }
 function coachSayMsg(t){
   const el = document.getElementById('coachSay');
