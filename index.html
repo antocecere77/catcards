@@ -173,7 +173,7 @@
 </head>
 <body>
   <h1>🐱 Cat<span>Cards</span></h1>
-  <p class="tag">Fotografa il tuo gatto e trasformalo in una carta da collezione · <strong style="color:var(--accent)">v9.2</strong></p>
+  <p class="tag">Fotografa il tuo gatto e trasformalo in una carta da collezione · <strong style="color:var(--accent)">v9.3</strong></p>
   <p id="bootErr" style="display:none; color:#ff6b6b; font-size:.8rem; max-width:440px; text-align:center; margin-bottom:10px;"></p>
 
   <div id="tabs" style="display:flex; flex-direction:column; gap:8px; width:100%; max-width:440px; margin-bottom:6px;">
@@ -330,7 +330,7 @@
     <p>Si <strong>guadagnano solo online</strong>: +5 per ogni vittoria mondiale o dal vivo, scommesse vinte, medaglie (10-50 punti l'una) e 🎁 codici regalo. In locale: zero. Si <strong>spendono</strong> in: scommesse (puntata 10-100), cibo in palestra (20-25), 🌿 vantaggio mondiale (50), 🎨 Cornice d'Oro (100), 🔁 rigenerazione del disegno (30). Perdere un incontro non costa punti: solo le scommesse sbagliate.</p>
 
     <h2 style="font-size:1rem; margin-top:16px; color:var(--accent);">🎲 Le scommesse</h2>
-    <p>Solo nelle <strong>sfide mondiali</strong>: prima del match scegli la puntata e su chi puntare (⭐ favorito a quota bassa, 🐾 underdog a quota alta). Vinci la puntata × (quota − 1); se sbagli perdi la puntata. Niente scommesse in locale o dal vivo.</p>
+    <p>Nelle <strong>sfide mondiali e dal vivo</strong>: prima del match scegli la puntata e su chi puntare (⭐ favorito a quota bassa, 🐾 underdog a quota alta). Vinci la puntata × (quota − 1); se sbagli perdi la puntata. Niente scommesse in locale e nei tornei.</p>
 
     <h2 style="font-size:1rem; margin-top:16px; color:var(--accent);">😴 Il riposo</h2>
     <p>Dopo ogni incontro vero (locale 1v1, mondiale, dal vivo) e ogni allenamento, i gatti coinvolti riposano <strong>1 ora</strong>: non possono combattere né mangiare. Il riposo è visibile a tutti, anche online. I tornei sono esibizioni e non stancano.</p>
@@ -342,7 +342,7 @@
     <p>Accedi con Google (o email), scegli il nome giocatore (uno per account, rinominabile ovunque in un colpo) e <strong>pubblica le carte che vuoi</strong>: solo le pubblicate e attive possono sfidare online. Sfidi le carte degli altri, il risultato finisce nel registro e in classifica (ordinata per % di vittorie). Puoi <strong>🚪 ritirare</strong> una carta: resta in classifica come "ritirata" ma nessuno può più sfidarla. Il pallino rosso su Mondo ti avvisa quando le tue carte hanno combattuto in tua assenza.</p>
 
     <h2 style="font-size:1rem; margin-top:16px; color:var(--accent);">⚡ La sfida dal vivo (QR)</h2>
-    <p>Due telefoni: uno mostra il QR della sua carta (⚔️ Arena → 📱), l'altro lo inquadra (📷) e il duello si gioca sul suo schermo. <strong>Vale come una sfida mondiale</strong> (punti, XP pieni, medaglie, riposo, risultato registrato se le carte sono pubblicate) ma senza scommesse.</p>
+    <p>Due telefoni: uno mostra il QR della sua carta (⚔️ Arena → 📱), l'altro lo inquadra (📷) e il duello si gioca sul suo schermo. <strong>Vale come una sfida mondiale</strong>: punti, XP pieni, medaglie, riposo, scommesse e risultato registrato se le carte sono pubblicate.</p>
 
     <h2 style="font-size:1rem; margin-top:16px; color:var(--accent);">🏆 Tornei e medagliere</h2>
     <p>Tornei a 4 o 8 tra le tue carte e i rivali: esibizioni automatiche con tabellone (XP ridotti, nessun riposo, nessun punto). Il <strong>🏅 Medagliere</strong> ha 16 medaglie con premi in punti — tocca una medaglia per scoprire come si conquista. Occhio alla 💀 Disfatta…</p>
@@ -2349,8 +2349,8 @@ async function runBattle(ea, eb, title){
   // esperienza: piena per mondiali e dal vivo (25/10), ridotta per locale e tornei (5/2)
   const seria = (title === 'SFIDA MONDIALE' || title === 'SFIDA DAL VIVO');
   recordResult(w.serial, loser.serial, seria ? 25 : 5, seria ? 10 : 2);
-  if (title === 'SFIDA MONDIALE') settleBet(w.serial);
-  else currentBet = null;   // nessuna scommessa fuori dal mondiale: mai puntate "appese"
+  if (seria) settleBet(w.serial);
+  else currentBet = null;   // nessuna scommessa fuori da mondiali e dal vivo: mai puntate "appese"
   if (window._mineSerial && seria){
     if (w.serial === window._mineSerial){
       counters.wins++; counters.winStreak = (counters.winStreak || 0) + 1; counters.lossStreak = 0;
@@ -3842,11 +3842,11 @@ async function onQrFound(data, mine){
   if (!confirm('⚡ Sfida dal vivo: ' + mine.name + ' contro ' + entry.name + (ownerNm ? ' di ' + ownerNm : '') + '. Si combatte!')) return;
   unlockAudio();
   window._mineSerial = mine.serial;
-  currentBet = null;   // regola: niente scommesse nelle sfide dal vivo
   loadInstrument(cardInstr(mine)); loadInstrument(cardInstr(entry));
   bracketState = null;
   document.getElementById('bracket').style.display = 'none';
   document.getElementById('bracketBtn').style.display = 'none';
+  await askBet(mine, entry);   // si scommette anche nei duelli dal vivo
   document.getElementById('battleScreen').style.display = 'flex';
   const w = await runBattle(mine, entry, 'SFIDA DAL VIVO');
   if (!w) return;
