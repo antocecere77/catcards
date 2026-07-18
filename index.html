@@ -171,7 +171,7 @@
 </head>
 <body>
   <h1>🐱 Cat<span>Cards</span></h1>
-  <p class="tag">Fotografa il tuo gatto e trasformalo in una carta da collezione · <strong style="color:var(--accent)">v8.5</strong></p>
+  <p class="tag">Fotografa il tuo gatto e trasformalo in una carta da collezione · <strong style="color:var(--accent)">v8.6</strong></p>
   <p id="bootErr" style="display:none; color:#ff6b6b; font-size:.8rem; max-width:440px; text-align:center; margin-bottom:10px;"></p>
 
   <div id="tabs" style="display:flex; flex-direction:column; gap:8px; width:100%; max-width:440px; margin-bottom:6px;">
@@ -1121,15 +1121,6 @@ async function loadMyWorldCards(){
       span.onclick = () => showMyWorldCard(x);
       span.innerHTML = '<strong>' + x.name + '</strong> — ' + (x.wins || 0) + ' V / ' + (x.losses || 0) + ' S' + (x.retired ? ' · 🚪 ritirata' : '');
       div.appendChild(span);
-      if (!x.retired){
-        const u = document.createElement('button');
-        u.className = 'btn secondary';
-        u.style.cssText = 'width:auto; margin:0; padding:8px 10px; font-size:.75rem;';
-        u.textContent = '🔄';
-        u.title = 'Aggiorna la carta pubblicata (statistiche e disegno attuali)';
-        u.onclick = () => republishOne(x.serial);
-        div.appendChild(u);
-      }
       const b = document.createElement('button');
       b.className = 'btn secondary';
       b.style.cssText = 'width:auto; margin:0; padding:8px 10px; font-size:.75rem;';
