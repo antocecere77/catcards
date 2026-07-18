@@ -161,7 +161,7 @@
 </head>
 <body>
   <h1>🐱 Cat<span>Cards</span></h1>
-  <p class="tag">Fotografa il tuo gatto e trasformalo in una carta da collezione · <strong style="color:var(--accent)">v6.3</strong></p>
+  <p class="tag">Fotografa il tuo gatto e trasformalo in una carta da collezione · <strong style="color:var(--accent)">v6.4</strong></p>
 
   <div id="tabs" style="display:flex; gap:8px; width:100%; max-width:440px; margin-bottom:6px;">
     <button class="tabBtn" data-tab="crea" onclick="showTab('crea')">📸 Crea</button>
@@ -2477,7 +2477,8 @@ async function loginRequest(){
   if (!email || email.indexOf('@') < 0){ msg.textContent = '⚠️ Scrivi la tua email.'; return; }
   msg.textContent = '📨 Invio il link di accesso…';
   try {
-    const r = await fetch(SUPA_URL + '/auth/v1/otp', {
+    const backTo = location.origin + location.pathname;   // torna esattamente a questa pagina
+    const r = await fetch(SUPA_URL + '/auth/v1/otp?redirect_to=' + encodeURIComponent(backTo), {
       method: 'POST', headers: {apikey: SUPA_KEY, 'Content-Type': 'application/json'},
       body: JSON.stringify({email: email, create_user: true})
     });
