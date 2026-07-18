@@ -171,7 +171,7 @@
 </head>
 <body>
   <h1>🐱 Cat<span>Cards</span></h1>
-  <p class="tag">Fotografa il tuo gatto e trasformalo in una carta da collezione · <strong style="color:var(--accent)">v7.5</strong></p>
+  <p class="tag">Fotografa il tuo gatto e trasformalo in una carta da collezione · <strong style="color:var(--accent)">v7.6</strong></p>
 
   <div id="tabs" style="display:flex; gap:8px; width:100%; max-width:440px; margin-bottom:6px;">
     <button class="tabBtn" data-tab="crea" onclick="showTab('crea')">📸 Crea</button>
@@ -3016,14 +3016,18 @@ async function loadLeaderboard(){
   const el = document.getElementById('leaderList');
   el.textContent = 'Carico la classifica…';
   try {
-    const r = await fetch(SUPA_URL + '/rest/v1/cards?select=name,owner,wins,losses,retired&order=wins.desc&limit=10', {headers: supaHeaders()});
+    const r = await fetch(SUPA_URL + '/rest/v1/cards?select=name,owner,wins,losses,retired&order=wins.desc&limit=50', {headers: supaHeaders()});
     if (!r.ok) throw new Error('HTTP ' + r.status);
-    const rows = await r.json();
+    let rows = await r.json();
+    // ordine: % di vittorie, a parità chi ha vinto di più, poi chi ha giocato di più
+    rows = rows.filter(x => (x.wins + x.losses) > 0);
+    rows.forEach(x => { x.pct = x.wins / (x.wins + x.losses); });
+    rows.sort((a, b) => (b.pct - a.pct) || (b.wins - a.wins) || ((b.wins + b.losses) - (a.wins + a.losses)));
+    rows = rows.slice(0, 10);
     const medals = ['🥇', '🥈', '🥉'];
-    el.innerHTML = rows.filter(x => (x.wins + x.losses) > 0).map((x, i) => {
-      const pct = Math.round(100 * x.wins / Math.max(1, x.wins + x.losses));
+    el.innerHTML = rows.map((x, i) => {
       return (medals[i] || (i + 1) + '°') + ' <strong>' + x.name + '</strong> di ' + (x.owner || 'anonimo') +
-        ' — ' + x.wins + ' V / ' + x.losses + ' S (' + pct + '%)' +
+        ' — ' + x.wins + ' V / ' + x.losses + ' S (' + Math.round(100 * x.pct) + '%)' +
         (x.retired ? ' · 🚪 <em>ritirata</em>' : '');
     }).join('<br>') || 'Nessun incontro mondiale ancora disputato.';
   } catch(err){
