@@ -159,7 +159,7 @@
 </head>
 <body>
   <h1>🐱 Cat<span>Cards</span></h1>
-  <p class="tag">Fotografa il tuo gatto e trasformalo in una carta da collezione · <strong style="color:var(--accent)">v5.3</strong></p>
+  <p class="tag">Fotografa il tuo gatto e trasformalo in una carta da collezione · <strong style="color:var(--accent)">v5.4</strong></p>
 
   <div id="tabs" style="display:flex; gap:8px; width:100%; max-width:440px; margin-bottom:6px;">
     <button class="tabBtn" data-tab="crea" onclick="showTab('crea')">📸 Crea</button>
@@ -934,11 +934,11 @@ async function syncWorldBase(){
     localStorage.setItem('catcards_worldbase', JSON.stringify(base));
   } catch(e){}
 }
-function openMondoNews(){
+async function openMondoNews(){
   const el = document.getElementById('newsList');
   if (!el) return;
   const news = window._worldNews || [];
-  el.innerHTML = news.length ? '📰 <strong>Mentre eri via:</strong><br>' + news.join('<br>') : '';
+  let html = news.length ? '📰 <strong>Mentre eri via:</strong><br>' + news.join('<br>') : '';
   if (window._worldRows){
     const base = {};
     window._worldRows.forEach(x => { base[x.serial] = {w: x.wins, l: x.losses}; });
@@ -946,6 +946,26 @@ function openMondoNews(){
   }
   window._worldNews = [];
   document.getElementById('mondoDot').style.display = 'none';
+  el.innerHTML = html;
+  // storico dettagliato dal registro incontri
+  try {
+    if (!collection.length) return;
+    const s = collection.map(c => c.serial).join(',');
+    const r = await fetch(SUPA_URL + '/rest/v1/matches?or=(winner_serial.in.(' + s + '),loser_serial.in.(' + s + '))&order=id.desc&limit=10', {headers: supaHeaders()});
+    if (!r.ok) return;
+    const rows = await r.json();
+    if (!rows.length) return;
+    const mine = {};
+    collection.forEach(c => { mine[c.serial] = true; });
+    const lines = rows.map(m => {
+      const d = new Date(m.created_at);
+      const when = d.toLocaleDateString('it-IT', {day: 'numeric', month: 'short'}) + ' ' +
+                   d.toLocaleTimeString('it-IT', {hour: '2-digit', minute: '2-digit'});
+      return (mine[m.winner_serial] ? '🏆' : '💥') + ' <strong>' + m.winner_name + '</strong> di ' + (m.winner_owner || '?') +
+        ' ha battuto <strong>' + m.loser_name + '</strong> di ' + (m.loser_owner || '?') + ' · ' + when;
+    });
+    el.innerHTML = html + (html ? '<br><br>' : '') + '📜 <strong>Ultimi incontri delle tue carte:</strong><br>' + lines.join('<br>');
+  } catch(e){}
 }
 function downloadSaved(){
   if (modalIndex < 0) return;
@@ -2518,6 +2538,22 @@ async function fightWorld(i){
     });
     blog('🌍 Risultato registrato nell\'Arena Mondiale!');
     syncWorldBase();
+  } catch(err){}
+  // registro incontri: chi, contro chi, quando
+  try {
+    const me = playerNameEl.value.trim() || 'anonimo';
+    const won = (w.serial === mineEntry.serial);
+    await fetch(SUPA_URL + '/rest/v1/matches', {
+      method: 'POST', headers: supaHeaders(),
+      body: JSON.stringify({
+        winner_serial: winSerial,
+        winner_name: won ? mineEntry.name : remote.name,
+        winner_owner: won ? me : (remote.owner || 'anonimo'),
+        loser_serial: loseSerial,
+        loser_name: won ? remote.name : mineEntry.name,
+        loser_owner: won ? (remote.owner || 'anonimo') : me
+      })
+    });
   } catch(err){}
 }
 async function loadLeaderboard(){
