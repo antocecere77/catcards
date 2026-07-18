@@ -173,7 +173,7 @@
 </head>
 <body>
   <h1>🐱 Cat<span>Cards</span></h1>
-  <p class="tag">Fotografa il tuo gatto e trasformalo in una carta da collezione · <strong style="color:var(--accent)">v9.4</strong></p>
+  <p class="tag">Fotografa il tuo gatto e trasformalo in una carta da collezione · <strong style="color:var(--accent)">v9.5</strong></p>
   <p id="bootErr" style="display:none; color:#ff6b6b; font-size:.8rem; max-width:440px; text-align:center; margin-bottom:10px;"></p>
 
   <div id="tabs" style="display:flex; flex-direction:column; gap:8px; width:100%; max-width:440px; margin-bottom:6px;">
@@ -3185,6 +3185,18 @@ async function fightWorld(i){
     alert('😴 ' + remote.name + ' sta riposando: riprova tra ' + Math.ceil((new Date(remote.rest_until).getTime() - Date.now()) / 60000) + ' minuti.');
     return;
   }
+  // controllo FRESCO dal server: magari ha appena combattuto o fatto palestra
+  try {
+    const rr = await fetch(SUPA_URL + '/rest/v1/cards?select=rest_until&serial=eq.' + encodeURIComponent(remote.serial), {headers: supaHeaders()});
+    if (rr.ok){
+      const rows = await rr.json();
+      if (rows.length && rows[0].rest_until && new Date(rows[0].rest_until).getTime() > Date.now()){
+        alert('😴 ' + remote.name + ' è appena andato a riposo: riprova tra ' + Math.ceil((new Date(rows[0].rest_until).getTime() - Date.now()) / 60000) + ' minuti.');
+        loadWorldCards();
+        return;
+      }
+    }
+  } catch(e){}
   const v = document.getElementById('selMine').value;
   const mineEntry = collection[parseInt(v, 10)];
   if (!mineEntry){ alert('Per sfidare online serve una TUA carta pubblicata e attiva: pubblicane una da «Scegli quali carte pubblicare».'); return; }
@@ -3910,7 +3922,11 @@ async function onQrFound(data, mine){
   setInterval(() => { try { refreshArena(); renderGym(); } catch(e){} }, 60000);   // aggiorna i 😴 quando il riposo finisce
   setInterval(() => {
     // il mondo cambia di continuo: con la scheda Mondo aperta, tutto si rinfresca da solo
-    if (window._curTab === 'mondo'){ loadLeaderboard(); loadMyWorldCards(); }
+    if (window._curTab === 'mondo'){
+      loadLeaderboard();
+      loadMyWorldCards();
+      if (worldCards.length) loadWorldCards();   // anche la lista sfidanti (riposi inclusi)
+    }
   }, 30000);
   migrateCards();
   migrateMelodies();
