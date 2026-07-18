@@ -171,14 +171,14 @@
 </head>
 <body>
   <h1>🐱 Cat<span>Cards</span></h1>
-  <p class="tag">Fotografa il tuo gatto e trasformalo in una carta da collezione · <strong style="color:var(--accent)">v7.6</strong></p>
+  <p class="tag">Fotografa il tuo gatto e trasformalo in una carta da collezione · <strong style="color:var(--accent)">v8.0</strong></p>
 
   <div id="tabs" style="display:flex; gap:8px; width:100%; max-width:440px; margin-bottom:6px;">
     <button class="tabBtn" data-tab="crea" onclick="showTab('crea')">📸 Crea</button>
     <button class="tabBtn" data-tab="coll" onclick="showTab('coll')" id="collTabBtn">📚 Carte</button>
     <button class="tabBtn" data-tab="arena" onclick="showTab('arena')">⚔️ Arena</button>
     <button class="tabBtn" data-tab="mondo" onclick="showTab('mondo')">🌍 Mondo<span id="mondoDot" style="display:none; width:9px; height:9px; background:#e63946; border-radius:50%; margin-left:5px; vertical-align:middle;"></span></button>
-    <button class="tabBtn" data-tab="med" onclick="showTab('med')" style="flex:0 0 46px;">🏅</button>
+    <button class="tabBtn" data-tab="med" onclick="showTab('med')" style="flex:0 0 46px;">🏋️</button>
     <button class="tabBtn" data-tab="opz" onclick="showTab('opz')" style="flex:0 0 46px;">⚙️</button>
   </div>
 
@@ -274,11 +274,28 @@
 
   <div id="tab-med" style="width:100%; max-width:440px; display:none;">
   <div class="panel" style="margin-top:20px;">
+    <h2>🏋️ Palestra</h2>
+    <div style="display:flex; gap:12px; align-items:center; margin-top:12px;">
+      <img id="coachImg" alt="Coach Baffo" style="width:76px; height:76px; border-radius:50%; object-fit:cover; border:2px solid var(--accent); display:none; flex-shrink:0;">
+      <div id="coachEmoji" style="font-size:3rem; flex-shrink:0;">😼</div>
+      <div style="flex:1; min-width:0;">
+        <strong>Coach Baffo</strong>
+        <p class="count" id="coachSay" style="margin-top:2px; line-height:1.5;">Miao, recluta. Scegli un allievo e mettiamoci al lavoro.</p>
+      </div>
+    </div>
+    <button class="btn secondary" onclick="coachAdvice()" style="margin-top:10px;">🎓 Chiedi un consiglio al Coach</button>
+    <label class="small" style="margin-top:14px;">L'allievo di oggi</label>
+    <select id="gymCat" onchange="renderGym()"></select>
+    <p class="count" id="gymInfo" style="margin-top:6px; line-height:1.6;"></p>
+    <label class="small" style="margin-top:12px;">🍽️ Dispensa — compra, poi guadagnatelo col gioco</label>
+    <div id="foodGrid" style="display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:8px;"></div>
+    <p class="count" data-wallet style="margin-top:10px;"></p>
+  </div>
+  <div class="panel" style="margin-top:20px;">
     <h2>🏅 Medagliere</h2>
-    <p class="count" data-wallet style="margin-top:4px;"></p>
     <div id="medalList" style="display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-top:12px;"></div>
     <div id="medalInfo" style="display:none; margin-top:12px; padding:12px; background:var(--panel2); border:1px solid #4d4477; border-radius:10px; font-size:.9rem; line-height:1.6;"></div>
-    <p class="count" style="margin-top:12px;">Le medaglie premiano con punti: spendili in scommesse e vantaggio nelle sfide mondiali, Cornice d'Oro (nella scheda carta) e rigenerazioni del disegno.</p>
+    <p class="count" style="margin-top:12px;">Le medaglie premiano con punti: spendili in scommesse, vantaggio mondiale, Cornice d'Oro, rigenerazioni e nella dispensa della Palestra.</p>
   </div>
   </div>
 
@@ -325,6 +342,17 @@
 
   <div class="modal" id="worldModal" style="z-index:27;" onclick="if(event.target===this)this.style.display='none'">
     <div class="panel" style="max-width:360px; margin-top:30px;" id="worldModalBody"></div>
+  </div>
+
+  <div class="modal" id="gameModal" style="z-index:29;">
+    <div class="panel" style="max-width:360px; margin-top:30px; text-align:center;">
+      <h2>🧶 Acchiappa il gomitolo!</h2>
+      <p class="count">Tocca il gomitolo più volte che puoi in 10 secondi</p>
+      <div id="gameArea" style="position:relative; height:260px; background:var(--panel2); border-radius:12px; margin-top:10px; overflow:hidden; touch-action:manipulation;">
+        <div id="yarn" style="position:absolute; font-size:2.4rem; cursor:pointer; user-select:none; left:40%; top:40%;">🧶</div>
+      </div>
+      <p style="margin-top:8px;"><strong id="gameScore">0</strong> prese · <span id="gameTime">10</span>s</p>
+    </div>
   </div>
 
   <div id="achToast"></div>
@@ -875,6 +903,7 @@ function renderCollection(){
   const ctb = document.getElementById('collTabBtn');
   if (ctb) ctb.textContent = '📚 Carte' + (collection.length ? ' · ' + collection.length : '');
   renderPubList();
+  if (typeof renderGym === 'function') renderGym();
   collection.forEach((c, i) => {
     const wrap = document.createElement('div');
     wrap.className = 'thumb' + ((c.rarity === 'Epica' || c.rarity === 'Leggendaria') ? ' holoWrap' : '');
@@ -3180,6 +3209,194 @@ async function buyFrame(){
   checkAchievements();
 }
 
+/* ---------- Palestra: dispensa, allenamento e Coach Baffo ---------- */
+const FOODS = [
+  {id: 'croc',    ic: '🥫', nm: 'Croccantini', cost: 20, stat: 'hp', tgt: 'HP'},
+  {id: 'pollo',   ic: '🍗', nm: 'Pollo',       cost: 25, stat: 0,    tgt: 'Forza'},
+  {id: 'topo',    ic: '🐁', nm: 'Topolino',    cost: 25, stat: 1,    tgt: 'Intelligenza'},
+  {id: 'erba',    ic: '🌿', nm: 'Erba gatta',  cost: 25, stat: 2,    tgt: 'Destrezza'},
+  {id: 'pesce',   ic: '🐟', nm: 'Pesce',       cost: 25, stat: 3,    tgt: 'Velocità'},
+  {id: 'chicche', ic: '🧀', nm: 'Chicche',     cost: 25, stat: 4,    tgt: 'Fascino'},
+];
+const TRAIN_COOLDOWN = 3600000;   // 1 ora di riposo tra un pasto e l'altro
+function gymCat(){
+  const v = document.getElementById('gymCat');
+  return v ? collection[parseInt(v.value, 10)] : null;
+}
+function trainCap(e){ return (cardLevel(e.serial) - 1) * 3; }   // +3 di margine per livello
+function trainAvail(e){ return Math.max(0, trainCap(e) - (e.trainUsed || 0)); }
+function coolLeft(e){
+  if (!e.trainAt) return 0;
+  return Math.max(0, TRAIN_COOLDOWN - (Date.now() - e.trainAt));
+}
+function renderGym(){
+  const sel = document.getElementById('gymCat');
+  if (!sel) return;
+  const keep = sel.value;
+  sel.innerHTML = '';
+  collection.forEach((c, i) => sel.add(new Option('🐱 ' + c.name + ' (Lv.' + cardLevel(c.serial) + ')', String(i))));
+  if (Array.prototype.some.call(sel.options, o => o.value === keep)) sel.value = keep;
+  const e = gymCat();
+  const info = document.getElementById('gymInfo');
+  if (info){
+    if (!e){ info.textContent = 'Nessun allievo: crea prima una carta.'; }
+    else {
+      const cl = coolLeft(e);
+      info.innerHTML = 'Lv.' + cardLevel(e.serial) + ' · margine di allenamento: <strong>' + (e.trainUsed || 0) + '/' + trainCap(e) + '</strong> usato' +
+        ' <span style="color:var(--muted)">(+3 per ogni livello: si sale vincendo nel mondo)</span>' +
+        (cl > 0 ? '<br>😴 Sta riposando: torna tra ' + Math.ceil(cl / 60000) + ' minuti' : '<br>✅ Pronto ad allenarsi!');
+    }
+  }
+  const grid = document.getElementById('foodGrid');
+  if (grid){
+    grid.innerHTML = '';
+    FOODS.forEach(f => {
+      const b = document.createElement('button');
+      b.className = 'btn secondary';
+      b.style.cssText = 'margin:0; padding:10px 4px; font-size:.78rem; line-height:1.3;';
+      b.innerHTML = f.ic + ' ' + f.nm + '<br><span style="color:var(--muted)">' + f.tgt + ' · ' + f.cost + ' pt</span>';
+      b.onclick = () => buyFood(f.id);
+      grid.appendChild(b);
+    });
+  }
+}
+function playGomitolo(){
+  return new Promise(resolve => {
+    const modal = document.getElementById('gameModal');
+    const area = document.getElementById('gameArea');
+    const yarn = document.getElementById('yarn');
+    const scoreEl = document.getElementById('gameScore');
+    const timeEl = document.getElementById('gameTime');
+    let score = 0, time = 10, speed = 900, over = false;
+    scoreEl.textContent = '0'; timeEl.textContent = '10';
+    modal.style.display = 'flex';
+    unlockAudio();
+    function moveYarn(){
+      yarn.style.left = (5 + Math.random() * 80) + '%';
+      yarn.style.top = (5 + Math.random() * 75) + '%';
+    }
+    let mover = setInterval(moveYarn, speed);
+    yarn.onclick = () => {
+      if (over) return;
+      score++;
+      scoreEl.textContent = String(score);
+      sfx('hit');
+      moveYarn();
+      if (speed > 350){
+        speed -= 60;
+        clearInterval(mover);
+        mover = setInterval(moveYarn, speed);
+      }
+    };
+    const timer = setInterval(() => {
+      time--;
+      timeEl.textContent = String(time);
+      if (time <= 0){
+        over = true;
+        clearInterval(timer); clearInterval(mover);
+        yarn.onclick = null;
+        setTimeout(() => { modal.style.display = 'none'; resolve(score); }, 600);
+      }
+    }, 1000);
+    moveYarn();
+  });
+}
+async function buyFood(id){
+  const f = FOODS.find(x => x.id === id);
+  const e = gymCat();
+  if (!e){ alert('Scegli prima un allievo.'); return; }
+  const cl = coolLeft(e);
+  if (cl > 0){ coachSayMsg('😴 ' + e.name + ' sta digerendo: torna tra ' + Math.ceil(cl / 60000) + ' minuti. La fretta rovina i campioni.'); return; }
+  if (trainAvail(e) <= 0){ coachSayMsg('📈 ' + e.name + ' ha esaurito il margine di allenamento: mandalo a vincere nel mondo per salire di livello, poi si torna in palestra.'); return; }
+  if (points < f.cost){ alert('Servono ' + f.cost + ' punti (ne hai ' + points + '). Vinci sfide mondiali e scommesse!'); return; }
+  if (!confirm(f.ic + ' ' + f.nm + ' per ' + e.name + ' (' + f.cost + ' punti)? Poi dovrà guadagnarselo col gomitolo: 5+ prese = +1 ' + f.tgt + ', 10+ prese = +2!')) return;
+  spendPoints(f.cost);
+  const score = await playGomitolo();
+  let gain = score >= 10 ? 2 : score >= 5 ? 1 : 0;
+  if (!gain){
+    e.trainAt = Date.now();
+    persistColl(); renderGym();
+    coachSayMsg('🙀 ' + score + ' prese?! Cibo sprecato. Ai miei tempi si prendeva il gomitolo pure bendati.');
+    return;
+  }
+  gain = Math.min(gain, trainAvail(e));
+  if (!Array.isArray(e.statsv) || e.statsv.length !== 6){
+    e.statsv = rollCard(parseInt(e.serial, 16) >>> 0, e.name).stats.map(s => s.value);
+  }
+  if (f.stat === 'hp'){
+    e.hp = Math.min(150, (e.hp || 80) + gain * 2);
+  } else {
+    e.statsv[f.stat] = Math.min(99, (e.statsv[f.stat] || 50) + gain);
+  }
+  e.trainUsed = (e.trainUsed || 0) + gain;
+  e.trainAt = Date.now();
+  await redrawEntry(e);
+  persistColl(); renderCollection(); renderGym();
+  sfx('win');
+  toast(f.ic + ' +' + (f.stat === 'hp' ? (gain * 2) + ' HP' : gain + ' ' + f.tgt) + ' per ' + e.name + '! (' + score + ' prese)');
+  coachSayMsg(score >= 10
+    ? '😼 ' + score + ' prese! ' + e.name + ' ha la stoffa del campione. Bonus raddoppiato, e non dirlo agli altri allievi.'
+    : '👍 ' + score + ' prese, onesto lavoro. ' + e.name + ' cresce. Ora a nanna: si torna tra un\'ora.');
+  if (myActive.has(e.serial)) coachSayMsg(document.getElementById('coachSay').textContent + ' (Ricorda il 🔄 nella scheda Mondo per aggiornare la carta online!)');
+}
+function coachSayMsg(t){
+  const el = document.getElementById('coachSay');
+  if (el) el.textContent = t;
+}
+function coachAdvice(){
+  const open = ['Miao, recluta! ', 'Ascolta il vecchio Baffo: ', 'Sputa il croccantino e ascolta: ', 'Ai miei tempi niente cuscini morbidi. ', 'Baffi dritti e orecchie tese: '];
+  const parts = [];
+  if (!collection.length){
+    coachSayMsg('La palestra è vuota! Portami un allievo dalla scheda 📸 Crea.');
+    return;
+  }
+  const e = gymCat() || collection[0];
+  const foodByStat = {0: '🍗 pollo', 1: '🐁 topolino', 2: '🌿 erba gatta', 3: '🐟 pesce', 4: '🧀 chicche'};
+  if (Array.isArray(e.statsv) && e.statsv.length === 6){
+    let low = 0;
+    for (let i = 1; i < 5; i++) if (e.statsv[i] < e.statsv[low]) low = i;
+    parts.push('Il punto debole di ' + e.name + ' è la ' + STATS[low].key + ' (' + e.statsv[low] + '): ' + foodByStat[low] + ' e giù di gomitolo.');
+  }
+  const s = battleStats[e.serial];
+  if (s && s.l > s.w) parts.push('Con ' + s.w + ' vittorie e ' + s.l + ' sconfitte serve grinta, non coccole.');
+  else if (s && s.w >= 3 && s.l === 0) parts.push('È imbattuto: attento che non si monti la testa.');
+  if (trainAvail(e) <= 0) parts.push('Margine di allenamento finito: solo le vittorie nel mondo sbloccano nuovi progressi.');
+  if (points < 25) parts.push('E le casse piangono (' + points + ' punti): vinci qualche scommessa mondiale.');
+  if (!parts.length) parts.push(e.name + ' è in forma smagliante. Fallo combattere, che la panchina infiacchisce i muscoli.');
+  coachSayMsg(open[Math.floor(Math.random() * open.length)] + parts.join(' '));
+  sfx('charm');
+}
+async function initGym(){
+  renderGym();
+  // ritratto del Coach: generato UNA volta sola con l'AI, poi salvato per sempre
+  try {
+    let img = await idbGet('coach');
+    if (!img){
+      const key = apiKeyEl.value.trim();
+      if (!key) return;
+      const models = await listImageModels(key).catch(() => []);
+      const model = models[0] || GEMINI_MODELS[0];
+      const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent?key=' + encodeURIComponent(key), {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({contents: [{parts: [{text: 'Cartoon portrait of a wise old grey cat gym coach: red headband, silver whistle around his neck, big mustache-like whiskers, one scarred ear, proud expression. Flat cel shading, bold outlines, warm colors, dark purple background. Square portrait, bust only.'}]}]})
+      });
+      if (!r.ok) return;
+      const j = await r.json();
+      const parts = (((j.candidates || [])[0] || {}).content || {}).parts || [];
+      const p = parts.find(x => x.inlineData && x.inlineData.data);
+      if (!p) return;
+      img = 'data:' + (p.inlineData.mimeType || 'image/png') + ';base64,' + p.inlineData.data;
+      await idbSet('coach', img);
+    }
+    const el = document.getElementById('coachImg');
+    if (el && img){
+      el.src = img;
+      el.style.display = 'block';
+      document.getElementById('coachEmoji').style.display = 'none';
+    }
+  } catch(e){}
+}
+
 /* ---------- avvio: carica da IndexedDB (con travaso automatico dalla vecchia memoria) ---------- */
 (async function initStore(){
   await captureAuthFromHash();
@@ -3210,6 +3427,7 @@ async function buyFrame(){
   showTab(collection.length ? 'coll' : 'crea');   // apertura intelligente: carte se ne hai, foto se no
   renderMedals();
   checkAchievements();
+  initGym();
   checkWorldNews();
   setInterval(checkWorldNews, 60000);   // controlla novità ogni minuto anche senza ricaricare
   setInterval(() => {
