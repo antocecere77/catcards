@@ -171,7 +171,7 @@
 </head>
 <body>
   <h1>🐱 Cat<span>Cards</span></h1>
-  <p class="tag">Fotografa il tuo gatto e trasformalo in una carta da collezione · <strong style="color:var(--accent)">v8.4</strong></p>
+  <p class="tag">Fotografa il tuo gatto e trasformalo in una carta da collezione · <strong style="color:var(--accent)">v8.5</strong></p>
   <p id="bootErr" style="display:none; color:#ff6b6b; font-size:.8rem; max-width:440px; text-align:center; margin-bottom:10px;"></p>
 
   <div id="tabs" style="display:flex; flex-direction:column; gap:8px; width:100%; max-width:440px; margin-bottom:6px;">
@@ -1342,8 +1342,8 @@ function recordResult(winSerial, loseSerial){
   battleStats[loseSerial] = battleStats[loseSerial] || {w:0, l:0};
   battleStats[winSerial].w++;
   battleStats[loseSerial].l++;
-  battleStats[winSerial].xp  = (battleStats[winSerial].xp  || 0) + 25;
-  battleStats[loseSerial].xp = (battleStats[loseSerial].xp || 0) + 10;
+  battleStats[winSerial].xp  = (battleStats[winSerial].xp  || 0) + (arguments.length > 2 ? arguments[2] : 25);
+  battleStats[loseSerial].xp = (battleStats[loseSerial].xp || 0) + (arguments.length > 3 ? arguments[3] : 10);
   try { localStorage.setItem('catcards_stats', JSON.stringify(battleStats)); } catch(e){}
   renderStats();
 }
@@ -2246,11 +2246,11 @@ async function runBattle(ea, eb, title){
   }
   blog('🏆 ' + w.name + ' vince il combattimento!', 'winner');
   sfx('win');
-  recordResult(w.serial, loser.serial);
+  // esperienza: piena per mondiali e dal vivo (25/10), ridotta per locale e tornei (5/2)
+  const seria = (title === 'SFIDA MONDIALE' || title === 'SFIDA DAL VIVO');
+  recordResult(w.serial, loser.serial, seria ? 25 : 5, seria ? 10 : 2);
   if (title === 'SFIDA MONDIALE') settleBet(w.serial);
   else currentBet = null;   // nessuna scommessa fuori dal mondiale: mai puntate "appese"
-  // contatori per il medagliere: contano le sfide mondiali e dal vivo (il locale è allenamento)
-  const seria = (title === 'SFIDA MONDIALE' || title === 'SFIDA DAL VIVO');
   if (window._mineSerial && seria){
     if (w.serial === window._mineSerial){
       counters.wins++; counters.winStreak = (counters.winStreak || 0) + 1; counters.lossStreak = 0;
