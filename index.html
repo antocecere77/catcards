@@ -161,7 +161,7 @@
 </head>
 <body>
   <h1>🐱 Cat<span>Cards</span></h1>
-  <p class="tag">Fotografa il tuo gatto e trasformalo in una carta da collezione · <strong style="color:var(--accent)">v6.9</strong></p>
+  <p class="tag">Fotografa il tuo gatto e trasformalo in una carta da collezione · <strong style="color:var(--accent)">v7.0</strong></p>
 
   <div id="tabs" style="display:flex; gap:8px; width:100%; max-width:440px; margin-bottom:6px;">
     <button class="tabBtn" data-tab="crea" onclick="showTab('crea')">📸 Crea</button>
@@ -241,6 +241,7 @@
       <div id="newsList" class="count" style="line-height:1.9;"></div>
       <label class="small">Il tuo nome giocatore (obbligatorio, min 3 lettere)</label>
       <input type="text" id="playerName" placeholder="Es. Antonio" maxlength="20">
+      <button class="btn secondary" id="nameSaveBtn" onclick="applyOwnerName()" style="display:none; margin-top:8px;">💾 Applica il nuovo nome a tutte le carte pubblicate</button>
       <details id="pubDetails" style="margin-top:12px;">
         <summary>🗂️ Scegli quali carte pubblicare</summary>
         <div id="pubList" style="margin-top:8px;"></div>
@@ -1007,31 +1008,30 @@ async function loadMyWorldCards(){
   if (!el) return;
   if (!session || !session.access_token){ el.textContent = ''; return; }
   try {
-    const r = await fetch(SUPA_URL + '/rest/v1/cards?select=serial,name,owner,wins,losses,retired&owner_id=eq.' + session.user_id + '&order=wins.desc', {headers: supaHeaders()});
+    const r = await fetch(SUPA_URL + '/rest/v1/cards?select=serial,name,owner,wins,losses,retired,img&owner_id=eq.' + session.user_id + '&order=wins.desc', {headers: supaHeaders()});
     if (!r.ok){ el.textContent = ''; return; }
     const rows = await r.json();
     myPublished = new Set(rows.map(x => x.serial));
     myActive = new Set(rows.filter(x => !x.retired).map(x => x.serial));
     renderPubList();   // la lista di pubblicazione mostra solo le carte non ancora online
     refreshArena();    // il menu delle sfide mostra solo le pubblicate attive
-    // il nome giocatore è l'identità nel mondo: con carte pubblicate non si cambia più
-    if (rows.length){
-      if (rows[0].owner) playerNameEl.value = rows[0].owner;
-      playerNameEl.readOnly = true;
-      playerNameEl.style.opacity = '.7';
-      playerNameEl.title = 'Il nome è legato alle carte pubblicate: per cambiarlo dovresti ritirarle tutte.';
-    } else {
-      playerNameEl.readOnly = false;
-      playerNameEl.style.opacity = '';
-      playerNameEl.title = '';
-    }
+    // un account = un nome: se lo cambi, si applica a tutte le carte pubblicate
+    serverOwner = rows.length ? (rows[0].owner || '') : '';
+    if (serverOwner && !playerNameEl.value.trim()) playerNameEl.value = serverOwner;
+    updateNameSaveBtn();
     if (!rows.length){ el.textContent = 'Nessuna tua carta è ancora pubblicata.'; return; }
     el.innerHTML = '';
     rows.forEach(x => {
       const div = document.createElement('div');
       div.style.cssText = 'display:flex; align-items:center; gap:8px; padding:4px 0;';
+      const th = document.createElement('img');
+      th.style.cssText = 'width:40px; border-radius:6px; flex-shrink:0; cursor:pointer;';
+      if (x.img) th.src = x.img; else th.style.display = 'none';
+      th.onclick = () => showMyWorldCard(x);
+      div.appendChild(th);
       const span = document.createElement('span');
-      span.style.cssText = 'flex:1; min-width:0;';
+      span.style.cssText = 'flex:1; min-width:0; cursor:pointer;';
+      span.onclick = () => showMyWorldCard(x);
       span.innerHTML = '<strong>' + x.name + '</strong> — ' + (x.wins || 0) + ' V / ' + (x.losses || 0) + ' S' + (x.retired ? ' · 🚪 ritirata' : '');
       div.appendChild(span);
       if (!x.retired){
@@ -1052,6 +1052,18 @@ async function loadMyWorldCards(){
       el.appendChild(div);
     });
   } catch(e){}
+}
+function showMyWorldCard(x){
+  // se la carta è nella collezione locale, apri la scheda completa; altrimenti mostra l'immagine dal server
+  const idx = collection.findIndex(c => c.serial === x.serial);
+  if (idx >= 0){ openCardModal(idx); return; }
+  const body = document.getElementById('worldModalBody');
+  body.innerHTML =
+    (x.img ? '<img src="' + x.img + '" style="width:100%; border-radius:12px;">' : '') +
+    '<h2 style="margin-top:10px;">' + x.name + '</h2>' +
+    '<p class="count">' + (x.wins || 0) + ' V / ' + (x.losses || 0) + ' S' + (x.retired ? ' · 🚪 ritirata' : '') + '</p>' +
+    '<button class="btn secondary" onclick="document.getElementById(\'worldModal\').style.display=\'none\'">✖ Chiudi</button>';
+  document.getElementById('worldModal').style.display = 'flex';
 }
 async function toggleRetire(serial, retire){
   await refreshSessionIfNeeded();
@@ -2658,7 +2670,31 @@ function loginGoogle(){
 }
 const playerNameEl = document.getElementById('playerName');
 try { playerNameEl.value = localStorage.getItem('catcards_player') || ''; } catch(e){}
-playerNameEl.addEventListener('input', () => { try { localStorage.setItem('catcards_player', playerNameEl.value.trim()); } catch(e){} });
+playerNameEl.addEventListener('input', () => {
+  try { localStorage.setItem('catcards_player', playerNameEl.value.trim()); } catch(e){}
+  updateNameSaveBtn();
+});
+let serverOwner = '';
+function updateNameSaveBtn(){
+  const btn = document.getElementById('nameSaveBtn');
+  if (!btn) return;
+  const name = playerNameEl.value.trim();
+  btn.style.display = (session && myPublished.size && name.length >= 3 && serverOwner && name !== serverOwner) ? 'block' : 'none';
+}
+async function applyOwnerName(){
+  const name = playerNameEl.value.trim();
+  if (name.length < 3 || !session) return;
+  await refreshSessionIfNeeded();
+  try {
+    const r = await fetch(SUPA_URL + '/rest/v1/cards?owner_id=eq.' + session.user_id, {
+      method: 'PATCH', headers: supaHeaders(),
+      body: JSON.stringify({owner: name})
+    });
+    if (!r.ok){ alert('Cambio nome fallito: HTTP ' + r.status); return; }
+  } catch(err){ alert('Errore di rete: ' + err.message); return; }
+  alert('✅ Ora tutte le tue carte nel mondo giocano come «' + name + '».');
+  loadMyWorldCards();
+}
 function makeThumb(dataUrl, w){
   return new Promise((res, rej) => {
     const im = new Image();
