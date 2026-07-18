@@ -161,7 +161,7 @@
 </head>
 <body>
   <h1>🐱 Cat<span>Cards</span></h1>
-  <p class="tag">Fotografa il tuo gatto e trasformalo in una carta da collezione · <strong style="color:var(--accent)">v6.8</strong></p>
+  <p class="tag">Fotografa il tuo gatto e trasformalo in una carta da collezione · <strong style="color:var(--accent)">v6.9</strong></p>
 
   <div id="tabs" style="display:flex; gap:8px; width:100%; max-width:440px; margin-bottom:6px;">
     <button class="tabBtn" data-tab="crea" onclick="showTab('crea')">📸 Crea</button>
@@ -1007,11 +1007,24 @@ async function loadMyWorldCards(){
   if (!el) return;
   if (!session || !session.access_token){ el.textContent = ''; return; }
   try {
-    const r = await fetch(SUPA_URL + '/rest/v1/cards?select=serial,name,wins,losses,retired&owner_id=eq.' + session.user_id + '&order=wins.desc', {headers: supaHeaders()});
+    const r = await fetch(SUPA_URL + '/rest/v1/cards?select=serial,name,owner,wins,losses,retired&owner_id=eq.' + session.user_id + '&order=wins.desc', {headers: supaHeaders()});
     if (!r.ok){ el.textContent = ''; return; }
     const rows = await r.json();
     myPublished = new Set(rows.map(x => x.serial));
+    myActive = new Set(rows.filter(x => !x.retired).map(x => x.serial));
     renderPubList();   // la lista di pubblicazione mostra solo le carte non ancora online
+    refreshArena();    // il menu delle sfide mostra solo le pubblicate attive
+    // il nome giocatore è l'identità nel mondo: con carte pubblicate non si cambia più
+    if (rows.length){
+      if (rows[0].owner) playerNameEl.value = rows[0].owner;
+      playerNameEl.readOnly = true;
+      playerNameEl.style.opacity = '.7';
+      playerNameEl.title = 'Il nome è legato alle carte pubblicate: per cambiarlo dovresti ritirarle tutte.';
+    } else {
+      playerNameEl.readOnly = false;
+      playerNameEl.style.opacity = '';
+      playerNameEl.title = '';
+    }
     if (!rows.length){ el.textContent = 'Nessuna tua carta è ancora pubblicata.'; return; }
     el.innerHTML = '';
     rows.forEach(x => {
@@ -1203,7 +1216,14 @@ function refreshArena(){
   if (selMine){
     const keepM = selMine.value;
     selMine.innerHTML = '';
-    collection.forEach((c, i) => selMine.add(new Option('🐱 ' + c.name + ' (' + c.rarity + ')', String(i))));
+    let eligible = 0;
+    collection.forEach((c, i) => {
+      if (myActive.has(c.serial)){
+        selMine.add(new Option('🐱 ' + c.name + ' (' + c.rarity + ')', String(i)));
+        eligible++;
+      }
+    });
+    if (!eligible) selMine.add(new Option('— pubblica prima una carta —', ''));
     if (Array.prototype.some.call(selMine.options, o => o.value === keepM)) selMine.value = keepM;
     document.getElementById('onlinePanel').style.display = 'block';
   }
@@ -2583,6 +2603,7 @@ function updatePubBtn(){
   btn.textContent = '📤 Pubblica le carte selezionate (' + n + ')';
 }
 let myPublished = new Set();
+let myActive = new Set();   // pubblicate e non ritirate: le uniche che possono sfidare
 function renderPubList(){
   const el = document.getElementById('pubList');
   if (!el) return;
@@ -2803,7 +2824,7 @@ async function fightWorld(i){
   const remote = worldCards[i];
   const v = document.getElementById('selMine').value;
   const mineEntry = collection[parseInt(v, 10)];
-  if (!mineEntry){ alert('Scegli prima la tua carta per le sfide online.'); return; }
+  if (!mineEntry){ alert('Per sfidare online serve una TUA carta pubblicata e attiva: pubblicane una da «Scegli quali carte pubblicare».'); return; }
   const remoteEntry = {
     serial: remote.serial, name: remote.name, nick: remote.nick,
     potere: (typeof remote.potere === 'number') ? remote.potere : undefined,
