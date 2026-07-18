@@ -171,7 +171,7 @@
 </head>
 <body>
   <h1>🐱 Cat<span>Cards</span></h1>
-  <p class="tag">Fotografa il tuo gatto e trasformalo in una carta da collezione · <strong style="color:var(--accent)">v8.8</strong></p>
+  <p class="tag">Fotografa il tuo gatto e trasformalo in una carta da collezione · <strong style="color:var(--accent)">v8.9</strong></p>
   <p id="bootErr" style="display:none; color:#ff6b6b; font-size:.8rem; max-width:440px; text-align:center; margin-bottom:10px;"></p>
 
   <div id="tabs" style="display:flex; flex-direction:column; gap:8px; width:100%; max-width:440px; margin-bottom:6px;">
@@ -327,6 +327,16 @@
       <button class="btn secondary" onclick="document.getElementById('backupFile').click()" style="margin-top:4px;">📂 Importa backup</button>
     </div>
     <input type="file" id="backupFile" accept="application/json,.json" style="display:none" onchange="importBackup(event)">
+    <label class="small" style="margin-top:18px;">🎁 Codice regalo</label>
+    <input type="text" id="giftCode" placeholder="GATTO-...">
+    <button class="btn secondary" onclick="redeemGift()" style="margin-top:8px;">Riscatta punti</button>
+    <p class="count" id="giftMsg" style="margin-top:6px;"></p>
+    <div id="adminGift" style="display:none; margin-top:10px; padding:10px; background:var(--panel2); border-radius:10px;">
+      <label class="small">👑 Admin: crea un codice regalo</label>
+      <input type="number" id="giftAmount" placeholder="Punti (es. 100)" min="1" max="500" style="width:100%; padding:12px; border-radius:10px; border:1px solid #4d4477; background:var(--panel); color:var(--text);">
+      <button class="btn secondary" onclick="makeGift()" style="margin-top:8px;">Genera codice</button>
+      <p class="count" id="giftOut" style="margin-top:6px; word-break:break-all;"></p>
+    </div>
     <label class="small" style="margin-top:18px;">Audio e presentazioni</label>
     <button class="btn secondary" data-snd onclick="toggleSound(this)" style="margin-top:4px;">🔊 Suoni: ON</button>
     <button class="btn secondary" id="autoSkipBtn" onclick="toggleAutoSkip(this)" style="margin-top:8px;">🎬 Presentazioni: ON</button>
@@ -2808,12 +2818,49 @@ function renderPubList(){
   updatePubBtn();
 }
 
+const ADMIN_EMAIL = 'antocecere77@gmail.com';
+function giftSig(n, salt){
+  let h = 0;
+  const s = 'GATTO|' + n + '|' + salt + '|miao-supremo-42';
+  for (let i = 0; i < s.length; i++){ h = ((h << 5) - h + s.charCodeAt(i)) | 0; }
+  return Math.abs(h).toString(36).toUpperCase().slice(0, 6);
+}
+function makeGift(){
+  const n = parseInt(document.getElementById('giftAmount').value, 10);
+  if (!(n >= 1 && n <= 500)){ document.getElementById('giftOut').textContent = '⚠️ Scegli un importo tra 1 e 500.'; return; }
+  const salt = Math.random().toString(36).slice(2, 6).toUpperCase();
+  const code = 'GATTO-' + n + '-' + salt + '-' + giftSig(n, salt);
+  document.getElementById('giftOut').textContent = code + '  (copialo e invialo: vale una volta per giocatore)';
+  try { navigator.clipboard.writeText(code); } catch(e){}
+}
+function redeemGift(){
+  const msg = document.getElementById('giftMsg');
+  const code = (document.getElementById('giftCode').value || '').trim().toUpperCase();
+  const m = code.match(/^GATTO-(\d+)-([A-Z0-9]{4})-([A-Z0-9]{6})$/);
+  if (!m){ msg.textContent = '❌ Codice non valido.'; return; }
+  const n = parseInt(m[1], 10);
+  if (giftSig(n, m[2]) !== m[3]){ msg.textContent = '❌ Codice non valido (firma errata).'; return; }
+  let used = [];
+  try { used = JSON.parse(localStorage.getItem('catcards_gifts') || '[]'); } catch(e){}
+  if (used.indexOf(code) >= 0){ msg.textContent = '⚠️ Codice già riscattato su questo dispositivo.'; return; }
+  used.push(code);
+  try { localStorage.setItem('catcards_gifts', JSON.stringify(used)); } catch(e){}
+  points += n;
+  try { localStorage.setItem('catcards_points', String(points)); } catch(e){}
+  renderWallet();
+  checkAchievements();
+  msg.textContent = '🎁 +' + n + ' punti! Totale: ' + points;
+  sfx('win');
+  document.getElementById('giftCode').value = '';
+}
 function renderAuth(){
   const member = document.getElementById('mondoMember');
   if (member){
     member.style.display = (session && session.access_token) ? 'block' : 'none';
     renderPubList();
   }
+  const adm = document.getElementById('adminGift');
+  if (adm) adm.style.display = (session && session.email === ADMIN_EMAIL) ? 'block' : 'none';
   const box = document.getElementById('authBox');
   if (!box) return;
   if (session && session.access_token){
