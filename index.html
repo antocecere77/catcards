@@ -141,6 +141,8 @@
   #collPanel .count{color:var(--muted); font-size:.85rem; margin-top:2px;}
   .modal{position:fixed; inset:0; background:rgba(0,0,0,.88); display:none; align-items:center; justify-content:flex-start; flex-direction:column; padding:16px 16px 40px; z-index:10; overflow-y:auto;}
   .modal img{max-width:88%; max-height:52vh; border-radius:14px; box-shadow:0 20px 60px rgba(0,0,0,.7); flex-shrink:0;}
+  #modalHolo{width:min(88vw, 37vh, 400px); flex-shrink:0;}
+  #modalHolo img{width:100%; height:auto; max-width:none; max-height:none; display:block; border-radius:14px;}
   .modal .btn{max-width:320px; margin-top:10px; flex-shrink:0;}
   .tabBtn{
     flex:1; padding:11px 4px; border-radius:10px; background:var(--panel); color:var(--muted);
@@ -159,7 +161,7 @@
 </head>
 <body>
   <h1>🐱 Cat<span>Cards</span></h1>
-  <p class="tag">Fotografa il tuo gatto e trasformalo in una carta da collezione · <strong style="color:var(--accent)">v6.2</strong></p>
+  <p class="tag">Fotografa il tuo gatto e trasformalo in una carta da collezione · <strong style="color:var(--accent)">v6.3</strong></p>
 
   <div id="tabs" style="display:flex; gap:8px; width:100%; max-width:440px; margin-bottom:6px;">
     <button class="tabBtn" data-tab="crea" onclick="showTab('crea')">📸 Crea</button>
@@ -309,7 +311,7 @@
     <button class="mnav" id="mPrev" style="left:6px;" onclick="stepCard(-1)">‹</button>
     <button class="mnav" id="mNext" style="right:6px;" onclick="stepCard(1)">›</button>
     <button id="mClose" onclick="closeModal()">✕</button>
-    <div id="modalHolo"><img id="modalImg" alt="carta" style="max-width:100%; max-height:52vh; border-radius:14px;"></div>
+    <div id="modalHolo"><img id="modalImg" alt="carta"></div>
     <p id="modalCap" style="color:var(--text); text-align:center; max-width:360px; font-size:.92rem; margin-top:8px; line-height:1.5;"></p>
     <button class="btn" onclick="downloadSaved()">⬇️ Scarica</button>
     <button class="btn secondary" onclick="playSavedTheme()">▶️ Ascolta il tema</button>
