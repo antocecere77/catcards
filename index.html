@@ -173,7 +173,7 @@
 </head>
 <body>
   <h1>🐱 Cat<span>Cards</span></h1>
-  <p class="tag">Fotografa il tuo gatto e trasformalo in una carta da collezione · <strong style="color:var(--accent)">v9.5</strong></p>
+  <p class="tag">Fotografa il tuo gatto e trasformalo in una carta da collezione · <strong style="color:var(--accent)">v9.6</strong></p>
   <p id="bootErr" style="display:none; color:#ff6b6b; font-size:.8rem; max-width:440px; text-align:center; margin-bottom:10px;"></p>
 
   <div id="tabs" style="display:flex; flex-direction:column; gap:8px; width:100%; max-width:440px; margin-bottom:6px;">
@@ -239,11 +239,6 @@
       <button class="btn secondary" onclick="startTournament(4)" style="margin-top:10px;">🏆 Torneo a 4</button>
       <button class="btn secondary" onclick="startTournament(8)" style="margin-top:10px;">🏆 Torneo a 8</button>
     </div>
-    <label class="small" style="margin-top:14px;">⚡ Sfida dal vivo (vale punti e medaglie!)</label>
-    <div style="display:flex; gap:10px;">
-      <button class="btn secondary" onclick="showQr()" style="margin-top:4px;">📱 Mostra il mio QR</button>
-      <button class="btn secondary" onclick="scanQr()" style="margin-top:4px;">📷 Inquadra QR</button>
-    </div>
     <div id="statsBox" style="margin-top:16px; display:none;">
       <h2 style="font-size:1rem;">📊 Albo d'oro</h2>
       <div id="statsList" class="count" style="line-height:2; margin-top:6px;"></div>
@@ -255,6 +250,18 @@
       <button class="btn secondary" onclick="importRival()" style="margin-top:10px;">Importa rivale</button>
       <p id="rivalMsg" class="count" style="margin-top:6px;"></p>
     </details>
+  </div>
+
+  <div class="panel" style="margin-top:20px;">
+    <h2>⚡ Sfida un amico</h2>
+    <p class="count" style="margin-top:4px;">Duello dal vivo, telefono contro telefono: vale punti, medaglie e scommesse come una sfida mondiale.</p>
+    <label class="small">Il tuo campione per il duello</label>
+    <select id="qrCat"></select>
+    <div style="display:flex; gap:10px;">
+      <button class="btn secondary" onclick="showQr()" style="margin-top:10px;">📱 Mostra il mio QR</button>
+      <button class="btn secondary" onclick="scanQr()" style="margin-top:10px;">📷 Inquadra il suo</button>
+    </div>
+    <p class="count" style="margin-top:8px;">Uno dei due mostra il QR, l'altro lo inquadra: il duello si gioca sul telefono di chi inquadra.</p>
   </div>
   </div>
 
@@ -1409,6 +1416,18 @@ function refreshArena(){
     const oB = new Option(label, 'c' + i); oB.disabled = resting; selB.add(oB);
   });
   rivals.forEach((r, i) => { selB.add(new Option('🆚 ' + r.name + ' (rivale)', 'r' + i)); });
+  const qrSel = document.getElementById('qrCat');
+  if (qrSel){
+    const keepQ = qrSel.value;
+    qrSel.innerHTML = '';
+    collection.forEach((c, i) => {
+      const resting = coolLeft(c) > 0;
+      const o = new Option('🐱 ' + c.name + ' (' + c.rarity + ')' + (resting ? ' 😴 riposa' : ''), 'c' + i);
+      o.disabled = resting;
+      qrSel.add(o);
+    });
+    if (Array.prototype.some.call(qrSel.options, o => o.value === keepQ)) qrSel.value = keepQ;
+  }
   const selMine = document.getElementById('selMine');
   if (selMine){
     const keepM = selMine.value;
@@ -3781,9 +3800,9 @@ function qrPayload(e){
   return 'CATCARDQ:' + btoa(unescape(encodeURIComponent(JSON.stringify(o))));
 }
 function showQr(){
-  const v = document.getElementById('selA').value;
+  const v = document.getElementById('qrCat').value;
   const e = getEntry(v);
-  if (!e){ alert('Scegli prima la tua carta nel menu «La tua carta».'); return; }
+  if (!e){ alert('Scegli prima il tuo campione nel menu qui sopra.'); return; }
   const rest = coolLeft(e);
   if (rest > 0){ alert('😴 ' + e.name + ' sta riposando: torna tra ' + Math.ceil(rest / 60000) + ' minuti.'); return; }
   if (typeof QRCode === 'undefined'){ alert('Generatore QR non caricato: ricarica la pagina con internet attivo.'); return; }
@@ -3803,9 +3822,9 @@ function stopScan(){
 }
 async function scanQr(){
   if (typeof jsQR === 'undefined'){ alert('Lettore QR non caricato: serve internet.'); return; }
-  const v = document.getElementById('selA').value;
+  const v = document.getElementById('qrCat').value;
   const mine = getEntry(v);
-  if (!mine){ alert('Scegli prima la tua carta nel menu «La tua carta».'); return; }
+  if (!mine){ alert('Scegli prima il tuo campione nel menu qui sopra.'); return; }
   const rest = coolLeft(mine);
   if (rest > 0){ alert('😴 ' + mine.name + ' sta riposando: torna tra ' + Math.ceil(rest / 60000) + ' minuti.'); return; }
   document.getElementById('scanModal').style.display = 'flex';
