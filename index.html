@@ -12,6 +12,8 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <title>CatCards — Trasforma il tuo gatto in una carta</title>
 <script src="https://cdn.jsdelivr.net/npm/webaudiofont@3.0.4/npm/dist/WebAudioFontPlayer.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <style>
   :root{
     --bg:#14121f; --panel:#1e1b2e; --panel2:#282440;
@@ -171,7 +173,7 @@
 </head>
 <body>
   <h1>🐱 Cat<span>Cards</span></h1>
-  <p class="tag">Fotografa il tuo gatto e trasformalo in una carta da collezione · <strong style="color:var(--accent)">v9.1</strong></p>
+  <p class="tag">Fotografa il tuo gatto e trasformalo in una carta da collezione · <strong style="color:var(--accent)">v9.2</strong></p>
   <p id="bootErr" style="display:none; color:#ff6b6b; font-size:.8rem; max-width:440px; text-align:center; margin-bottom:10px;"></p>
 
   <div id="tabs" style="display:flex; flex-direction:column; gap:8px; width:100%; max-width:440px; margin-bottom:6px;">
@@ -184,7 +186,8 @@
     <div style="display:flex; gap:8px;">
       <button class="tabBtn" data-tab="pal" onclick="showTab('pal')">🏋️ Palestra</button>
       <button class="tabBtn" data-tab="med" onclick="showTab('med')">🏅 Medagliere</button>
-      <button class="tabBtn" data-tab="opz" onclick="showTab('opz')">⚙️ Opzioni</button>
+      <button class="tabBtn" data-tab="reg" onclick="showTab('reg')">📖 Regole</button>
+      <button class="tabBtn" data-tab="opz" onclick="showTab('opz')">⚙️</button>
     </div>
   </div>
 
@@ -235,6 +238,11 @@
     <div style="display:flex; gap:10px;">
       <button class="btn secondary" onclick="startTournament(4)" style="margin-top:10px;">🏆 Torneo a 4</button>
       <button class="btn secondary" onclick="startTournament(8)" style="margin-top:10px;">🏆 Torneo a 8</button>
+    </div>
+    <label class="small" style="margin-top:14px;">⚡ Sfida dal vivo (vale punti e medaglie!)</label>
+    <div style="display:flex; gap:10px;">
+      <button class="btn secondary" onclick="showQr()" style="margin-top:4px;">📱 Mostra il mio QR</button>
+      <button class="btn secondary" onclick="scanQr()" style="margin-top:4px;">📷 Inquadra QR</button>
     </div>
     <div id="statsBox" style="margin-top:16px; display:none;">
       <h2 style="font-size:1rem;">📊 Albo d'oro</h2>
@@ -308,6 +316,42 @@
   </div>
   </div>
 
+  <div id="tab-reg" style="width:100%; max-width:440px; display:none;">
+  <div class="panel" style="margin-top:20px; font-size:.92rem; line-height:1.7;">
+    <h2>📖 Le regole di CatCards</h2>
+
+    <h2 style="font-size:1rem; margin-top:16px; color:var(--accent);">🎴 Le carte</h2>
+    <p>Fotografa un gatto e diventa una carta: l'AI lo ridisegna in cartoon e ne analizza aspetto e carattere per generare <strong>statistiche</strong> (un gattone robusto avrà più Forza), <strong>razza</strong>, <strong>descrizione</strong>, <strong>potere speciale</strong> e <strong>3 mosse</strong> (💥 potente ma imprecisa, ⚡ rapida e quasi infallibile, ✨ astuta che può confondere). La <strong>rarità</strong> è sorteggiata dall'impronta della foto: 55% Comune, 28% Rara, 13% Epica, 4% Leggendaria (Epiche e Leggendarie brillano e hanno statistiche col bonus). La stessa foto dà sempre la stessa carta.</p>
+
+    <h2 style="font-size:1rem; margin-top:16px; color:var(--accent);">⭐ Esperienza e livelli</h2>
+    <p>Le carte crescono combattendo: <strong>sfide mondiali e dal vivo: 25 XP a vittoria, 10 a sconfitta</strong> · <strong>arena locale e tornei: 5 e 2</strong>. Ogni 100 XP: +1 livello = <strong>+4 HP, +3% attacco e +3 di margine palestra</strong>. Gli specchi (carta contro sé stessa) non contano.</p>
+
+    <h2 style="font-size:1rem; margin-top:16px; color:var(--accent);">💰 I punti (la moneta)</h2>
+    <p>Si <strong>guadagnano solo online</strong>: +5 per ogni vittoria mondiale o dal vivo, scommesse vinte, medaglie (10-50 punti l'una) e 🎁 codici regalo. In locale: zero. Si <strong>spendono</strong> in: scommesse (puntata 10-100), cibo in palestra (20-25), 🌿 vantaggio mondiale (50), 🎨 Cornice d'Oro (100), 🔁 rigenerazione del disegno (30). Perdere un incontro non costa punti: solo le scommesse sbagliate.</p>
+
+    <h2 style="font-size:1rem; margin-top:16px; color:var(--accent);">🎲 Le scommesse</h2>
+    <p>Solo nelle <strong>sfide mondiali</strong>: prima del match scegli la puntata e su chi puntare (⭐ favorito a quota bassa, 🐾 underdog a quota alta). Vinci la puntata × (quota − 1); se sbagli perdi la puntata. Niente scommesse in locale o dal vivo.</p>
+
+    <h2 style="font-size:1rem; margin-top:16px; color:var(--accent);">😴 Il riposo</h2>
+    <p>Dopo ogni incontro vero (locale 1v1, mondiale, dal vivo) e ogni allenamento, i gatti coinvolti riposano <strong>1 ora</strong>: non possono combattere né mangiare. Il riposo è visibile a tutti, anche online. I tornei sono esibizioni e non stancano.</p>
+
+    <h2 style="font-size:1rem; margin-top:16px; color:var(--accent);">🏋️ La palestra</h2>
+    <p>Ogni livello sblocca <strong>+3 punti di margine allenamento</strong>. Compri un alimento (🥫 HP · 🍗 Forza · 🐁 Intelligenza · 🌿 Destrezza · 🐟 Velocità · 🧀 Fascino) e il gatto se lo guadagna con l'esercizio abbinato: 🧶 gomitolo (agilità), 🐭 caccia al topo (fisico), 🪶 segui la piuma (mente). Soglie: <strong>sotto 5 punti cibo sprecato, 5-9 bonus ×1, 10+ bonus ×2</strong> (per la piuma: 3 e 5 round). Le carte pubblicate si aggiornano online da sole. Coach Baffo dà consigli gratis.</p>
+
+    <h2 style="font-size:1rem; margin-top:16px; color:var(--accent);">🌍 L'Arena Mondiale</h2>
+    <p>Accedi con Google (o email), scegli il nome giocatore (uno per account, rinominabile ovunque in un colpo) e <strong>pubblica le carte che vuoi</strong>: solo le pubblicate e attive possono sfidare online. Sfidi le carte degli altri, il risultato finisce nel registro e in classifica (ordinata per % di vittorie). Puoi <strong>🚪 ritirare</strong> una carta: resta in classifica come "ritirata" ma nessuno può più sfidarla. Il pallino rosso su Mondo ti avvisa quando le tue carte hanno combattuto in tua assenza.</p>
+
+    <h2 style="font-size:1rem; margin-top:16px; color:var(--accent);">⚡ La sfida dal vivo (QR)</h2>
+    <p>Due telefoni: uno mostra il QR della sua carta (⚔️ Arena → 📱), l'altro lo inquadra (📷) e il duello si gioca sul suo schermo. <strong>Vale come una sfida mondiale</strong> (punti, XP pieni, medaglie, riposo, risultato registrato se le carte sono pubblicate) ma senza scommesse.</p>
+
+    <h2 style="font-size:1rem; margin-top:16px; color:var(--accent);">🏆 Tornei e medagliere</h2>
+    <p>Tornei a 4 o 8 tra le tue carte e i rivali: esibizioni automatiche con tabellone (XP ridotti, nessun riposo, nessun punto). Il <strong>🏅 Medagliere</strong> ha 16 medaglie con premi in punti — tocca una medaglia per scoprire come si conquista. Occhio alla 💀 Disfatta…</p>
+
+    <h2 style="font-size:1rem; margin-top:16px; color:var(--accent);">⚔️ Il combattimento</h2>
+    <p>Automatico a turni: Velocità decide chi parte (di solito), Forza il danno, Destrezza le schivate, Intelligenza i critici (×1.6), Fascino ammalia, Indifferenza riduce i danni. Nessun colpo toglie più del 38% degli HP. Poteri speciali, power-up casuali (🧶🌿📦🐟), colpo finale al rallentatore e replay. La presentazione si può saltare (⏭️ o da Opzioni).</p>
+  </div>
+  </div>
+
   <div id="tab-opz" style="width:100%; max-width:440px; display:none;">
   <div class="panel" style="margin-top:20px;">
     <h2>⚙️ Opzioni</h2>
@@ -361,6 +405,24 @@
 
   <div class="modal" id="worldModal" style="z-index:27;" onclick="if(event.target===this)this.style.display='none'">
     <div class="panel" style="max-width:360px; margin-top:30px;" id="worldModalBody"></div>
+  </div>
+
+  <div class="modal" id="qrModal" onclick="if(event.target===this)this.style.display='none'">
+    <div class="panel" style="max-width:340px; margin-top:30px; text-align:center;">
+      <h2>⚡ Sfida dal vivo</h2>
+      <p class="count" id="qrName"></p>
+      <div id="qrHolder" style="display:flex; justify-content:center; margin:12px 0; background:#fff; border-radius:12px; padding:10px;"></div>
+      <p class="count">Fai inquadrare questo codice dallo sfidante: nella sua app, ⚔️ Arena → 📷 Inquadra QR. Il duello si gioca sul suo telefono.</p>
+      <button class="btn secondary" onclick="document.getElementById('qrModal').style.display='none'">✖ Chiudi</button>
+    </div>
+  </div>
+
+  <div class="modal" id="scanModal">
+    <div class="panel" style="max-width:340px; margin-top:30px; text-align:center;">
+      <h2>📷 Inquadra il QR dello sfidante</h2>
+      <video id="scanVideo" playsinline style="width:100%; border-radius:12px; margin-top:10px; background:#000;"></video>
+      <button class="btn secondary" onclick="stopScan()" style="margin-top:10px;">✖ Annulla</button>
+    </div>
   </div>
 
   <div class="modal" id="gameModal" style="z-index:29;">
@@ -1031,7 +1093,7 @@ function stepCard(d){
 
 /* ---------- navigazione a schede ---------- */
 function showTab(t){
-  ['crea', 'coll', 'arena', 'mondo', 'pal', 'med', 'opz'].forEach(k => {
+  ['crea', 'coll', 'arena', 'mondo', 'pal', 'med', 'reg', 'opz'].forEach(k => {
     const el = document.getElementById('tab-' + k);
     if (el) el.style.display = (k === t) ? 'block' : 'none';
   });
@@ -3698,6 +3760,111 @@ async function initGym(){
       document.getElementById('coachEmoji').style.display = 'none';
     }
   } catch(e){}
+}
+
+/* ---------- sfida dal vivo via QR ---------- */
+function qrPayload(e){
+  const o = {s: e.serial, n: e.name, p: e.potere, v: e.statsv || null, h: e.hp || null,
+             r: e.rarity || null, k: e.nick || null, d: e.dna || null, u: e.strum || null};
+  return 'CATCARDQ:' + btoa(unescape(encodeURIComponent(JSON.stringify(o))));
+}
+function showQr(){
+  const v = document.getElementById('selA').value;
+  const e = getEntry(v);
+  if (!e){ alert('Scegli prima la tua carta nel menu «La tua carta».'); return; }
+  const rest = coolLeft(e);
+  if (rest > 0){ alert('😴 ' + e.name + ' sta riposando: torna tra ' + Math.ceil(rest / 60000) + ' minuti.'); return; }
+  if (typeof QRCode === 'undefined'){ alert('Generatore QR non caricato: serve internet.'); return; }
+  const holder = document.getElementById('qrHolder');
+  holder.innerHTML = '';
+  document.getElementById('qrName').textContent = '🐱 ' + e.name + ' attende sfidanti!';
+  QRCode.toCanvas(qrPayload(e), {width: 260, margin: 1}, (err, cv) => {
+    if (err || !cv){ holder.textContent = 'Errore nella generazione del QR.'; return; }
+    holder.appendChild(cv);
+  });
+  document.getElementById('qrModal').style.display = 'flex';
+}
+let scanStream = null, scanRAF = null;
+function stopScan(){
+  if (scanStream){ try { scanStream.getTracks().forEach(t => t.stop()); } catch(e){} scanStream = null; }
+  if (scanRAF){ cancelAnimationFrame(scanRAF); scanRAF = null; }
+  document.getElementById('scanModal').style.display = 'none';
+}
+async function scanQr(){
+  if (typeof jsQR === 'undefined'){ alert('Lettore QR non caricato: serve internet.'); return; }
+  const v = document.getElementById('selA').value;
+  const mine = getEntry(v);
+  if (!mine){ alert('Scegli prima la tua carta nel menu «La tua carta».'); return; }
+  const rest = coolLeft(mine);
+  if (rest > 0){ alert('😴 ' + mine.name + ' sta riposando: torna tra ' + Math.ceil(rest / 60000) + ' minuti.'); return; }
+  document.getElementById('scanModal').style.display = 'flex';
+  const video = document.getElementById('scanVideo');
+  try {
+    scanStream = await navigator.mediaDevices.getUserMedia({video: {facingMode: 'environment'}});
+  } catch(err){ stopScan(); alert('Fotocamera non disponibile: ' + err.message); return; }
+  video.srcObject = scanStream;
+  try { await video.play(); } catch(e){}
+  const cv = document.createElement('canvas');
+  const cx = cv.getContext('2d', {willReadFrequently: true});
+  const tick = () => {
+    if (!scanStream) return;
+    if (video.readyState >= 2 && video.videoWidth){
+      cv.width = video.videoWidth; cv.height = video.videoHeight;
+      cx.drawImage(video, 0, 0);
+      let code = null;
+      try { code = jsQR(cx.getImageData(0, 0, cv.width, cv.height).data, cv.width, cv.height); } catch(e){}
+      if (code && code.data && code.data.indexOf('CATCARDQ:') === 0){
+        stopScan();
+        onQrFound(code.data, mine);
+        return;
+      }
+    }
+    scanRAF = requestAnimationFrame(tick);
+  };
+  tick();
+}
+async function onQrFound(data, mine){
+  let o;
+  try { o = JSON.parse(decodeURIComponent(escape(atob(data.slice(9))))); } catch(e){ alert('QR non valido.'); return; }
+  if (!o.s || !o.n){ alert('QR non valido.'); return; }
+  if (o.s === mine.serial){ alert('Hai inquadrato la tua stessa carta!'); return; }
+  const entry = {serial: o.s, name: o.n,
+    potere: (typeof o.p === 'number') ? o.p : undefined,
+    statsv: (Array.isArray(o.v) && o.v.length === 6) ? o.v : undefined,
+    hp: (typeof o.h === 'number' && o.h > 0) ? o.h : undefined,
+    rarity: o.r || undefined, nick: o.k || undefined,
+    dna: o.d || null, strum: o.u || null, img: null};
+  let ownerNm = null;
+  try {   // se la carta è pubblicata, recupera foto e annuncio dal mondo
+    const r = await fetch(SUPA_URL + '/rest/v1/cards?select=img,owner,annuncio&serial=eq.' + encodeURIComponent(o.s), {headers: supaHeaders()});
+    if (r.ok){ const rows = await r.json(); if (rows.length){ entry.img = rows[0].img || null; entry.annuncio = rows[0].annuncio || null; ownerNm = rows[0].owner; } }
+  } catch(e){}
+  if (!confirm('⚡ Sfida dal vivo: ' + mine.name + ' contro ' + entry.name + (ownerNm ? ' di ' + ownerNm : '') + '. Si combatte!')) return;
+  unlockAudio();
+  window._mineSerial = mine.serial;
+  currentBet = null;   // regola: niente scommesse nelle sfide dal vivo
+  loadInstrument(cardInstr(mine)); loadInstrument(cardInstr(entry));
+  bracketState = null;
+  document.getElementById('bracket').style.display = 'none';
+  document.getElementById('bracketBtn').style.display = 'none';
+  document.getElementById('battleScreen').style.display = 'flex';
+  const w = await runBattle(mine, entry, 'SFIDA DAL VIVO');
+  if (!w) return;
+  if (session && session.access_token){
+    const winSerial = w.serial;
+    const loseSerial = (w.serial === mine.serial) ? entry.serial : mine.serial;
+    try {
+      await fetch(SUPA_URL + '/rest/v1/rpc/record_result', {method: 'POST', headers: supaHeaders(), body: JSON.stringify({winner: winSerial, loser: loseSerial})});
+      const me = playerNameEl.value.trim() || 'anonimo';
+      const won = (w.serial === mine.serial);
+      await fetch(SUPA_URL + '/rest/v1/matches', {method: 'POST', headers: supaHeaders(), body: JSON.stringify({
+        winner_serial: winSerial, winner_name: won ? mine.name : entry.name, winner_owner: won ? me : (ownerNm || 'dal vivo'),
+        loser_serial: loseSerial, loser_name: won ? entry.name : mine.name, loser_owner: won ? (ownerNm || 'dal vivo') : me
+      })});
+      blog('🌍 Risultato registrato nell\'Arena Mondiale!');
+      syncWorldBase();
+    } catch(e){}
+  }
 }
 
 /* ---------- avvio: carica da IndexedDB (con travaso automatico dalla vecchia memoria) ---------- */
