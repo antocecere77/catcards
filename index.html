@@ -171,7 +171,7 @@
 </head>
 <body>
   <h1>🐱 Cat<span>Cards</span></h1>
-  <p class="tag">Fotografa il tuo gatto e trasformalo in una carta da collezione · <strong style="color:var(--accent)">v7.4</strong></p>
+  <p class="tag">Fotografa il tuo gatto e trasformalo in una carta da collezione · <strong style="color:var(--accent)">v7.5</strong></p>
 
   <div id="tabs" style="display:flex; gap:8px; width:100%; max-width:440px; margin-bottom:6px;">
     <button class="tabBtn" data-tab="crea" onclick="showTab('crea')">📸 Crea</button>
@@ -301,8 +301,9 @@
       <button class="btn secondary" onclick="document.getElementById('backupFile').click()" style="margin-top:4px;">📂 Importa backup</button>
     </div>
     <input type="file" id="backupFile" accept="application/json,.json" style="display:none" onchange="importBackup(event)">
-    <label class="small" style="margin-top:18px;">Audio</label>
+    <label class="small" style="margin-top:18px;">Audio e presentazioni</label>
     <button class="btn secondary" data-snd onclick="toggleSound(this)" style="margin-top:4px;">🔊 Suoni: ON</button>
+    <button class="btn secondary" id="autoSkipBtn" onclick="toggleAutoSkip(this)" style="margin-top:8px;">🎬 Presentazioni: ON</button>
   </div>
   </div>
 
@@ -1577,7 +1578,7 @@ function pcmToWavDataUrl(b64, rate){
 async function synthAnnuncio(e){
   const key = apiKeyEl.value.trim();
   if (!key || !e.annuncio) return 'manca la chiave o l\'annuncio';
-  const voice = 'Charon';   // voce unica per tutti: lo speaker ufficiale dell'arena
+  const voice = 'Orus';   // voce unica per tutti: maschile, ferma, da speaker ufficiale dell'arena
   try {
     const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=' + encodeURIComponent(key), {
       method: 'POST', headers: {'Content-Type': 'application/json'},
@@ -1604,18 +1605,25 @@ async function synthAnnuncio(e){
 function playAnnuncio(f, fallbackText){
   return new Promise(res => {
     if (!soundOn || skipIntro){ res(); return; }
+    let done = false;
+    const finish = () => { if (!done){ done = true; res(); } };
     if (f.voce){
       try {
         const au = new Audio(f.voce);
         window._curAud = au;
-        au.onended = () => res();
-        au.onerror = () => { speak(fallbackText).then(res); };
-        au.play().catch(() => speak(fallbackText).then(res));
-        setTimeout(res, 10000);
+        // lo skip tronca la voce all'istante
+        const iv = setInterval(() => {
+          if (done){ clearInterval(iv); return; }
+          if (skipIntro || !battleOn){ clearInterval(iv); try { au.pause(); } catch(e){} finish(); }
+        }, 100);
+        au.onended = () => { clearInterval(iv); finish(); };
+        au.onerror = () => { clearInterval(iv); speak(fallbackText).then(finish); };
+        au.play().catch(() => { clearInterval(iv); speak(fallbackText).then(finish); });
+        setTimeout(finish, 10000);
         return;
       } catch(e){}
     }
-    speak(fallbackText).then(res);
+    speak(fallbackText).then(finish);
   });
 }
 function speak(text){
@@ -1991,10 +1999,10 @@ async function runBattle(ea, eb, title){
   updateBars(a, b);
   const rng = mulberry32((Date.now() & 0xffffffff) >>> 0);
   const side = f => f === a ? 'A' : 'B';
-  // presentazione stile MMA (saltabile con il pulsante ⏭️ o toccando il VS)
-  skipIntro = false;
+  // presentazione stile MMA (saltabile con il pulsante ⏭️, toccando il VS, o sempre da Opzioni)
+  skipIntro = !!window._autoSkip;
   if (musicBus && AC){ try { musicBus.gain.setValueAtTime(1, AC.currentTime); } catch(e){} }
-  document.getElementById('skipBtn').style.display = 'block';
+  document.getElementById('skipBtn').style.display = skipIntro ? 'none' : 'block';
   if (window._buyCatnip && window._mineSerial === a.serial && title === 'SFIDA MONDIALE'){
     window._buyCatnip = false;
     a.catnip = true;
@@ -2359,6 +2367,17 @@ function sfx(type){
       setTimeout(() => { try { meowSound(320, 640, 460, 0.55, null, 0.4); } catch(e){} }, 650);
     }
   } catch(e){}
+}
+window._autoSkip = false;
+try { window._autoSkip = localStorage.getItem('catcards_autoskip') === '1'; } catch(e){}
+function toggleAutoSkip(btn){
+  window._autoSkip = !window._autoSkip;
+  try { localStorage.setItem('catcards_autoskip', window._autoSkip ? '1' : '0'); } catch(e){}
+  btn.textContent = window._autoSkip ? '⏭️ Presentazioni: SALTATE' : '🎬 Presentazioni: ON';
+}
+function initAutoSkipBtn(){
+  const b = document.getElementById('autoSkipBtn');
+  if (b) b.textContent = window._autoSkip ? '⏭️ Presentazioni: SALTATE' : '🎬 Presentazioni: ON';
 }
 function toggleSound(btn){
   soundOn = !soundOn;
@@ -3012,13 +3031,13 @@ async function loadLeaderboard(){
   }
 }
 
-/* ---------- voci v2: riregistra tutti gli annunci con la voce unica ---------- */
+/* ---------- voci v3: riregistra TUTTI gli annunci con la voce maschile unica ---------- */
 function unifyVoices(){
   try {
-    if (localStorage.getItem('catcards_vocev') !== '2'){
+    if (localStorage.getItem('catcards_vocev') !== '3'){
       collection.forEach(e => { e.voce = null; e.vtried = 0; });
       persistColl();
-      localStorage.setItem('catcards_vocev', '2');
+      localStorage.setItem('catcards_vocev', '3');
     }
   } catch(e){}
 }
@@ -3180,6 +3199,7 @@ async function buyFrame(){
     try { localStorage.removeItem('catcards_coll'); localStorage.removeItem('catcards_rivals'); } catch(e){}
   }
   unifyVoices();
+  initAutoSkipBtn();
   renderCollection();
   renderStats();
   renderWallet();
