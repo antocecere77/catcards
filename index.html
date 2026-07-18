@@ -171,7 +171,7 @@
 </head>
 <body>
   <h1>🐱 Cat<span>Cards</span></h1>
-  <p class="tag">Fotografa il tuo gatto e trasformalo in una carta da collezione · <strong style="color:var(--accent)">v9.0</strong></p>
+  <p class="tag">Fotografa il tuo gatto e trasformalo in una carta da collezione · <strong style="color:var(--accent)">v9.1</strong></p>
   <p id="bootErr" style="display:none; color:#ff6b6b; font-size:.8rem; max-width:440px; text-align:center; margin-bottom:10px;"></p>
 
   <div id="tabs" style="display:flex; flex-direction:column; gap:8px; width:100%; max-width:440px; margin-bottom:6px;">
@@ -2852,39 +2852,51 @@ function renderPubList(){
 }
 
 const ADMIN_EMAIL = 'antocecere77@gmail.com';
-function giftSig(n, salt){
-  let h = 0;
-  const s = 'GATTO|' + n + '|' + salt + '|miao-supremo-42';
-  for (let i = 0; i < s.length; i++){ h = ((h << 5) - h + s.charCodeAt(i)) | 0; }
-  return Math.abs(h).toString(36).toUpperCase().slice(0, 6);
-}
-function makeGift(){
+async function makeGift(){
+  const out = document.getElementById('giftOut');
   const n = parseInt(document.getElementById('giftAmount').value, 10);
-  if (!(n >= 1 && n <= 500)){ document.getElementById('giftOut').textContent = '⚠️ Scegli un importo tra 1 e 500.'; return; }
-  const salt = Math.random().toString(36).slice(2, 6).toUpperCase();
-  const code = 'GATTO-' + n + '-' + salt + '-' + giftSig(n, salt);
-  document.getElementById('giftOut').textContent = code + '  (copialo e invialo: vale una volta per giocatore)';
-  try { navigator.clipboard.writeText(code); } catch(e){}
+  if (!(n >= 1 && n <= 1000)){ out.textContent = '⚠️ Scegli un importo tra 1 e 1000.'; return; }
+  if (!session || session.email !== ADMIN_EMAIL){ out.textContent = '⚠️ Solo l\'admin può creare codici.'; return; }
+  await refreshSessionIfNeeded();
+  const code = 'GATTO-' + Math.random().toString(36).slice(2, 10).toUpperCase();
+  try {
+    const r = await fetch(SUPA_URL + '/rest/v1/gifts', {
+      method: 'POST', headers: supaHeaders(),
+      body: JSON.stringify({code: code, points: n})
+    });
+    if (!r.ok){
+      let t = 'HTTP ' + r.status;
+      try { const j = await r.json(); if (j.message) t = j.message.slice(0, 120); } catch(e2){}
+      out.textContent = '❌ Creazione fallita: ' + t;
+      return;
+    }
+    out.textContent = code + ' (' + n + ' punti — monouso, copiato negli appunti)';
+    try { navigator.clipboard.writeText(code); } catch(e){}
+  } catch(err){ out.textContent = '❌ Errore di rete: ' + err.message; }
 }
-function redeemGift(){
+async function redeemGift(){
   const msg = document.getElementById('giftMsg');
   const code = (document.getElementById('giftCode').value || '').trim().toUpperCase();
-  const m = code.match(/^GATTO-(\d+)-([A-Z0-9]{4})-([A-Z0-9]{6})$/);
-  if (!m){ msg.textContent = '❌ Codice non valido.'; return; }
-  const n = parseInt(m[1], 10);
-  if (giftSig(n, m[2]) !== m[3]){ msg.textContent = '❌ Codice non valido (firma errata).'; return; }
-  let used = [];
-  try { used = JSON.parse(localStorage.getItem('catcards_gifts') || '[]'); } catch(e){}
-  if (used.indexOf(code) >= 0){ msg.textContent = '⚠️ Codice già riscattato su questo dispositivo.'; return; }
-  used.push(code);
-  try { localStorage.setItem('catcards_gifts', JSON.stringify(used)); } catch(e){}
-  points += n;
-  try { localStorage.setItem('catcards_points', String(points)); } catch(e){}
-  renderWallet();
-  checkAchievements();
-  msg.textContent = '🎁 +' + n + ' punti! Totale: ' + points;
-  sfx('win');
-  document.getElementById('giftCode').value = '';
+  if (!code){ msg.textContent = '⚠️ Incolla un codice.'; return; }
+  if (!session || !session.access_token){ msg.textContent = '🔑 Accedi prima (scheda 🌍 Mondo): il riscatto è legato al tuo account.'; return; }
+  await refreshSessionIfNeeded();
+  try {
+    const r = await fetch(SUPA_URL + '/rest/v1/rpc/redeem_gift', {
+      method: 'POST', headers: supaHeaders(),
+      body: JSON.stringify({gift_code: code})
+    });
+    if (!r.ok){ msg.textContent = '❌ Errore: HTTP ' + r.status; return; }
+    const n = await r.json();
+    if (n === -2){ msg.textContent = '🔑 Devi essere connesso per riscattare.'; return; }
+    if (n === -1 || !(n > 0)){ msg.textContent = '❌ Codice inesistente o già usato da qualcuno.'; return; }
+    points += n;
+    try { localStorage.setItem('catcards_points', String(points)); } catch(e){}
+    renderWallet();
+    checkAchievements();
+    msg.textContent = '🎁 +' + n + ' punti! Totale: ' + points;
+    sfx('win');
+    document.getElementById('giftCode').value = '';
+  } catch(err){ msg.textContent = '❌ Errore di rete: ' + err.message; }
 }
 function renderAuth(){
   const member = document.getElementById('mondoMember');
