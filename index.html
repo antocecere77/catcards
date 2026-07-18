@@ -171,7 +171,7 @@
 </head>
 <body>
   <h1>🐱 Cat<span>Cards</span></h1>
-  <p class="tag">Fotografa il tuo gatto e trasformalo in una carta da collezione · <strong style="color:var(--accent)">v7.2</strong></p>
+  <p class="tag">Fotografa il tuo gatto e trasformalo in una carta da collezione · <strong style="color:var(--accent)">v7.3</strong></p>
 
   <div id="tabs" style="display:flex; gap:8px; width:100%; max-width:440px; margin-bottom:6px;">
     <button class="tabBtn" data-tab="crea" onclick="showTab('crea')">📸 Crea</button>
@@ -234,7 +234,6 @@
       <h2 style="font-size:1rem;">📊 Albo d'oro</h2>
       <div id="statsList" class="count" style="line-height:2; margin-top:6px;"></div>
     </div>
-    <button class="btn secondary" onclick="buyCatnip()" style="margin-top:12px;">🌿 Vantaggio nel prossimo incontro (50 punti)</button>
     <details style="margin-top:12px;">
       <summary>📥 Importa la carta di un amico</summary>
       <label class="small">Incolla qui il codice sfida ricevuto</label>
@@ -264,6 +263,7 @@
       <div id="myWorldList" class="count" style="line-height:1.9;"></div>
       <label class="small">La tua carta per le sfide online</label>
       <select id="selMine"></select>
+      <button class="btn secondary" onclick="buyCatnip()" style="margin-top:10px;">🌿 Vantaggio nella prossima sfida mondiale (50 punti)</button>
       <button class="btn secondary" onclick="loadWorldCards()" style="margin-top:10px;">🔄 Cerca sfidanti nel mondo</button>
       <div id="worldList" style="margin-top:10px;"></div>
     </div>
@@ -277,7 +277,8 @@
     <h2>🏅 Medagliere</h2>
     <p class="count" data-wallet style="margin-top:4px;"></p>
     <div id="medalList" style="display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-top:12px;"></div>
-    <p class="count" style="margin-top:12px;">Le medaglie premiano con punti: spendili in scommesse mondiali, Cornice d'Oro (nella scheda carta), vantaggio in arena e rigenerazioni del disegno.</p>
+    <div id="medalInfo" style="display:none; margin-top:12px; padding:12px; background:var(--panel2); border:1px solid #4d4477; border-radius:10px; font-size:.9rem; line-height:1.6;"></div>
+    <p class="count" style="margin-top:12px;">Le medaglie premiano con punti: spendili in scommesse e vantaggio nelle sfide mondiali, Cornice d'Oro (nella scheda carta) e rigenerazioni del disegno.</p>
   </div>
   </div>
 
@@ -998,7 +999,7 @@ async function openMondoNews(){
   try {
     if (!collection.length) return;
     const s = collection.map(c => c.serial).join(',');
-    const r = await fetch(SUPA_URL + '/rest/v1/matches?or=(winner_serial.in.(' + s + '),loser_serial.in.(' + s + '))&order=id.desc&limit=10', {headers: supaHeaders()});
+    const r = await fetch(SUPA_URL + '/rest/v1/matches?or=(winner_serial.in.(' + s + '),loser_serial.in.(' + s + '))&order=id.desc&limit=5', {headers: supaHeaders()});
     if (!r.ok) return;
     const rows = await r.json();
     if (!rows.length) return;
@@ -1011,8 +1012,9 @@ async function openMondoNews(){
       return (mine[m.winner_serial] ? '🏆' : '💥') + ' <strong>' + m.winner_name + '</strong> di ' + (m.winner_owner || '?') +
         ' ha battuto <strong>' + m.loser_name + '</strong> di ' + (m.loser_owner || '?') + ' · ' + when;
     });
-    el.innerHTML = html + (html ? '<br><br>' : '') + '📜 <strong>Ultimi incontri delle tue carte:</strong><br>' + lines.join('<br>');
+    el.innerHTML = html + (html ? '<br><br>' : '') + '📜 <strong>Ultimi 5 incontri delle tue carte:</strong><br>' + lines.join('<br>');
   } catch(e){}
+  loadLeaderboard();   // classifica sempre fresca quando apri la scheda Mondo
 }
 function downloadSaved(){
   if (modalIndex < 0) return;
@@ -1967,7 +1969,7 @@ async function runBattle(ea, eb, title){
   skipIntro = false;
   if (musicBus && AC){ try { musicBus.gain.setValueAtTime(1, AC.currentTime); } catch(e){} }
   document.getElementById('skipBtn').style.display = 'block';
-  if (window._buyCatnip && window._mineSerial === a.serial){
+  if (window._buyCatnip && window._mineSerial === a.serial && title === 'SFIDA MONDIALE'){
     window._buyCatnip = false;
     a.catnip = true;
     blog('🌿 ' + a.name + ' entra in arena già carico di erba gatta!');
@@ -2943,6 +2945,8 @@ async function fightWorld(i){
     });
     blog('🌍 Risultato registrato nell\'Arena Mondiale!');
     syncWorldBase();
+    loadLeaderboard();
+    loadMyWorldCards();
   } catch(err){}
   // registro incontri: chi, contro chi, quando
   try {
@@ -3031,8 +3035,20 @@ function renderMedals(){
   ACHS.forEach(a => {
     const d = document.createElement('div');
     d.className = 'medal' + (ach[a.id] ? '' : ' locked');
+    d.style.cursor = 'pointer';
     d.title = a.ds + ' · premio: ' + a.pt + ' punti';
     d.innerHTML = '<div class="mi">' + a.ic + '</div><div class="mn">' + a.nm + '</div>';
+    d.onclick = () => {
+      const info = document.getElementById('medalInfo');
+      if (!info) return;
+      const won = ach[a.id];
+      info.style.display = 'block';
+      info.innerHTML = '<span style="font-size:1.4rem;">' + a.ic + '</span> <strong>' + a.nm + '</strong>' +
+        (won ? ' <span style="color:#51cf66;">✓ conquistata</span>' : ' <span style="color:var(--muted);">🔒 da conquistare</span>') +
+        '<br>Come si ottiene: ' + a.ds +
+        '<br>Premio: <strong>+' + a.pt + ' punti</strong>' +
+        (won ? '<br><span class="count">Sbloccata il ' + new Date(won).toLocaleDateString('it-IT') + '</span>' : '');
+    };
     el.appendChild(d);
   });
 }
