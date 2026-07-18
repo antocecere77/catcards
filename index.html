@@ -171,13 +171,14 @@
 </head>
 <body>
   <h1>🐱 Cat<span>Cards</span></h1>
-  <p class="tag">Fotografa il tuo gatto e trasformalo in una carta da collezione · <strong style="color:var(--accent)">v7.1</strong></p>
+  <p class="tag">Fotografa il tuo gatto e trasformalo in una carta da collezione · <strong style="color:var(--accent)">v7.2</strong></p>
 
   <div id="tabs" style="display:flex; gap:8px; width:100%; max-width:440px; margin-bottom:6px;">
     <button class="tabBtn" data-tab="crea" onclick="showTab('crea')">📸 Crea</button>
     <button class="tabBtn" data-tab="coll" onclick="showTab('coll')" id="collTabBtn">📚 Carte</button>
     <button class="tabBtn" data-tab="arena" onclick="showTab('arena')">⚔️ Arena</button>
     <button class="tabBtn" data-tab="mondo" onclick="showTab('mondo')">🌍 Mondo<span id="mondoDot" style="display:none; width:9px; height:9px; background:#e63946; border-radius:50%; margin-left:5px; vertical-align:middle;"></span></button>
+    <button class="tabBtn" data-tab="med" onclick="showTab('med')" style="flex:0 0 46px;">🏅</button>
     <button class="tabBtn" data-tab="opz" onclick="showTab('opz')" style="flex:0 0 46px;">⚙️</button>
   </div>
 
@@ -233,10 +234,6 @@
       <h2 style="font-size:1rem;">📊 Albo d'oro</h2>
       <div id="statsList" class="count" style="line-height:2; margin-top:6px;"></div>
     </div>
-    <div style="margin-top:16px;">
-      <h2 style="font-size:1rem;">🏅 Medagliere</h2>
-      <div id="medalList" style="display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-top:8px;"></div>
-    </div>
     <button class="btn secondary" onclick="buyCatnip()" style="margin-top:12px;">🌿 Vantaggio nel prossimo incontro (50 punti)</button>
     <details style="margin-top:12px;">
       <summary>📥 Importa la carta di un amico</summary>
@@ -272,6 +269,15 @@
     </div>
     <button class="btn secondary" onclick="loadLeaderboard()" style="margin-top:10px;">🏅 Classifica mondiale</button>
     <div id="leaderList" class="count" style="line-height:2; margin-top:8px;"></div>
+  </div>
+  </div>
+
+  <div id="tab-med" style="width:100%; max-width:440px; display:none;">
+  <div class="panel" style="margin-top:20px;">
+    <h2>🏅 Medagliere</h2>
+    <p class="count" data-wallet style="margin-top:4px;"></p>
+    <div id="medalList" style="display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-top:12px;"></div>
+    <p class="count" style="margin-top:12px;">Le medaglie premiano con punti: spendili in scommesse mondiali, Cornice d'Oro (nella scheda carta), vantaggio in arena e rigenerazioni del disegno.</p>
   </div>
   </div>
 
@@ -927,7 +933,7 @@ function stepCard(d){
 
 /* ---------- navigazione a schede ---------- */
 function showTab(t){
-  ['crea', 'coll', 'arena', 'mondo', 'opz'].forEach(k => {
+  ['crea', 'coll', 'arena', 'mondo', 'med', 'opz'].forEach(k => {
     const el = document.getElementById('tab-' + k);
     if (el) el.style.display = (k === t) ? 'block' : 'none';
   });
@@ -1385,8 +1391,10 @@ let points = 100;
 try { points = parseInt(localStorage.getItem('catcards_points') || '100', 10); } catch(e){}
 let currentBet = null;
 function renderWallet(){
+  const t = '💰 I tuoi punti: ' + points;
   const el = document.getElementById('wallet');
-  if (el) el.textContent = '💰 I tuoi punti: ' + points;
+  if (el) el.textContent = t;
+  document.querySelectorAll('[data-wallet]').forEach(x => { x.textContent = t; });
 }
 function estStrength(e){
   const card = rollCard(parseInt(e.serial, 16) >>> 0, e.name);
@@ -1933,11 +1941,11 @@ async function startBattle(){
   }
   unlockAudio();
   window._mineSerial = ea.serial;
-  loadInstrument(cardInstr(ea)); loadInstrument(cardInstr(eb));   // pre-carica i campioni GIUSTI durante la scommessa
+  loadInstrument(cardInstr(ea)); loadInstrument(cardInstr(eb));
   bracketState = null;
   document.getElementById('bracket').style.display = 'none';
   document.getElementById('bracketBtn').style.display = 'none';
-  await askBet(ea, eb);
+  // niente scommesse in locale: i punti si vincono solo nelle sfide mondiali
   document.getElementById('battleScreen').style.display = 'flex';
   await runBattle(ea, eb, null);
 }
@@ -2148,13 +2156,13 @@ async function runBattle(ea, eb, title){
   sfx('win');
   recordResult(w.serial, loser.serial);
   settleBet(w.serial);
-  // contatori per il medagliere (solo per gli incontri in cui giochi TU)
-  if (window._mineSerial){
+  // contatori per il medagliere: contano SOLO le sfide mondiali (il locale è allenamento)
+  if (window._mineSerial && title === 'SFIDA MONDIALE'){
     if (w.serial === window._mineSerial){
-      counters.wins++; counters.lossStreak = 0;
-      if (title === 'SFIDA MONDIALE') counters.worldWins++;
+      counters.wins++; counters.winStreak = (counters.winStreak || 0) + 1; counters.lossStreak = 0;
+      counters.worldWins++;
     } else if (loser.serial === window._mineSerial){
-      counters.losses++; counters.lossStreak++;
+      counters.losses++; counters.lossStreak++; counters.winStreak = 0;
     }
     saveCounters();
     checkAchievements();
@@ -2986,7 +2994,7 @@ function unifyVoices(){
 /* ---------- medagliere e contatori ---------- */
 let ach = {};
 try { ach = JSON.parse(localStorage.getItem('catcards_ach') || '{}'); } catch(e){}
-let counters = {wins: 0, losses: 0, lossStreak: 0, tourn4: 0, tourn8: 0, worldWins: 0, betWins: 0};
+let counters = {wins: 0, losses: 0, lossStreak: 0, winStreak: 0, tourn4: 0, tourn8: 0, worldWins: 0, betWins: 0};
 try { counters = Object.assign(counters, JSON.parse(localStorage.getItem('catcards_cnt') || '{}')); } catch(e){}
 function saveCounters(){ try { localStorage.setItem('catcards_cnt', JSON.stringify(counters)); } catch(e){} }
 const ACHS = [
@@ -2995,17 +3003,17 @@ const ACHS = [
   {id:'coll10',      ic:'🃏', nm:'Gattaro seriale',    ds:'10 carte in collezione',             pt:25, ck:() => collection.length >= 10},
   {id:'epica',       ic:'💎', nm:'Che rarità!',        ds:'Ottieni una carta Epica',            pt:20, ck:() => collection.some(c => c.rarity === 'Epica')},
   {id:'legg',        ic:'🌟', nm:'Leggendaria!',       ds:'Ottieni una Leggendaria',            pt:40, ck:() => collection.some(c => c.rarity === 'Leggendaria')},
-  {id:'win1',        ic:'⚔️', nm:'Prima vittoria',     ds:'Vinci un incontro',                  pt:10, ck:() => counters.wins >= 1},
-  {id:'win10',       ic:'🔥', nm:'Veterano',           ds:'Vinci 10 incontri',                  pt:25, ck:() => counters.wins >= 10},
-  {id:'win50',       ic:'👑', nm:'Leggenda',           ds:'Vinci 50 incontri',                  pt:50, ck:() => counters.wins >= 50},
+  {id:'win1',        ic:'⚔️', nm:'Prima vittoria',     ds:'Vinci una sfida mondiale',           pt:10, ck:() => counters.wins >= 1},
+  {id:'win10',       ic:'🔥', nm:'Veterano',           ds:'Vinci 10 sfide mondiali',            pt:25, ck:() => counters.wins >= 10},
+  {id:'win50',       ic:'👑', nm:'Leggenda',           ds:'Vinci 50 sfide mondiali',            pt:50, ck:() => counters.wins >= 50},
   {id:'t4',          ic:'🏆', nm:'Campione',           ds:'Vinci un torneo a 4',                pt:25, ck:() => counters.tourn4 >= 1},
   {id:'t8',          ic:'🏰', nm:'Dominatore',         ds:'Vinci un torneo a 8',                pt:40, ck:() => counters.tourn8 >= 1},
   {id:'pub',         ic:'🌍', nm:'Nel mondo',          ds:'Pubblica una carta',                 pt:15, ck:() => myPublished.size >= 1},
-  {id:'wwin',        ic:'🥇', nm:'Gloria mondiale',    ds:'Vinci una sfida mondiale',           pt:25, ck:() => counters.worldWins >= 1},
+  {id:'wwin',        ic:'🥇', nm:'Tripletta',          ds:'Vinci 3 sfide mondiali di fila',     pt:25, ck:() => (counters.winStreak || 0) >= 3},
   {id:'bet',         ic:'🎲', nm:'Bookmaker',          ds:'Vinci una scommessa',                pt:15, ck:() => counters.betWins >= 1},
   {id:'ricco',       ic:'💰', nm:'Riccone',            ds:'Possiedi 150 punti',                 pt:20, ck:() => points >= 150},
   {id:'onore',       ic:'🚪', nm:'Ritiro con onore',   ds:'Ritira una carta con record positivo', pt:20, ck:() => Array.isArray(window._myWorldRows) && window._myWorldRows.some(x => x.retired && (x.wins || 0) > (x.losses || 0))},
-  {id:'disfatta',    ic:'💀', nm:'Disfatta',           ds:'Perdi 10 incontri di fila',          pt:30, ck:() => counters.lossStreak >= 10},
+  {id:'disfatta',    ic:'💀', nm:'Disfatta',           ds:'Perdi 10 sfide mondiali di fila',    pt:30, ck:() => counters.lossStreak >= 10},
 ];
 let toastT = null;
 function toast(t){
