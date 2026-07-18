@@ -159,7 +159,7 @@
 </head>
 <body>
   <h1>🐱 Cat<span>Cards</span></h1>
-  <p class="tag">Fotografa il tuo gatto e trasformalo in una carta da collezione · <strong style="color:var(--accent)">v5.4</strong></p>
+  <p class="tag">Fotografa il tuo gatto e trasformalo in una carta da collezione · <strong style="color:var(--accent)">v6.0</strong></p>
 
   <div id="tabs" style="display:flex; gap:8px; width:100%; max-width:440px; margin-bottom:6px;">
     <button class="tabBtn" data-tab="crea" onclick="showTab('crea')">📸 Crea</button>
@@ -234,6 +234,7 @@
   <div id="tab-mondo" style="width:100%; max-width:440px; display:none;">
   <div class="panel" id="onlinePanel" style="margin-top:20px; display:none;">
     <h2>🌍 Arena Mondiale</h2>
+    <div id="authBox" style="margin-top:8px;"></div>
     <div id="newsList" class="count" style="line-height:1.9;"></div>
     <label class="small">Il tuo nome giocatore</label>
     <input type="text" id="playerName" placeholder="Es. Antonio" maxlength="20">
@@ -2413,7 +2414,89 @@ async function migrateMelodies(){
 const SUPA_URL = 'https://jcopltczbhbmmjpvchqd.supabase.co';
 const SUPA_KEY = 'sb_publishable_8NwuK7oV1TqnKdJsiStUZA_kCZB487O';
 function supaHeaders(extra){
-  return Object.assign({apikey: SUPA_KEY, Authorization: 'Bearer ' + SUPA_KEY, 'Content-Type': 'application/json'}, extra || {});
+  const token = (session && session.access_token) ? session.access_token : SUPA_KEY;
+  return Object.assign({apikey: SUPA_KEY, Authorization: 'Bearer ' + token, 'Content-Type': 'application/json'}, extra || {});
+}
+
+/* ---------- accesso con email (magic link) ---------- */
+let session = null;
+try { session = JSON.parse(localStorage.getItem('catcards_session') || 'null'); } catch(e){}
+function saveSession(){
+  try {
+    if (session) localStorage.setItem('catcards_session', JSON.stringify(session));
+    else localStorage.removeItem('catcards_session');
+  } catch(e){}
+}
+async function captureAuthFromHash(){
+  if (!location.hash || location.hash.indexOf('access_token=') < 0) return;
+  const p = new URLSearchParams(location.hash.slice(1));
+  const at = p.get('access_token'), rt = p.get('refresh_token');
+  if (!at) return;
+  try {
+    const r = await fetch(SUPA_URL + '/auth/v1/user', {headers: {apikey: SUPA_KEY, Authorization: 'Bearer ' + at}});
+    const u = r.ok ? await r.json() : {};
+    session = {
+      access_token: at, refresh_token: rt,
+      expires_at: Date.now() + (parseInt(p.get('expires_in') || '3600', 10) * 1000),
+      user_id: u.id || null, email: u.email || ''
+    };
+    saveSession();
+  } catch(e){}
+  history.replaceState(null, '', location.pathname + location.search);
+}
+async function refreshSessionIfNeeded(){
+  if (!session || !session.refresh_token) return;
+  if (Date.now() < (session.expires_at || 0) - 120000) return;
+  try {
+    const r = await fetch(SUPA_URL + '/auth/v1/token?grant_type=refresh_token', {
+      method: 'POST', headers: {apikey: SUPA_KEY, 'Content-Type': 'application/json'},
+      body: JSON.stringify({refresh_token: session.refresh_token})
+    });
+    if (!r.ok){ session = null; saveSession(); return; }
+    const j = await r.json();
+    session = {
+      access_token: j.access_token, refresh_token: j.refresh_token,
+      expires_at: Date.now() + ((j.expires_in || 3600) * 1000),
+      user_id: (j.user && j.user.id) || session.user_id, email: (j.user && j.user.email) || session.email
+    };
+    saveSession();
+  } catch(e){}
+}
+async function loginRequest(){
+  const email = (document.getElementById('authEmail').value || '').trim();
+  const msg = document.getElementById('authMsg');
+  if (!email || email.indexOf('@') < 0){ msg.textContent = '⚠️ Scrivi la tua email.'; return; }
+  msg.textContent = '📨 Invio il link di accesso…';
+  try {
+    const r = await fetch(SUPA_URL + '/auth/v1/otp', {
+      method: 'POST', headers: {apikey: SUPA_KEY, 'Content-Type': 'application/json'},
+      body: JSON.stringify({email: email, create_user: true})
+    });
+    if (!r.ok){
+      let t = 'HTTP ' + r.status;
+      try { const j = await r.json(); if (j.msg || j.error_description) t = (j.msg || j.error_description).slice(0, 120); } catch(e2){}
+      throw new Error(t);
+    }
+    msg.textContent = '✅ Controlla la posta di ' + email + ' e clicca il link di accesso (guarda anche nello spam).';
+  } catch(err){
+    msg.textContent = '❌ Invio fallito: ' + err.message;
+  }
+}
+function logout(){
+  session = null; saveSession(); renderAuth();
+}
+function renderAuth(){
+  const box = document.getElementById('authBox');
+  if (!box) return;
+  if (session && session.access_token){
+    box.innerHTML = '<p class="count">🔓 Connesso come <strong>' + (session.email || 'utente') + '</strong> ' +
+      '<button class="btn secondary" onclick="logout()" style="width:auto; display:inline-block; margin:0 0 0 8px; padding:8px 12px; font-size:.8rem;">Esci</button></p>';
+  } else {
+    box.innerHTML = '<label class="small">Accedi per pubblicare e sfidare (link via email, niente password)</label>' +
+      '<input type="email" id="authEmail" placeholder="la-tua@email.it">' +
+      '<button class="btn secondary" onclick="loginRequest()" style="margin-top:8px;">🔑 Accedi via email</button>' +
+      '<p class="count" id="authMsg" style="margin-top:6px;"></p>';
+  }
 }
 const playerNameEl = document.getElementById('playerName');
 try { playerNameEl.value = localStorage.getItem('catcards_player') || ''; } catch(e){}
@@ -2434,8 +2517,10 @@ function makeThumb(dataUrl, w){
 async function publishCards(){
   const msg = document.getElementById('onlineMsg');
   const owner = playerNameEl.value.trim();
+  if (!session || !session.access_token){ msg.textContent = '🔑 Prima accedi con la tua email (qui sopra).'; return; }
   if (!owner){ msg.textContent = '⚠️ Scrivi prima il tuo nome giocatore.'; return; }
   if (!collection.length){ msg.textContent = '⚠️ Non hai ancora carte da pubblicare.'; return; }
+  await refreshSessionIfNeeded();
   msg.textContent = '📤 Pubblico ' + collection.length + ' carte…';
   try {
     const rows = [];
@@ -2443,7 +2528,7 @@ async function publishCards(){
       let thumb = null;
       try { thumb = await makeThumb(e.img, 220); } catch(err){}
       rows.push({
-        serial: e.serial, name: e.name, owner: owner,
+        serial: e.serial, name: e.name, owner: owner, owner_id: session.user_id,
         nick: e.nick || null, rarity: e.rarity || null, razza: e.razza || null, descr: e.descr || null,
         potere: (typeof e.potere === 'number') ? e.potere : null,
         statsv: e.statsv || null, hp: e.hp || null,
@@ -2509,6 +2594,8 @@ async function loadWorldCards(){
 }
 async function fightWorld(i){
   if (battleOn) return;
+  if (!session || !session.access_token){ alert('Accedi prima con la tua email (in cima alla scheda Mondo) per sfidare online.'); return; }
+  await refreshSessionIfNeeded();
   const remote = worldCards[i];
   const v = document.getElementById('selMine').value;
   const mineEntry = collection[parseInt(v, 10)];
@@ -2587,6 +2674,9 @@ function unifyVoices(){
 
 /* ---------- avvio: carica da IndexedDB (con travaso automatico dalla vecchia memoria) ---------- */
 (async function initStore(){
+  await captureAuthFromHash();
+  await refreshSessionIfNeeded();
+  renderAuth();
   idb = await idbOpen();
   if (idb){
     const storedColl = await idbGet('coll');
