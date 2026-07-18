@@ -171,7 +171,7 @@
 </head>
 <body>
   <h1>🐱 Cat<span>Cards</span></h1>
-  <p class="tag">Fotografa il tuo gatto e trasformalo in una carta da collezione · <strong style="color:var(--accent)">v8.9</strong></p>
+  <p class="tag">Fotografa il tuo gatto e trasformalo in una carta da collezione · <strong style="color:var(--accent)">v9.0</strong></p>
   <p id="bootErr" style="display:none; color:#ff6b6b; font-size:.8rem; max-width:440px; text-align:center; margin-bottom:10px;"></p>
 
   <div id="tabs" style="display:flex; flex-direction:column; gap:8px; width:100%; max-width:440px; margin-bottom:6px;">
@@ -865,9 +865,42 @@ let idb = null;
 function idbOpen(){
   return new Promise(res => {
     try {
-      const rq = indexedDB.open('catcards', 1);
-      rq.onupgradeneeded = () => rq.result.createObjectStore('kv');
+      const rq = indexedDB.open('catcards', 2);
+      rq.onupgradeneeded = () => {
+        const db = rq.result;
+        if (!db.objectStoreNames.contains('kv')) db.createObjectStore('kv');
+        if (!db.objectStoreNames.contains('cards')) db.createObjectStore('cards', {keyPath: 'serial'});
+      };
       rq.onsuccess = () => res(rq.result);
+      rq.onerror = () => res(null);
+    } catch(e){ res(null); }
+  });
+}
+// tabella delle carte: un record per carta (più solido di un blocco unico)
+function idbCardsWriteAll(list){
+  return new Promise(res => {
+    if (!idb){ res(false); return; }
+    try {
+      const tx = idb.transaction('cards', 'readwrite');
+      const st = tx.objectStore('cards');
+      st.clear();
+      list.forEach((c, i) => { c.ord = i; st.put(c); });
+      tx.oncomplete = () => res(true);
+      tx.onerror = () => res(false);
+    } catch(e){ res(false); }
+  });
+}
+function idbCardsGetAll(){
+  return new Promise(res => {
+    if (!idb){ res(null); return; }
+    try {
+      const tx = idb.transaction('cards', 'readonly');
+      const rq = tx.objectStore('cards').getAll();
+      rq.onsuccess = () => {
+        const rows = rq.result || [];
+        rows.sort((a, b) => (a.ord || 0) - (b.ord || 0));
+        res(rows);
+      };
       rq.onerror = () => res(null);
     } catch(e){ res(null); }
   });
@@ -900,7 +933,7 @@ let collection = [];
 try { collection = JSON.parse(localStorage.getItem('catcards_coll') || '[]'); } catch(e){}
 let modalIndex = -1;
 function persistColl(){
-  if (idb){ idbSet('coll', collection); return; }
+  if (idb){ idbCardsWriteAll(collection); return; }
   try { localStorage.setItem('catcards_coll', JSON.stringify(collection)); }
   catch(e){ /* lo spazio vero arriva con IndexedDB all'avvio */ }
 }
@@ -3662,11 +3695,19 @@ async function initGym(){
   renderAuth();
   idb = await idbOpen();
   if (idb){
-    const storedColl = await idbGet('coll');
-    if (Array.isArray(storedColl) && storedColl.length >= collection.length && storedColl.length > 0){
-      collection = storedColl;
-    } else if (collection.length){
-      await idbSet('coll', collection);   // travaso iniziale
+    const fromTable = await idbCardsGetAll();
+    if (fromTable && fromTable.length){
+      collection = fromTable;   // la tabella è la fonte di verità
+    } else {
+      // travaso: dal vecchio blocco unico (o da localStorage legacy) alla tabella
+      const storedColl = await idbGet('coll');
+      if (Array.isArray(storedColl) && storedColl.length >= collection.length && storedColl.length > 0){
+        collection = storedColl;
+      }
+      if (collection.length){
+        await idbCardsWriteAll(collection);
+        await idbSet('coll', null);   // il vecchio blocco va in pensione
+      }
     }
     const storedRiv = await idbGet('rivals');
     if (Array.isArray(storedRiv) && storedRiv.length >= rivals.length){
