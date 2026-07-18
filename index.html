@@ -171,7 +171,7 @@
 </head>
 <body>
   <h1>🐱 Cat<span>Cards</span></h1>
-  <p class="tag">Fotografa il tuo gatto e trasformalo in una carta da collezione · <strong style="color:var(--accent)">v8.6</strong></p>
+  <p class="tag">Fotografa il tuo gatto e trasformalo in una carta da collezione · <strong style="color:var(--accent)">v8.8</strong></p>
   <p id="bootErr" style="display:none; color:#ff6b6b; font-size:.8rem; max-width:440px; text-align:center; margin-bottom:10px;"></p>
 
   <div id="tabs" style="display:flex; flex-direction:column; gap:8px; width:100%; max-width:440px; margin-bottom:6px;">
@@ -1298,9 +1298,10 @@ function refreshArena(){
   const keep = [selA.value, selB.value];
   selA.innerHTML = ''; selB.innerHTML = '';
   collection.forEach((c, i) => {
-    const rest = coolLeft(c) > 0 ? ' 😴' : '';
-    selA.add(new Option('🐱 ' + c.name + ' (' + c.rarity + ')' + rest, 'c' + i));
-    selB.add(new Option('🐱 ' + c.name + ' (' + c.rarity + ')' + rest, 'c' + i));
+    const resting = coolLeft(c) > 0;
+    const label = '🐱 ' + c.name + ' (' + c.rarity + ')' + (resting ? ' 😴 riposa' : '');
+    const oA = new Option(label, 'c' + i); oA.disabled = resting; selA.add(oA);
+    const oB = new Option(label, 'c' + i); oB.disabled = resting; selB.add(oB);
   });
   rivals.forEach((r, i) => { selB.add(new Option('🆚 ' + r.name + ' (rivale)', 'r' + i)); });
   const selMine = document.getElementById('selMine');
@@ -1310,8 +1311,11 @@ function refreshArena(){
     let eligible = 0;
     collection.forEach((c, i) => {
       if (myActive.has(c.serial)){
-        selMine.add(new Option('🐱 ' + c.name + ' (' + c.rarity + ')', String(i)));
-        eligible++;
+        const resting = coolLeft(c) > 0;
+        const o = new Option('🐱 ' + c.name + ' (' + c.rarity + ')' + (resting ? ' 😴 riposa' : ''), String(i));
+        o.disabled = resting;
+        selMine.add(o);
+        if (!resting) eligible++;
       }
     });
     if (!eligible) selMine.add(new Option('— pubblica prima una carta —', ''));
@@ -2951,7 +2955,7 @@ async function loadWorldCards(){
   const list = document.getElementById('worldList');
   msg.textContent = '🔎 Cerco sfidanti…';
   try {
-    const r = await fetch(SUPA_URL + '/rest/v1/cards?select=serial,name,owner,nick,rarity,potere,statsv,hp,dna,strum,annuncio,img,wins,losses&retired=not.is.true&order=created_at.desc&limit=40', {headers: supaHeaders()});
+    const r = await fetch(SUPA_URL + '/rest/v1/cards?select=serial,name,owner,nick,rarity,potere,statsv,hp,dna,strum,annuncio,img,wins,losses,rest_until&retired=not.is.true&order=created_at.desc&limit=40', {headers: supaHeaders()});
     if (!r.ok) throw new Error('HTTP ' + r.status);
     const all = await r.json();
     const mine = {};
@@ -2964,8 +2968,10 @@ async function loadWorldCards(){
     }
     msg.textContent = worldCards.length + ' sfidanti trovati:';
     worldCards.forEach((c, i) => {
+      const resting = c.rest_until && new Date(c.rest_until).getTime() > Date.now();
+      const restMin = resting ? Math.ceil((new Date(c.rest_until).getTime() - Date.now()) / 60000) : 0;
       const row = document.createElement('div');
-      row.style.cssText = 'display:flex; align-items:center; gap:10px; padding:8px; border:1px solid #363057; border-radius:10px; margin-top:8px;';
+      row.style.cssText = 'display:flex; align-items:center; gap:10px; padding:8px; border:1px solid #363057; border-radius:10px; margin-top:8px;' + (resting ? ' opacity:.6;' : '');
       const im = document.createElement('img');
       im.style.cssText = 'width:46px; border-radius:6px; flex-shrink:0; cursor:pointer;';
       if (c.img) im.src = c.img; else im.style.display = 'none';
@@ -2974,12 +2980,14 @@ async function loadWorldCards(){
       info.style.cssText = 'flex:1; min-width:0; font-size:.85rem; cursor:pointer;';
       info.onclick = () => showWorldCard(i);
       info.innerHTML = '<strong>' + c.name + '</strong> di ' + (c.owner || 'anonimo') +
-        '<br><span style="color:var(--muted)">' + (c.rarity || '') + ' · ' + (c.wins || 0) + ' V / ' + (c.losses || 0) + ' S · tocca per la scheda</span>';
+        '<br><span style="color:var(--muted)">' + (c.rarity || '') + ' · ' + (c.wins || 0) + ' V / ' + (c.losses || 0) + ' S' +
+        (resting ? ' · 😴 riposa (' + restMin + 'm)' : ' · tocca per la scheda') + '</span>';
       const btn = document.createElement('button');
       btn.className = 'btn secondary';
       btn.style.cssText = 'width:auto; margin:0; padding:10px 14px;';
-      btn.textContent = '⚔️ Sfida';
-      btn.onclick = () => fightWorld(i);
+      btn.textContent = resting ? '😴' : '⚔️ Sfida';
+      btn.disabled = !!resting;
+      if (!resting) btn.onclick = () => fightWorld(i);
       row.appendChild(im); row.appendChild(info); row.appendChild(btn);
       list.appendChild(row);
     });
@@ -3006,6 +3014,7 @@ function showWorldCard(i){
     '<h2 style="margin-top:10px;">' + c.name + (c.nick ? ' <span style="color:var(--muted); font-size:.85rem;">«' + c.nick + '»</span>' : '') + '</h2>' +
     '<p class="count">di ' + (c.owner || 'anonimo') + ' · ' + (c.rarity || '') + ' · Lv.' + lvl + ' · ' + (c.wins || 0) + ' V / ' + (c.losses || 0) + ' S' +
     (c.hp ? ' · ' + c.hp + ' HP' : '') + '</p>' +
+    ((c.rest_until && new Date(c.rest_until).getTime() > Date.now()) ? '<p style="color:#ffb703;">😴 Sta riposando: torna tra ' + Math.ceil((new Date(c.rest_until).getTime() - Date.now()) / 60000) + ' minuti</p>' : '') +
     (statsHtml ? '<div style="margin-top:10px;">' + statsHtml + '</div>' : '') +
     ((typeof c.potere === 'number') ? '<p style="color:#ffd166; font-size:.9rem; margin-top:8px;">🌟 ' + POWERS[c.potere].name + ' — ' + POWERS[c.potere].desc + '</p>' : '') +
     '<p style="font-size:.85rem; margin-top:8px; line-height:1.6;">' + mvLine + '</p>' +
@@ -3015,9 +3024,13 @@ function showWorldCard(i){
 }
 async function fightWorld(i){
   if (battleOn) return;
-  if (!session || !session.access_token){ alert('Accedi prima con la tua email (in cima alla scheda Mondo) per sfidare online.'); return; }
+  if (!session || !session.access_token){ alert('Accedi prima (in cima alla scheda Mondo) per sfidare online.'); return; }
   await refreshSessionIfNeeded();
   const remote = worldCards[i];
+  if (remote && remote.rest_until && new Date(remote.rest_until).getTime() > Date.now()){
+    alert('😴 ' + remote.name + ' sta riposando: riprova tra ' + Math.ceil((new Date(remote.rest_until).getTime() - Date.now()) / 60000) + ' minuti.');
+    return;
+  }
   const v = document.getElementById('selMine').value;
   const mineEntry = collection[parseInt(v, 10)];
   if (!mineEntry){ alert('Per sfidare online serve una TUA carta pubblicata e attiva: pubblicane una da «Scegli quali carte pubblicare».'); return; }
@@ -3271,7 +3284,10 @@ function renderGym(){
   if (!sel) return;
   const keep = sel.value;
   sel.innerHTML = '';
-  collection.forEach((c, i) => sel.add(new Option('🐱 ' + c.name + ' (Lv.' + cardLevel(c.serial) + ')', String(i))));
+  collection.forEach((c, i) => {
+    const rest = coolLeft(c) > 0 ? ' 😴 riposa' : '';
+    sel.add(new Option('🐱 ' + c.name + ' (Lv.' + cardLevel(c.serial) + ')' + rest, String(i)));
+  });
   if (Array.prototype.some.call(sel.options, o => o.value === keep)) sel.value = keep;
   const e = gymCat();
   const info = document.getElementById('gymInfo');
@@ -3503,7 +3519,15 @@ async function buyFood(id){
   persistColl(); renderCollection(); renderGym();
   sfx('win');
   const online = myPublished.has(e.serial) && session && session.access_token;
-  if (online) republishOne(e.serial);   // la carta nel mondo si aggiorna da sola
+  if (online){
+    republishOne(e.serial);   // la carta nel mondo si aggiorna da sola
+    try {   // e il riposo vale anche online: gli altri la vedono 😴
+      fetch(SUPA_URL + '/rest/v1/cards?serial=eq.' + encodeURIComponent(e.serial), {
+        method: 'PATCH', headers: supaHeaders(),
+        body: JSON.stringify({rest_until: new Date(Date.now() + TRAIN_COOLDOWN).toISOString()})
+      });
+    } catch(err){}
+  }
   finishTrainUI(gain >= 2 ? '🌟 Allenamento perfetto!' : '✅ Allenamento riuscito!',
     'Punteggio: <strong>' + score + '</strong>' + (gain >= 2 ? ' — bonus raddoppiato!' : '') + '<br><br>' +
     '<span style="font-size:1.3rem;">' + f.ic + ' <strong>' + gainTxt + '</strong> per ' + e.name + '</span><br><br>' +
@@ -3617,6 +3641,7 @@ async function initGym(){
   initGym();
   checkWorldNews();
   setInterval(checkWorldNews, 60000);   // controlla novità ogni minuto anche senza ricaricare
+  setInterval(() => { try { refreshArena(); renderGym(); } catch(e){} }, 60000);   // aggiorna i 😴 quando il riposo finisce
   setInterval(() => {
     // il mondo cambia di continuo: con la scheda Mondo aperta, tutto si rinfresca da solo
     if (window._curTab === 'mondo'){ loadLeaderboard(); loadMyWorldCards(); }
