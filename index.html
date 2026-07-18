@@ -99,6 +99,16 @@
   .fighter.atkRslow{animation:lungeR 1.4s;}
   .fighter.hitSlow{animation:shake 1.3s;}
   #blog .chron{color:#ffd166; font-style:italic; border-left:3px solid #ffd166; padding-left:8px; margin-top:8px;}
+  .medal{background:var(--panel2); border:1px solid #363057; border-radius:10px; padding:8px 4px; text-align:center;}
+  .medal .mi{font-size:1.5rem;}
+  .medal .mn{font-size:.62rem; color:var(--muted); margin-top:2px; line-height:1.2;}
+  .medal.locked{opacity:.35; filter:grayscale(1);}
+  #achToast{
+    position:fixed; left:50%; bottom:24px; transform:translateX(-50%);
+    background:var(--panel); border:1px solid var(--accent); color:var(--text);
+    padding:12px 18px; border-radius:12px; z-index:40; display:none;
+    box-shadow:0 10px 30px rgba(0,0,0,.5); font-size:.9rem; max-width:90vw; text-align:center;
+  }
   .fighter{flex:1; background:var(--panel); border:1px solid #363057; border-radius:14px; padding:10px; text-align:center; position:relative; transition:filter 1s, transform 1s;}
   @keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-7px) rotate(-2deg)}40%{transform:translateX(6px)}60%{transform:translateX(-5px) rotate(2deg)}80%{transform:translateX(4px)}}
   @keyframes lungeL{50%{transform:translateX(26px) scale(1.06)}}
@@ -161,7 +171,7 @@
 </head>
 <body>
   <h1>🐱 Cat<span>Cards</span></h1>
-  <p class="tag">Fotografa il tuo gatto e trasformalo in una carta da collezione · <strong style="color:var(--accent)">v7.0</strong></p>
+  <p class="tag">Fotografa il tuo gatto e trasformalo in una carta da collezione · <strong style="color:var(--accent)">v7.1</strong></p>
 
   <div id="tabs" style="display:flex; gap:8px; width:100%; max-width:440px; margin-bottom:6px;">
     <button class="tabBtn" data-tab="crea" onclick="showTab('crea')">📸 Crea</button>
@@ -192,7 +202,7 @@
     <div id="cardHolo"><canvas id="cardCanvas" width="750" height="1050"></canvas></div>
     <button class="btn" onclick="downloadCard()">⬇️ Scarica la carta (PNG)</button>
     <button class="btn secondary" onclick="shareCurrent()">📤 Condividi</button>
-    <button class="btn secondary" onclick="doGenerate()">🔁 Rigenera il disegno</button>
+    <button class="btn secondary" onclick="regenPaid()">🔁 Rigenera il disegno (30 punti)</button>
     <button class="btn secondary" onclick="reset()">🔄 Nuova carta</button>
   </div>
   </div>
@@ -223,6 +233,11 @@
       <h2 style="font-size:1rem;">📊 Albo d'oro</h2>
       <div id="statsList" class="count" style="line-height:2; margin-top:6px;"></div>
     </div>
+    <div style="margin-top:16px;">
+      <h2 style="font-size:1rem;">🏅 Medagliere</h2>
+      <div id="medalList" style="display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-top:8px;"></div>
+    </div>
+    <button class="btn secondary" onclick="buyCatnip()" style="margin-top:12px;">🌿 Vantaggio nel prossimo incontro (50 punti)</button>
     <details style="margin-top:12px;">
       <summary>📥 Importa la carta di un amico</summary>
       <label class="small">Incolla qui il codice sfida ricevuto</label>
@@ -304,6 +319,8 @@
     <div class="panel" style="max-width:360px; margin-top:30px;" id="worldModalBody"></div>
   </div>
 
+  <div id="achToast"></div>
+
   <div class="modal" id="betBox" style="z-index:26;">
     <div class="panel" style="max-width:340px; margin-top:40px;">
       <h2>🎲 Pronostico</h2>
@@ -325,6 +342,7 @@
     <button class="btn secondary" onclick="shareSaved()">📤 Condividi</button>
     <button class="btn secondary" onclick="copyChallenge()">🔗 Copia codice sfida</button>
     <button class="btn secondary" onclick="retireCard()">🚪 Ritira dal mondo</button>
+    <button class="btn secondary" onclick="buyFrame()">🎨 Cornice d'Oro (100 punti)</button>
     <button class="btn secondary" onclick="deleteSaved()">🗑️ Elimina</button>
     <button class="btn secondary" onclick="closeModal()">✖ Chiudi</button>
   </div>
@@ -609,7 +627,9 @@ function roundRect(g, x, y, w, h, r){
   g.closePath();
 }
 function drawCard(card, art){
-  const W = 750, H = 1050, col = card.rarity.color;
+  const W = 750, H = 1050;
+  const col = card.frame === 'oro' ? '#FFD700' : card.rarity.color;
+  const glowCol = card.frame === 'oro' ? '#8a6d00' : card.rarity.glow;
   // sfondo
   const bg = ctx.createLinearGradient(0, 0, 0, H);
   bg.addColorStop(0, '#231f36'); bg.addColorStop(1, '#131020');
@@ -617,7 +637,7 @@ function drawCard(card, art){
   // cornice rarità
   ctx.lineWidth = 14; ctx.strokeStyle = col;
   roundRect(ctx, 12, 12, W-24, H-24, 34); ctx.stroke();
-  ctx.lineWidth = 3; ctx.strokeStyle = card.rarity.glow;
+  ctx.lineWidth = 3; ctx.strokeStyle = glowCol;
   roundRect(ctx, 26, 26, W-52, H-52, 26); ctx.stroke();
   // banner nome
   ctx.fillStyle = 'rgba(0,0,0,.45)';
@@ -830,8 +850,10 @@ function saveCurrentCard(card){
     img: canvas.toDataURL('image/jpeg', 0.82), date: Date.now()
   };
   const i = collection.findIndex(c => c.serial === entry.serial);
-  if (i >= 0) collection[i] = entry; else collection.unshift(entry);
+  if (i >= 0){ entry.frame = collection[i].frame || null; collection[i] = entry; }
+  else collection.unshift(entry);
   persistColl(); renderCollection();
+  checkAchievements();
 }
 function renderCollection(){
   const grid = document.getElementById('collGrid');
@@ -1013,6 +1035,8 @@ async function loadMyWorldCards(){
     const rows = await r.json();
     myPublished = new Set(rows.map(x => x.serial));
     myActive = new Set(rows.filter(x => !x.retired).map(x => x.serial));
+    window._myWorldRows = rows;
+    checkAchievements();
     renderPubList();   // la lista di pubblicazione mostra solo le carte non ancora online
     refreshArena();    // il menu delle sfide mostra solo le pubblicate attive
     // un account = un nome: se lo cambi, si applica a tutte le carte pubblicate
@@ -1393,6 +1417,7 @@ function settleBet(winnerSerial){
   if (winnerSerial === currentBet.serial){
     const gain = Math.round(10 * (currentBet.quota - 1));
     points += gain;
+    counters.betWins++; saveCounters();
     blog('🎲 Pronostico azzeccato! Avevi puntato su ' + currentBet.name + ': +' + gain + ' punti (totale: ' + points + ')', 'winner');
   } else {
     points -= 10;
@@ -1907,6 +1932,7 @@ async function startBattle(){
     return;
   }
   unlockAudio();
+  window._mineSerial = ea.serial;
   loadInstrument(cardInstr(ea)); loadInstrument(cardInstr(eb));   // pre-carica i campioni GIUSTI durante la scommessa
   bracketState = null;
   document.getElementById('bracket').style.display = 'none';
@@ -1933,6 +1959,11 @@ async function runBattle(ea, eb, title){
   skipIntro = false;
   if (musicBus && AC){ try { musicBus.gain.setValueAtTime(1, AC.currentTime); } catch(e){} }
   document.getElementById('skipBtn').style.display = 'block';
+  if (window._buyCatnip && window._mineSerial === a.serial){
+    window._buyCatnip = false;
+    a.catnip = true;
+    blog('🌿 ' + a.name + ' entra in arena già carico di erba gatta!');
+  }
   const recA = recordLine(a.serial), recB = recordLine(b.serial);
   if (!title && !skipIntro){ sfx('crowd'); blog('🎤 SIGNORE E SIGNORIIII… benvenuti all\'Arena CatCards!'); await introSleep(1100); if (!battleOn) return null; }
   if (!skipIntro){
@@ -2117,6 +2148,17 @@ async function runBattle(ea, eb, title){
   sfx('win');
   recordResult(w.serial, loser.serial);
   settleBet(w.serial);
+  // contatori per il medagliere (solo per gli incontri in cui giochi TU)
+  if (window._mineSerial){
+    if (w.serial === window._mineSerial){
+      counters.wins++; counters.lossStreak = 0;
+      if (title === 'SFIDA MONDIALE') counters.worldWins++;
+    } else if (loser.serial === window._mineSerial){
+      counters.losses++; counters.lossStreak++;
+    }
+    saveCounters();
+    checkAchievements();
+  }
   window._evOn = false;
   battleOn = false;
   return w === a ? ea : eb;
@@ -2336,6 +2378,7 @@ async function startTournament(n){
     return;
   }
   unlockAudio();
+  window._mineSerial = null;   // nei tornei giocano le carte, non tu: niente contatori personali
   let players = pool.slice().sort(() => Math.random() - 0.5).slice(0, n);
   players.forEach(p => loadInstrument(cardInstr(p)));   // pre-carica i campioni giusti di tutti
   const totalRounds = Math.round(Math.log2(n));
@@ -2369,6 +2412,11 @@ async function startTournament(n){
   showBracket();
   blog('👑 ' + players[0].name + ' è il CAMPIONE del torneo!', 'winner');
   sfx('win');
+  if (collection.some(c => c.serial === players[0].serial)){
+    if (n === 4) counters.tourn4++; else counters.tourn8++;
+    saveCounters();
+    checkAchievements();
+  }
 }
 
 renderCollection();
@@ -2869,6 +2917,7 @@ async function fightWorld(i){
     annuncio: remote.annuncio || null, img: remote.img || null
   };
   unlockAudio();
+  window._mineSerial = mineEntry.serial;
   loadInstrument(cardInstr(mineEntry)); loadInstrument(cardInstr(remoteEntry));
   bracketState = null;
   document.getElementById('bracket').style.display = 'none';
@@ -2934,6 +2983,128 @@ function unifyVoices(){
   } catch(e){}
 }
 
+/* ---------- medagliere e contatori ---------- */
+let ach = {};
+try { ach = JSON.parse(localStorage.getItem('catcards_ach') || '{}'); } catch(e){}
+let counters = {wins: 0, losses: 0, lossStreak: 0, tourn4: 0, tourn8: 0, worldWins: 0, betWins: 0};
+try { counters = Object.assign(counters, JSON.parse(localStorage.getItem('catcards_cnt') || '{}')); } catch(e){}
+function saveCounters(){ try { localStorage.setItem('catcards_cnt', JSON.stringify(counters)); } catch(e){} }
+const ACHS = [
+  {id:'prima_carta', ic:'🐣', nm:'Prima carta',        ds:'Crea la tua prima carta',            pt:10, ck:() => collection.length >= 1},
+  {id:'coll5',       ic:'🎴', nm:'Collezionista',      ds:'5 carte in collezione',              pt:15, ck:() => collection.length >= 5},
+  {id:'coll10',      ic:'🃏', nm:'Gattaro seriale',    ds:'10 carte in collezione',             pt:25, ck:() => collection.length >= 10},
+  {id:'epica',       ic:'💎', nm:'Che rarità!',        ds:'Ottieni una carta Epica',            pt:20, ck:() => collection.some(c => c.rarity === 'Epica')},
+  {id:'legg',        ic:'🌟', nm:'Leggendaria!',       ds:'Ottieni una Leggendaria',            pt:40, ck:() => collection.some(c => c.rarity === 'Leggendaria')},
+  {id:'win1',        ic:'⚔️', nm:'Prima vittoria',     ds:'Vinci un incontro',                  pt:10, ck:() => counters.wins >= 1},
+  {id:'win10',       ic:'🔥', nm:'Veterano',           ds:'Vinci 10 incontri',                  pt:25, ck:() => counters.wins >= 10},
+  {id:'win50',       ic:'👑', nm:'Leggenda',           ds:'Vinci 50 incontri',                  pt:50, ck:() => counters.wins >= 50},
+  {id:'t4',          ic:'🏆', nm:'Campione',           ds:'Vinci un torneo a 4',                pt:25, ck:() => counters.tourn4 >= 1},
+  {id:'t8',          ic:'🏰', nm:'Dominatore',         ds:'Vinci un torneo a 8',                pt:40, ck:() => counters.tourn8 >= 1},
+  {id:'pub',         ic:'🌍', nm:'Nel mondo',          ds:'Pubblica una carta',                 pt:15, ck:() => myPublished.size >= 1},
+  {id:'wwin',        ic:'🥇', nm:'Gloria mondiale',    ds:'Vinci una sfida mondiale',           pt:25, ck:() => counters.worldWins >= 1},
+  {id:'bet',         ic:'🎲', nm:'Bookmaker',          ds:'Vinci una scommessa',                pt:15, ck:() => counters.betWins >= 1},
+  {id:'ricco',       ic:'💰', nm:'Riccone',            ds:'Possiedi 150 punti',                 pt:20, ck:() => points >= 150},
+  {id:'onore',       ic:'🚪', nm:'Ritiro con onore',   ds:'Ritira una carta con record positivo', pt:20, ck:() => Array.isArray(window._myWorldRows) && window._myWorldRows.some(x => x.retired && (x.wins || 0) > (x.losses || 0))},
+  {id:'disfatta',    ic:'💀', nm:'Disfatta',           ds:'Perdi 10 incontri di fila',          pt:30, ck:() => counters.lossStreak >= 10},
+];
+let toastT = null;
+function toast(t){
+  const el = document.getElementById('achToast');
+  if (!el) return;
+  el.textContent = t;
+  el.style.display = 'block';
+  clearTimeout(toastT);
+  toastT = setTimeout(() => { el.style.display = 'none'; }, 3800);
+}
+function renderMedals(){
+  const el = document.getElementById('medalList');
+  if (!el) return;
+  el.innerHTML = '';
+  ACHS.forEach(a => {
+    const d = document.createElement('div');
+    d.className = 'medal' + (ach[a.id] ? '' : ' locked');
+    d.title = a.ds + ' · premio: ' + a.pt + ' punti';
+    d.innerHTML = '<div class="mi">' + a.ic + '</div><div class="mn">' + a.nm + '</div>';
+    el.appendChild(d);
+  });
+}
+function checkAchievements(){
+  let got = false;
+  for (let pass = 0; pass < 2; pass++){   // secondo giro: un premio può sbloccare «Riccone»
+    ACHS.forEach(a => {
+      if (ach[a.id]) return;
+      let ok = false;
+      try { ok = a.ck(); } catch(e){}
+      if (ok){
+        ach[a.id] = Date.now();
+        points += a.pt;
+        got = true;
+        toast('🏅 Medaglia sbloccata: ' + a.ic + ' ' + a.nm + '! +' + a.pt + ' punti');
+        sfx('win');
+      }
+    });
+  }
+  if (got){
+    try {
+      localStorage.setItem('catcards_ach', JSON.stringify(ach));
+      localStorage.setItem('catcards_points', String(points));
+    } catch(e){}
+    renderWallet(); renderMedals();
+  }
+}
+
+/* ---------- negozio punti ---------- */
+function spendPoints(n){
+  points -= n;
+  try { localStorage.setItem('catcards_points', String(points)); } catch(e){}
+  renderWallet();
+}
+function buyCatnip(){
+  if (window._buyCatnip){ alert('Vantaggio già acquistato: vale per il tuo prossimo incontro.'); return; }
+  if (points < 50){ alert('Servono 50 punti (ne hai ' + points + '). Vinci scommesse e medaglie!'); return; }
+  if (!confirm('Spendere 50 punti? La tua carta inizierà il prossimo incontro con l\'erba gatta (primo colpo raddoppiato).')) return;
+  spendPoints(50);
+  window._buyCatnip = true;
+  toast('🌿 Vantaggio pronto: vale per il tuo prossimo incontro!');
+}
+function regenPaid(){
+  if (points < 30){ alert('Rigenerare il disegno costa 30 punti (ne hai ' + points + ').'); return; }
+  if (!confirm('Spendere 30 punti per un nuovo disegno AI?')) return;
+  spendPoints(30);
+  doGenerate();
+}
+async function redrawEntry(e){
+  try {
+    const im = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = e.img; });
+    const sx = 55 * im.width / 750, sy = 128 * im.height / 1050;
+    const sw = 640 * im.width / 750, sh = 470 * im.height / 1050;
+    const artC = document.createElement('canvas'); artC.width = 640; artC.height = 470;
+    artC.getContext('2d').drawImage(im, sx, sy, sw, sh, 0, 0, 640, 470);
+    const card = rollCard(parseInt(e.serial, 16) >>> 0, e.name);
+    if (Array.isArray(e.statsv) && e.statsv.length === 6) card.stats = card.stats.map((st, i2) => Object.assign({}, st, {value: e.statsv[i2]}));
+    if (typeof e.hp === 'number' && e.hp > 0) card.hp = e.hp;
+    card.potere = (typeof e.potere === 'number') ? e.potere : (parseInt(e.serial, 16) >>> 0) % POWERS.length;
+    if (e.razza) card.razza = e.razza;
+    card.frame = e.frame || null;
+    drawCard(card, artC);
+    e.img = canvas.toDataURL('image/jpeg', 0.82);
+  } catch(err){}
+}
+async function buyFrame(){
+  if (modalIndex < 0) return;
+  const c = collection[modalIndex];
+  if (c.frame === 'oro'){ alert(c.name + ' sfoggia già la Cornice d\'Oro!'); return; }
+  if (points < 100){ alert('La Cornice d\'Oro costa 100 punti (ne hai ' + points + ').'); return; }
+  if (!confirm('Spendere 100 punti per la Cornice d\'Oro di ' + c.name + '? Resterà per sempre.')) return;
+  spendPoints(100);
+  c.frame = 'oro';
+  await redrawEntry(c);
+  persistColl(); renderCollection();
+  openCardModal(collection.indexOf(c));
+  toast('🎨 ' + c.name + ' ora sfoggia la Cornice d\'Oro!');
+  checkAchievements();
+}
+
 /* ---------- avvio: carica da IndexedDB (con travaso automatico dalla vecchia memoria) ---------- */
 (async function initStore(){
   await captureAuthFromHash();
@@ -2961,6 +3132,8 @@ function unifyVoices(){
   renderStats();
   renderWallet();
   showTab(collection.length ? 'coll' : 'crea');   // apertura intelligente: carte se ne hai, foto se no
+  renderMedals();
+  checkAchievements();
   checkWorldNews();
   setInterval(checkWorldNews, 60000);   // controlla novità ogni minuto anche senza ricaricare
   migrateCards();
