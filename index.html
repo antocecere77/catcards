@@ -161,7 +161,7 @@
 </head>
 <body>
   <h1>🐱 Cat<span>Cards</span></h1>
-  <p class="tag">Fotografa il tuo gatto e trasformalo in una carta da collezione · <strong style="color:var(--accent)">v6.5</strong></p>
+  <p class="tag">Fotografa il tuo gatto e trasformalo in una carta da collezione · <strong style="color:var(--accent)">v6.6</strong></p>
 
   <div id="tabs" style="display:flex; gap:8px; width:100%; max-width:440px; margin-bottom:6px;">
     <button class="tabBtn" data-tab="crea" onclick="showTab('crea')">📸 Crea</button>
@@ -241,11 +241,11 @@
       <div id="newsList" class="count" style="line-height:1.9;"></div>
       <label class="small">Il tuo nome giocatore (obbligatorio, min 3 lettere)</label>
       <input type="text" id="playerName" placeholder="Es. Antonio" maxlength="20">
-      <details style="margin-top:12px;">
+      <details id="pubDetails" style="margin-top:12px;">
         <summary>🗂️ Scegli quali carte pubblicare</summary>
         <div id="pubList" style="margin-top:8px;"></div>
       </details>
-      <button class="btn" onclick="publishCards()">📤 Pubblica le carte selezionate</button>
+      <button class="btn" id="pubBtn" onclick="publishCards()">📤 Pubblica le carte selezionate</button>
       <p class="count" id="onlineMsg" style="margin-top:6px;"></p>
       <label class="small">La tua carta per le sfide online</label>
       <select id="selMine"></select>
@@ -2495,13 +2495,19 @@ async function loginRequest(){
 function logout(){
   session = null; saveSession(); renderAuth();
 }
-/* ---------- scelta delle carte da pubblicare ---------- */
-let pubSel = null;   // null = tutte selezionate
+/* ---------- scelta delle carte da pubblicare (deselezionate di default) ---------- */
+let pubSel = new Set();
 try {
   const arr = JSON.parse(localStorage.getItem('catcards_pubsel') || 'null');
   if (Array.isArray(arr)) pubSel = new Set(arr);
 } catch(e){}
-function isPub(serial){ return !pubSel || pubSel.has(serial); }
+function isPub(serial){ return pubSel.has(serial); }
+function updatePubBtn(){
+  const btn = document.getElementById('pubBtn');
+  if (!btn) return;
+  const n = collection.filter(c => pubSel.has(c.serial)).length;
+  btn.textContent = '📤 Pubblica le carte selezionate (' + n + ')';
+}
 function renderPubList(){
   const el = document.getElementById('pubList');
   if (!el) return;
@@ -2513,14 +2519,15 @@ function renderPubList(){
     cb.type = 'checkbox';
     cb.checked = isPub(c.serial);
     cb.onchange = () => {
-      if (!pubSel) pubSel = new Set(collection.map(x => x.serial));
       if (cb.checked) pubSel.add(c.serial); else pubSel.delete(c.serial);
       try { localStorage.setItem('catcards_pubsel', JSON.stringify(Array.from(pubSel))); } catch(e){}
+      updatePubBtn();
     };
     lab.appendChild(cb);
     lab.appendChild(document.createTextNode(' ' + c.name + ' (' + c.rarity + ')'));
     el.appendChild(lab);
   });
+  updatePubBtn();
 }
 
 function renderAuth(){
@@ -2577,7 +2584,13 @@ async function publishCards(){
   if (!collection.length){ msg.textContent = '⚠️ Non hai ancora carte da pubblicare.'; return; }
   await refreshSessionIfNeeded();
   const toPub = collection.filter(c => isPub(c.serial));
-  if (!toPub.length){ msg.textContent = '⚠️ Nessuna carta selezionata: spunta almeno una carta in «Scegli quali carte pubblicare».'; return; }
+  if (!toPub.length){
+    msg.textContent = '⚠️ Nessuna carta selezionata: spunta qui sopra quelle da pubblicare.';
+    const det = document.getElementById('pubDetails');
+    if (det) det.open = true;
+    renderPubList();
+    return;
+  }
   msg.textContent = '📤 Pubblico ' + toPub.length + (toPub.length === 1 ? ' carta…' : ' carte…');
   try {
     const rows = [];
