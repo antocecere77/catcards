@@ -173,7 +173,7 @@
 </head>
 <body>
   <h1>🐱 Cat<span>Cards</span></h1>
-  <p class="tag">Fotografa il tuo gatto e trasformalo in una carta da collezione · <strong style="color:var(--accent)">v10.3</strong></p>
+  <p class="tag">Fotografa il tuo gatto e trasformalo in una carta da collezione · <strong style="color:var(--accent)">v10.4</strong></p>
   <p id="bootErr" style="display:none; color:#ff6b6b; font-size:.8rem; max-width:440px; text-align:center; margin-bottom:10px;"></p>
 
   <div id="tabs" style="display:flex; flex-direction:column; gap:8px; width:100%; max-width:440px; margin-bottom:6px;">
@@ -358,7 +358,8 @@
     <p>Accedi con Google (o email), scegli il nome giocatore (uno per account, rinominabile ovunque in un colpo) e <strong>pubblica le carte che vuoi</strong>: solo le pubblicate e attive possono sfidare online. Sfidi le carte degli altri, il risultato finisce nel registro e in classifica (ordinata per % di vittorie). Puoi <strong>🚪 ritirare</strong> una carta: resta in classifica come "ritirata" ma nessuno può più sfidarla. Il pallino rosso su Mondo ti avvisa quando le tue carte hanno combattuto in tua assenza.</p>
 
     <h2 style="font-size:1rem; margin-top:16px; color:var(--accent);">📊 Il ranking (stile UFC)</h2>
-    <p>Ogni carta pubblicata ha un punteggio <strong>Elo</strong> (parte da 1000): vinci e sali, perdi e scendi — e battere qualcuno più forte di te vale molto di più. La classifica ufficiale è in ordine di Elo, il <strong>#1 è il CAMPIONE 👑</strong> e chi è stato campione conserva per sempre il 🏆. Puoi sfidare solo chi sta <strong>da 5 posizioni sopra a 5 sotto</strong> la tua: per arrivare al titolo bisogna scalare. Il ranking mostra anche le strisce: 🔥 vittorie di fila, 🧊 sconfitte di fila, e la miglior striscia di sempre. Il <strong>🎩 Manager</strong> studia i numeri e ti consiglia il prossimo incontro giusto — o quando è meglio ritirarsi un po' in palestra.</p>
+    <p>Ogni carta pubblicata ha un punteggio <strong>Elo</strong>, che parte da <strong>1000</strong>. A ogni incontro il vincitore <strong>prende</strong> punti e lo sconfitto <strong>cede gli stessi punti</strong> — e la quantità dipende dalla differenza di forza: battere un avversario <strong>più forte</strong> vale fino a <strong>~32 punti</strong>, battere uno molto più debole ne vale il minimo, <strong>8</strong> (vincere facile rende poco, l'impresa rende tanto). Nessuna carta scende mai sotto quota 100. Il calcolo lo fa il server, uguale per tutti.</p>
+    <p>La classifica ufficiale è in ordine di Elo: il <strong>#1 è il CAMPIONE 👑</strong>, e chi è stato campione conserva per sempre il 🏆. Puoi sfidare solo chi sta <strong>da 5 posizioni sopra a 5 sotto</strong> la tua: per il titolo bisogna scalare (in top 5 il campione è a tiro). Il ranking mostra le strisce — 🔥 vittorie di fila, 🧊 sconfitte di fila, e la miglior striscia di sempre. Il <strong>🎩 Manager</strong> studia i numeri e ti consiglia il prossimo incontro giusto, se conviene l'erba gatta 🌿, e quando è meglio ritirarsi un po' in palestra.</p>
 
     <h2 style="font-size:1rem; margin-top:16px; color:var(--accent);">⚡ La sfida dal vivo (QR)</h2>
     <p>Due telefoni: uno mostra il QR della sua carta (⚔️ Arena → 📱), l'altro lo inquadra (📷) e il duello si gioca sul suo schermo. <strong>Vale come una sfida mondiale</strong>: punti, XP pieni, medaglie, riposo, scommesse e risultato registrato se le carte sono pubblicate.</p>
@@ -1293,6 +1294,20 @@ async function managerAdvice(){
       parts.push('il prossimo incontro giusto per ' + mine.name + ' (#' + rk + ') è ' + best.name + ' di ' + (best.owner || '?') +
         ' (#' + rankOf(best.serial) + ', ' + (best.elo || 1000) + ' pt): ' +
         (gap > 60 ? 'rischioso, ma se lo batti fai il botto in classifica.' : gap < -60 ? 'sulla carta è battibile: vittoria di gestione.' : 'incontro alla pari, di quelli che piacciono al pubblico.'));
+      if ((best.win_streak || 0) >= 2){
+        parts.push('Occhio però: è un avversario tosto, arriva da una striscia di ' + best.win_streak + ' vittorie 🔥.');
+      } else if ((best.loss_streak || 0) >= 2){
+        parts.push('E ti dirò: è in crisi nera (🧊 ' + best.loss_streak + ' sconfitte di fila) — il momento perfetto per colpirlo.');
+      }
+      if (gap > 40 || (best.win_streak || 0) >= 3){
+        parts.push(points >= 50
+          ? 'Il mio consiglio da bordo ring: investi 50 punti nell\'erba gatta 🌿 prima del match — contro uno così serve il turbo.'
+          : 'Servirebbe l\'erba gatta 🌿, ma le casse piangono (' + points + ' punti): o trovi punti, o scegli un bersaglio più morbido.');
+      } else if (gap > -40){
+        parts.push('Erba gatta 🌿? Facoltativa: incontro alla pari, decideranno i nervi.');
+      } else {
+        parts.push('Niente erba gatta: ce la fa con le sue zampe, risparmia i punti.');
+      }
     } else {
       parts.push('nessun bersaglio di altri proprietari sopra di te ora (o riposano tutti): difendi la posizione, o ripassa più tardi.');
     }
