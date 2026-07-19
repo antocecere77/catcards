@@ -340,6 +340,11 @@
 
   <div id="tab-med" style="width:100%; max-width:440px; display:none;">
   <div class="panel" style="margin-top:20px;">
+    <h2>📅 Missioni di oggi</h2>
+    <p class="count" style="line-height:1.5;">Tre incarichi nuovi ogni mezzanotte, uguali per tutto il mondo: <strong>5 punti</strong> l'uno, <strong>+10 di bonus</strong> se completi il tris.</p>
+    <div id="misList" style="margin-top:8px; line-height:1.5;"></div>
+  </div>
+  <div class="panel" style="margin-top:20px;">
     <h2>🏅 Medagliere</h2>
     <div id="medalList" style="display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-top:12px;"></div>
     <div id="medalInfo" style="display:none; margin-top:12px; padding:12px; background:var(--panel2); border:1px solid #4d4477; border-radius:10px; font-size:.9rem; line-height:1.6;"></div>
@@ -358,7 +363,7 @@
     <p>Le carte crescono combattendo: <strong>sfide mondiali e dal vivo: 25 XP a vittoria, 10 a sconfitta</strong> · <strong>arena locale e tornei: 5 e 2</strong>. Ogni 100 XP: +1 livello = <strong>+4 HP, +3% attacco e +3 di margine palestra</strong>. Gli specchi (carta contro sé stessa) non contano.</p>
 
     <h2 style="font-size:1rem; margin-top:16px; color:var(--accent);">💰 I punti (la moneta)</h2>
-    <p>Si <strong>guadagnano solo online</strong>: +5 per ogni vittoria mondiale o dal vivo, scommesse vinte, medaglie (10-50 punti l'una) e 🎁 codici regalo. In locale: zero. Si <strong>spendono</strong> in: scommesse (puntata 10-100), cibo in palestra (20-25), 🌿 vantaggio mondiale (50), 🎨 Cornice d'Oro (100), 🔁 rigenerazione del disegno (30). Perdere un incontro non costa punti: solo le scommesse sbagliate.</p>
+    <p>Si guadagnano con: <strong>+10 per ogni vittoria mondiale o dal vivo</strong>, +10 per ogni Boss domato, 📅 missioni giornaliere (5 l'una, +10 il tris: max 25 al giorno), scommesse vinte, medaglie (10-100 punti l'una) e 🎁 codici regalo. Le vittorie locali: zero punti. Si <strong>spendono</strong> in: scommesse (puntata 10-100), cibo in palestra (20-25), 🌿 vantaggio mondiale (50), 🎨 Cornice d'Oro (100), 🔁 rigenerazione del disegno (30). Perdere un incontro non costa punti: solo le scommesse sbagliate.</p>
 
     <h2 style="font-size:1rem; margin-top:16px; color:var(--accent);">🎲 Le scommesse</h2>
     <p>Nelle <strong>sfide mondiali e dal vivo</strong>: prima del match scegli la puntata e su chi puntare (⭐ favorito a quota bassa, 🐾 underdog a quota alta). Vinci la puntata × (quota − 1); se sbagli perdi la puntata. Niente scommesse in locale e nei tornei.</p>
@@ -375,6 +380,9 @@
     <h2 style="font-size:1rem; margin-top:16px; color:var(--accent);">📊 Il ranking (stile UFC)</h2>
     <p>Ogni carta pubblicata ha un punteggio <strong>Elo</strong>, che parte da <strong>1000</strong>. A ogni incontro il vincitore <strong>prende</strong> punti e lo sconfitto <strong>cede gli stessi punti</strong> — e la quantità dipende dalla differenza di forza: battere un avversario <strong>più forte</strong> vale fino a <strong>~32 punti</strong>, battere uno molto più debole ne vale il minimo, <strong>8</strong> (vincere facile rende poco, l'impresa rende tanto). Nessuna carta scende mai sotto quota 100. Il calcolo lo fa il server, uguale per tutti.</p>
     <p>La classifica ufficiale è in ordine di Elo, ma la cintura è un'altra cosa: <strong>campione si diventa SOLO battendo il campione in carica 👑</strong> in una sfida mondiale o dal vivo. Puoi superarlo di punti quanto vuoi: resti primo contendente finché non lo stendi sul ring. Il campione sta sempre in cima al ranking, e chi è stato campione conserva per sempre il 🏆. Puoi sfidare solo chi sta <strong>da 5 posizioni sopra a 5 sotto</strong> la tua: per il titolo bisogna scalare (in top 5 il campione è a tiro). Il ranking mostra le strisce — 🔥 vittorie di fila, 🧊 sconfitte di fila, e la miglior striscia di sempre. Il <strong>🎩 Manager</strong> studia i numeri e ti consiglia il prossimo incontro giusto, se conviene l'erba gatta 🌿, e quando è meglio ritirarsi un po' in palestra.</p>
+
+    <h2 style="font-size:1rem; margin-top:16px; color:var(--accent);">📅 Le missioni giornaliere</h2>
+    <p>Ogni mezzanotte arrivano <strong>3 missioni</strong>, uguali per tutto il mondo: una di combattimento, una di palestra, una a sorpresa (boss, scommesse, QR…). Ognuna paga <strong>5 punti</strong>, il tris completo altri <strong>10 di bonus</strong>. Le trovi in cima al 🏅 Medagliere, con la spunta ✅ su quelle già fatte. Massimo 25 punti al giorno: quanto basta per un allenamento, o poco più.</p>
 
     <h2 style="font-size:1rem; margin-top:16px; color:var(--accent);">🤖 I Boss dell'Arena</h2>
     <p>Otto leggende generate dal sistema, con statistiche fuori scala. Ogni giorno ne sono attive <strong>2, uguali per tutto il mondo</strong> (le decide la data). Batterne uno paga <strong>+10 punti e 25 XP</strong>. Attenzione: hai <strong>UN solo tentativo al giorno per boss</strong> — vinto, perso o abbandonato, si torna domani. Scegli bene il gatto prima di scendere in arena. Perdere costa solo 2 XP di consolazione. Dopo il match il gatto <strong>riposa un'ora</strong> come in ogni incontro vero, e l'erba gatta 🌿 comprata prima vale anche qui. Contro i Boss scendono in campo <strong>solo le carte pubblicate nel Mondo</strong>, e i boss <strong>non toccano il ranking Elo</strong>. Ogni boss ha la sua medaglia nel 🏅 Medagliere, più la 🤖 Ammazzaboss per chi li doma tutti — dal 🥫 Micio di Latta fino al 🌑 Gatto Mammone, quasi imbattibile senza livelli alti.</p>
@@ -1054,7 +1062,7 @@ function saveCurrentCard(card){
     entry.restAt = collection[i].restAt || 0;
     collection[i] = entry;
   }
-  else collection.unshift(entry);
+  else { collection.unshift(entry); try { missionEvent('new_card'); } catch(e){} }
   persistColl(); renderCollection();
   checkAchievements();
 }
@@ -1138,6 +1146,7 @@ function showTab(t){
   document.querySelectorAll('.tabBtn').forEach(b => b.classList.toggle('active', b.dataset.tab === t));
   window._curTab = t;
   if (t === 'mondo') openMondoNews();
+  if (t === 'med'){ try { renderMissions(); } catch(e){} }
   if (t === 'boss'){
     try {
       renderBosses();
@@ -1748,6 +1757,7 @@ function settleBet(winnerSerial){
     const gain = Math.round(st * (currentBet.quota - 1));
     points += gain;
     counters.betWins++; saveCounters();
+    try { missionEvent('bet_win'); } catch(e){}
     blog('🎲 Pronostico azzeccato! Avevi puntato ' + st + ' su ' + currentBet.name + ': +' + gain + ' punti (totale: ' + points + ')', 'winner');
   } else {
     points -= st;
@@ -2499,10 +2509,12 @@ async function runBattle(ea, eb, title){
     if (w.serial === window._mineSerial){
       counters.wins++; counters.winStreak = (counters.winStreak || 0) + 1; counters.lossStreak = 0;
       counters.worldWins++;
-      points += 5;   // premio base: nessuno resta mai a secco di punti
+      points += 10;   // la vittoria vera paga bene: è la fonte principale di punti
       try { localStorage.setItem('catcards_points', String(points)); } catch(e){}
       renderWallet();
-      blog('💰 +5 punti per la vittoria!');
+      blog('💰 +10 punti per la vittoria!');
+      missionEvent('world_win');
+      if (w.catnip) missionEvent('catnip_win');
     } else if (loser.serial === window._mineSerial){
       counters.losses++; counters.lossStreak++; counters.winStreak = 0;
     }
@@ -2527,6 +2539,8 @@ async function runBattle(ea, eb, title){
       }
       try { localStorage.setItem('catcards_boss', JSON.stringify(bossWins)); } catch(e){}
       checkAchievements();
+      missionEvent('boss_win');
+      if (w.catnip) missionEvent('catnip_win');
     } else {
       blog('🤖 Il Boss resta in piedi... il tentativo di oggi è andato: appuntamento a domani (magari con l\'erba gatta 🌿).');
     }
@@ -2537,6 +2551,7 @@ async function runBattle(ea, eb, title){
   }
   window._evOn = false;
   battleOn = false;
+  try { missionEvent('any_fight'); } catch(e){}
   return w === a ? ea : eb;
 }
 try { renderStats(); } catch(e){}
@@ -2802,6 +2817,7 @@ async function startTournament(n){
   sfx('win');
   if (collection.some(c => c.serial === players[0].serial)){
     if (n === 4) counters.tourn4++; else counters.tourn8++;
+    try { missionEvent('tourn_win'); } catch(e){}
     saveCounters();
     checkAchievements();
   }
@@ -2961,7 +2977,7 @@ async function migrateMelodies(){
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
 /* ---------- versione e aggiornamento automatico ---------- */
-const APP_VERSION = '11.4';   // unica fonte di verità: aggiorna anche version.txt a ogni release
+const APP_VERSION = '11.5';   // unica fonte di verità: aggiorna anche version.txt a ogni release
 try { document.getElementById('appVer').textContent = 'v' + APP_VERSION; } catch(e){}
 async function checkUpdate(){
   try {
@@ -3510,6 +3526,13 @@ async function fightWorld(i){
   document.getElementById('battleScreen').style.display = 'flex';
   const w = await runBattle(mineEntry, remoteEntry, 'SFIDA MONDIALE');
   if (!w) return;
+  // missione «L'Impresa»: vittoria su un avversario con più Elo
+  try {
+    if (w.serial === mineEntry.serial){
+      const myRow = worldAll.find(c => c.serial === mineEntry.serial);
+      if ((remote.elo || 1000) > ((myRow && myRow.elo) || 1000)) missionEvent('upset_win');
+    }
+  } catch(e){}
   // riporta il risultato al server (aggiorna vittorie/sconfitte mondiali)
   const winSerial = w.serial, loseSerial = (w.serial === mineEntry.serial) ? remoteEntry.serial : mineEntry.serial;
   try {
@@ -3579,6 +3602,92 @@ try { ach = JSON.parse(localStorage.getItem('catcards_ach') || '{}'); } catch(e)
 let counters = {wins: 0, losses: 0, lossStreak: 0, winStreak: 0, tourn4: 0, tourn8: 0, worldWins: 0, betWins: 0};
 try { counters = Object.assign(counters, JSON.parse(localStorage.getItem('catcards_cnt') || '{}')); } catch(e){}
 function saveCounters(){ try { localStorage.setItem('catcards_cnt', JSON.stringify(counters)); } catch(e){} }
+/* ---------- missioni giornaliere: 3 al giorno, uguali per tutti, 5 punti l'una + 10 di tris ---------- */
+const MISSION_POOL = {
+  combat: [
+    {id:'world1', ic:'⚔️', txt:'Vinci 1 sfida mondiale', evt:'world_win', n:1},
+    {id:'world2', ic:'🌍', txt:'Vinci 2 sfide mondiali', evt:'world_win', n:2},
+    {id:'fight3', ic:'🥊', txt:'Combatti 3 incontri (vanno bene anche locali)', evt:'any_fight', n:3},
+    {id:'tourn',  ic:'🏆', txt:'Vinci un torneo (a 4 o a 8)', evt:'tourn_win', n:1},
+    {id:'upset',  ic:'😼', txt:'L\'Impresa: batti nel mondo un avversario con più Elo del tuo', evt:'upset_win', n:1},
+  ],
+  gym: [
+    {id:'train1', ic:'🏋️', txt:'Completa un allenamento riuscito', evt:'train', n:1},
+    {id:'gom10',  ic:'🧶', txt:'Fai 10+ ad Acchiappa il Gomitolo', evt:'game_gomitolo10', n:1},
+    {id:'topo10', ic:'🐭', txt:'Fai 10+ alla Caccia al Topo', evt:'game_topo10', n:1},
+    {id:'piuma5', ic:'🪶', txt:'Arriva a 5 round con Segui la Piuma', evt:'game_piuma5', n:1},
+  ],
+  extra: [
+    {id:'boss',   ic:'🤖', txt:'Doma un Boss dell\'Arena', evt:'boss_win', n:1},
+    {id:'bet',    ic:'🎲', txt:'Vinci una scommessa', evt:'bet_win', n:1},
+    {id:'catnip', ic:'🌿', txt:'Vinci un incontro partendo con l\'erba gatta', evt:'catnip_win', n:1},
+    {id:'card',   ic:'📸', txt:'Crea una carta nuova', evt:'new_card', n:1},
+    {id:'qr',     ic:'⚡', txt:'Gioca una sfida dal vivo (QR)', evt:'qr_duel', n:1},
+  ],
+};
+function todayMissions(){
+  // il giorno UTC decide il tris: 1 combattimento + 1 palestra + 1 varie, uguali per tutti
+  const day = Math.floor(Date.now() / 86400000);
+  const rng = mulberry32(((day * 2654435761) + 77) >>> 0);
+  const pick = arr => arr[Math.floor(rng() * arr.length)];
+  return [pick(MISSION_POOL.combat), pick(MISSION_POOL.gym), pick(MISSION_POOL.extra)];
+}
+let misState = {};
+try { misState = JSON.parse(localStorage.getItem('catcards_missions') || '{}'); } catch(e){}
+function misToday(){
+  const today = new Date().toISOString().slice(0, 10);
+  if (misState.day !== today){
+    misState = {day: today, prog: {}, done: {}, tris: false};
+    try { localStorage.setItem('catcards_missions', JSON.stringify(misState)); } catch(e){}
+  }
+  return misState;
+}
+function missionEvent(evt){
+  try {
+    const st = misToday();
+    const ms = todayMissions();
+    let changed = false, justDone = null;
+    ms.forEach(m => {
+      if (m.evt !== evt || st.done[m.id]) return;
+      st.prog[m.id] = (st.prog[m.id] || 0) + 1;
+      changed = true;
+      if (st.prog[m.id] >= m.n){
+        st.done[m.id] = Date.now();
+        points += 5;
+        justDone = m;
+      }
+    });
+    if (!changed) return;
+    if (justDone && !st.tris && ms.every(m => st.done[m.id])){
+      st.tris = true;
+      points += 10;
+      toast('🎉 TRIS! Missione «' + justDone.txt + '» e giornata completa: +5 e +10 bonus!');
+      try { sfx('win'); } catch(e){}
+    } else if (justDone){
+      toast('📅 Missione completata: ' + justDone.ic + ' ' + justDone.txt + '! +5 punti');
+      try { sfx('win'); } catch(e){}
+    }
+    try {
+      localStorage.setItem('catcards_missions', JSON.stringify(misState));
+      localStorage.setItem('catcards_points', String(points));
+    } catch(e){}
+    renderWallet(); renderMissions();
+  } catch(e){}
+}
+function renderMissions(){
+  const el = document.getElementById('misList');
+  if (!el) return;
+  const st = misToday();
+  el.innerHTML = todayMissions().map(m => {
+    const done = !!st.done[m.id];
+    const p = Math.min(st.prog[m.id] || 0, m.n);
+    return '<div style="display:flex; align-items:center; gap:10px; padding:7px 0; border-bottom:1px solid #2e2950;' + (done ? ' opacity:.75;' : '') + '">' +
+      '<span style="font-size:1.4rem; flex-shrink:0;">' + (done ? '✅' : m.ic) + '</span>' +
+      '<span style="flex:1; min-width:0;">' + m.txt + (m.n > 1 ? ' <strong>(' + p + '/' + m.n + ')</strong>' : '') + '</span>' +
+      '<strong style="flex-shrink:0; color:' + (done ? '#51cf66' : 'var(--accent)') + ';">' + (done ? 'fatto' : '+5') + '</strong></div>';
+  }).join('') +
+  (st.tris ? '<p style="color:#51cf66; font-weight:700; margin-top:8px;">🎉 Tris completato: +10 punti bonus incassati. A domani!</p>' : '');
+}
 /* ---------- Boss dell'Arena: 8 leggende scritte a codice, zero costi AI (solo ritratti una tantum) ---------- */
 const BOSSES = [
   {id:'latta',   serial:'B0550001', name:'Il Micio di Latta',      nick:'La Scatoletta Vivente', em:'🥫', tier:1,
@@ -4155,6 +4264,12 @@ async function buyFood(id){
   }
   e.trainUsed = (e.trainUsed || 0) + gain;
   e.trainAt = Date.now();
+  try {
+    missionEvent('train');
+    if (f.game === 'gomitolo' && score >= 10) missionEvent('game_gomitolo10');
+    if (f.game === 'topo' && score >= 10) missionEvent('game_topo10');
+    if (f.game === 'piuma' && score >= 5) missionEvent('game_piuma5');
+  } catch(e2){}
   await redrawEntry(e);
   persistColl(); renderCollection(); renderGym();
   sfx('win');
@@ -4366,6 +4481,7 @@ async function onQrFound(data, mine){
   document.getElementById('battleScreen').style.display = 'flex';
   const w = await runBattle(mine, entry, 'SFIDA DAL VIVO');
   if (!w) return;
+  try { missionEvent('qr_duel'); } catch(e){}
   if (session && session.access_token){
     const winSerial = w.serial;
     const loseSerial = (w.serial === mine.serial) ? entry.serial : mine.serial;
@@ -4421,6 +4537,7 @@ async function onQrFound(data, mine){
   renderWallet();
   showTab(collection.length ? 'coll' : 'crea');   // apertura intelligente: carte se ne hai, foto se no
   renderMedals();
+  try { renderMissions(); } catch(e){}
   checkAchievements();
   initGym();
   initRealtime();
