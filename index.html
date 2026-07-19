@@ -174,7 +174,7 @@
 </head>
 <body>
   <h1>🐱 Cat<span>Cards</span></h1>
-  <p class="tag">Fotografa il tuo gatto e trasformalo in una carta da collezione · <strong style="color:var(--accent)">v10.8</strong></p>
+  <p class="tag">Fotografa il tuo gatto e trasformalo in una carta da collezione · <strong style="color:var(--accent)">v10.9</strong></p>
   <p id="bootErr" style="display:none; color:#ff6b6b; font-size:.8rem; max-width:440px; text-align:center; margin-bottom:10px;"></p>
 
   <div id="tabs" style="display:flex; flex-direction:column; gap:8px; width:100%; max-width:440px; margin-bottom:6px;">
@@ -1145,9 +1145,24 @@ async function checkWorldNews(){
   if (!collection.length) return;
   try {
     const serials = collection.map(c => c.serial).join(',');
-    const r = await fetch(SUPA_URL + '/rest/v1/cards?select=serial,name,wins,losses&serial=in.(' + serials + ')', {headers: supaHeaders()});
+    const r = await fetch(SUPA_URL + '/rest/v1/cards?select=serial,name,wins,losses,rest_until&serial=in.(' + serials + ')', {headers: supaHeaders()});
     if (!r.ok) return;
     const rows = await r.json();
+    // riposo dal server: se una tua carta ha combattuto ALTROVE (es. battuta da un altro giocatore),
+    // il sonnellino vale anche qui — palestra, arena e selettori la vedranno 😴
+    try {
+      let restChanged = false;
+      rows.forEach(x => {
+        if (!x.rest_until) return;
+        const end = new Date(x.rest_until).getTime();
+        if (end <= Date.now()) return;
+        const ce = collection.find(c => c.serial === x.serial);
+        if (!ce) return;
+        const localEnd = Math.max(ce.trainAt || 0, ce.restAt || 0) + TRAIN_COOLDOWN;
+        if (end > localEnd + 5000){ ce.restAt = end - TRAIN_COOLDOWN; restChanged = true; }
+      });
+      if (restChanged){ persistColl(); renderGym(); refreshArena(); if (window._curTab === 'boss') renderBosses(); }
+    } catch(e){}
     let base = {};
     try { base = JSON.parse(localStorage.getItem('catcards_worldbase') || '{}'); } catch(e){}
     const news = [];
