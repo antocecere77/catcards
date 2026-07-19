@@ -1720,11 +1720,60 @@ function unlockAudio(){
 let points = 100;
 try { points = parseInt(localStorage.getItem('catcards_points') || '100', 10); } catch(e){}
 let currentBet = null;
+let walletSynced = null;   // ultimo saldo confermato dal server; null = non ancora allineato
+let walletBusy = false;
 function renderWallet(){
+  walletDisplay();
+  syncWallet();
+}
+function walletDisplay(){
   const t = '💰 I tuoi punti: ' + points;
   const el = document.getElementById('wallet');
   if (el) el.textContent = t;
   document.querySelectorAll('[data-wallet]').forEach(x => { x.textContent = t; });
+}
+// il portafoglio vive sul server (tabella profiles): il locale è solo una cache
+async function initWallet(){
+  if (!session || !session.access_token) return;
+  try {
+    await refreshSessionIfNeeded();
+    const r = await fetch(SUPA_URL + '/rest/v1/profiles?select=points&user_id=eq.' + session.user_id, {headers: supaHeaders()});
+    if (!r.ok) return;
+    const rows = await r.json();
+    if (rows.length){
+      // il server è la fonte di verità: allinea la cache locale
+      points = rows[0].points;
+      walletSynced = points;
+    } else {
+      // primo accesso: crea il profilo col saldo locale attuale
+      const nr = await fetch(SUPA_URL + '/rest/v1/rpc/wallet_delta', {
+        method: 'POST', headers: supaHeaders(), body: JSON.stringify({delta: points})
+      });
+      if (nr.ok){ points = await nr.json(); walletSynced = points; }
+    }
+    try { localStorage.setItem('catcards_points', String(points)); } catch(e){}
+    walletDisplay();
+  } catch(e){}
+}
+async function syncWallet(){
+  if (!session || !session.access_token || walletSynced === null || walletBusy) return;
+  const delta = points - walletSynced;
+  if (delta === 0) return;
+  walletBusy = true;
+  walletSynced = points;   // evita doppi invii concorrenti
+  try {
+    const r = await fetch(SUPA_URL + '/rest/v1/rpc/wallet_delta', {
+      method: 'POST', headers: supaHeaders(), body: JSON.stringify({delta: delta})
+    });
+    if (r.ok){
+      const tot = await r.json();
+      points = tot; walletSynced = tot;
+      try { localStorage.setItem('catcards_points', String(points)); } catch(e){}
+      walletDisplay();
+    } else { walletSynced -= delta; }   // fallito: riproverà al prossimo cambio
+  } catch(e){ walletSynced -= delta; }
+  walletBusy = false;
+  if (points !== walletSynced) syncWallet();   // eventuale delta accumulato durante l'invio
 }
 function estStrength(e){
   const card = rollCard(parseInt(e.serial, 16) >>> 0, e.name);
@@ -3003,7 +3052,7 @@ async function migrateMelodies(){
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
 /* ---------- versione e aggiornamento automatico ---------- */
-const APP_VERSION = '11.9';   // unica fonte di verità: aggiorna anche version.txt a ogni release
+const APP_VERSION = '12.0';   // unica fonte di verità: aggiorna anche version.txt a ogni release
 try { document.getElementById('appVer').textContent = 'v' + APP_VERSION; } catch(e){}
 function verNewer(a, b){   // a più recente di b? confronto numerico 11.10 > 11.9
   const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);
@@ -3205,6 +3254,7 @@ function renderAuth(){
     member.style.display = (session && session.access_token) ? 'block' : 'none';
     renderPubList();
   }
+  if (session && session.access_token && walletSynced === null) initWallet();   // aggancia il portafoglio server una volta
   const adm = document.getElementById('adminGift');
   if (adm) adm.style.display = (session && session.email === ADMIN_EMAIL) ? 'block' : 'none';
   const box = document.getElementById('authBox');
