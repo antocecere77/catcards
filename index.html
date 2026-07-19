@@ -3093,7 +3093,7 @@ async function migrateMelodies(){
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
 /* ---------- versione e aggiornamento automatico ---------- */
-const APP_VERSION = '12.9';   // unica fonte di verità: aggiorna anche version.txt a ogni release
+const APP_VERSION = '13.0';   // unica fonte di verità: aggiorna anche version.txt a ogni release
 try { document.getElementById('appVer').textContent = 'v' + APP_VERSION; } catch(e){}
 function verNewer(a, b){   // a più recente di b? confronto numerico 11.10 > 11.9
   const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);
@@ -4045,7 +4045,15 @@ async function loadLeaderboard(){
     const r = await fetch(SUPA_URL + '/rest/v1/cards?select=serial,name,owner,wins,losses,retired,elo,win_streak,loss_streak,best_streak,was_champion&order=elo.desc.nullslast,wins.desc&limit=15', {headers: supaHeaders()});
     if (!r.ok) throw new Error('HTTP ' + r.status);
     await fetchChampion();
-    const rows = orderWithChampion((await r.json()).filter(x => !x.retired));
+    let raw = (await r.json()).filter(x => !x.retired);
+    // il CAMPIONE va sempre mostrato in cima, anche se per Elo è sceso sotto i primi 15
+    if (champSerial && !raw.some(x => x.serial === champSerial)){
+      try {
+        const cr = await fetch(SUPA_URL + '/rest/v1/cards?select=serial,name,owner,wins,losses,retired,elo,win_streak,loss_streak,best_streak,was_champion&serial=eq.' + encodeURIComponent(champSerial), {headers: supaHeaders()});
+        if (cr.ok){ const c = await cr.json(); if (c.length && !c[0].retired) raw = c.concat(raw); }
+      } catch(e){}
+    }
+    const rows = orderWithChampion(raw);
     el.innerHTML = rows.map((x, i) => {
       const streak = x.win_streak > 1 ? ' 🔥' + x.win_streak : (x.loss_streak > 1 ? ' 🧊' + x.loss_streak : '');
       const isChamp = i === 0 && (!champSerial || x.serial === champSerial);
