@@ -334,6 +334,24 @@
     <datalist id="tradeOwners"></datalist>
     <div id="tradeBrowse" style="margin-top:8px;"></div>
   </div>
+  <div class="panel" style="margin-top:20px;">
+    <h2>⚖️ Aste</h2>
+    <div style="display:flex; gap:12px; align-items:center; margin-top:8px;">
+      <img id="incImg" alt="Banditore" style="width:64px; height:64px; border-radius:50%; object-fit:cover; border:2px solid var(--accent2); display:none; flex-shrink:0;">
+      <div id="incEmoji" style="font-size:2.6rem; flex-shrink:0;">😼</div>
+      <div style="flex:1; min-width:0;">
+        <strong>Mister Incanto, il Banditore</strong>
+        <p class="count" id="incSay" style="margin-top:2px; line-height:1.5;">Signori, si apre l'incanto! Chi offre? Chi rilancia?</p>
+      </div>
+    </div>
+    <button class="btn secondary" onclick="openCreateAuction()" style="margin-top:10px;">🔨 Metti una carta all'asta</button>
+    <button class="btn secondary" onclick="loadAuctions()" style="margin-top:8px;">🔄 Aggiorna aste</button>
+    <div id="auctionList" style="margin-top:10px;"></div>
+  </div>
+  </div>
+
+  <div class="modal" id="auctionModal" style="z-index:28;" onclick="if(event.target===this)this.style.display='none'">
+    <div class="panel" style="max-width:360px; margin-top:30px;" id="auctionModalBody"></div>
   </div>
 
   <div id="tab-boss" style="width:100%; max-width:440px; display:none;">
@@ -473,6 +491,7 @@
       <input type="number" id="botCount" value="15" min="1" max="30" style="width:100%; padding:12px; border-radius:10px; border:1px solid #4d4477; background:var(--panel); color:var(--text);">
       <button class="btn secondary" onclick="populateWorld()" id="botGenBtn" style="margin-top:8px;">🤖 Popola il mondo</button>
       <button class="btn secondary" onclick="simBots()" style="margin-top:8px;">🎲 Simula partite tra bot</button>
+      <button class="btn secondary" onclick="simBotAuctions()" style="margin-top:8px;">🔨 Metti carte bot all'asta</button>
       <p class="count" id="botOut" style="margin-top:6px;"></p>
     </div>
     <label class="small" style="margin-top:18px;">Audio e presentazioni</label>
@@ -1332,11 +1351,12 @@ async function loadMyWorldCards(){
   if (!el) return;
   if (!session || !session.access_token){ el.textContent = ''; return; }
   try {
-    const r = await fetch(SUPA_URL + '/rest/v1/cards?select=serial,name,owner,wins,losses,retired,img&owner_id=eq.' + session.user_id + '&order=wins.desc', {headers: supaHeaders()});
+    const r = await fetch(SUPA_URL + '/rest/v1/cards?select=serial,name,owner,wins,losses,retired,img,frozen&owner_id=eq.' + session.user_id + '&order=wins.desc', {headers: supaHeaders()});
     if (!r.ok){ el.textContent = ''; return; }
     const rows = await r.json();
     myPublished = new Set(rows.map(x => x.serial));
     myActive = new Set(rows.filter(x => !x.retired).map(x => x.serial));
+    myFrozen = new Set(rows.filter(x => x.frozen).map(x => x.serial));   // carte impegnate in scambio/asta: non selezionabili
     window._myWorldRows = rows;
     if (!worldAll.length){ try { await loadWorldCards(); } catch(e){} }   // serve la classifica per mostrare la posizione
     checkAchievements();
@@ -1604,9 +1624,10 @@ function refreshArena(){
   selA.innerHTML = ''; selB.innerHTML = '';
   collection.forEach((c, i) => {
     const resting = coolLeft(c) > 0;
-    const label = '🐱 ' + c.name + ' (' + c.rarity + ')' + (resting ? ' 😴 riposa' : '');
-    const oA = new Option(label, 'c' + i); oA.disabled = resting; selA.add(oA);
-    const oB = new Option(label, 'c' + i); oB.disabled = resting; selB.add(oB);
+    const frozen = myFrozen.has(c.serial);
+    const label = '🐱 ' + c.name + ' (' + c.rarity + ')' + (frozen ? ' 🔒 al mercato' : (resting ? ' 😴 riposa' : ''));
+    const oA = new Option(label, 'c' + i); oA.disabled = resting || frozen; selA.add(oA);
+    const oB = new Option(label, 'c' + i); oB.disabled = resting || frozen; selB.add(oB);
   });
   rivals.forEach((r, i) => { selB.add(new Option('🆚 ' + r.name + ' (rivale)', 'r' + i)); });
   const qrSel = document.getElementById('qrCat');
@@ -1615,8 +1636,9 @@ function refreshArena(){
     qrSel.innerHTML = '';
     collection.forEach((c, i) => {
       const resting = coolLeft(c) > 0;
-      const o = new Option('🐱 ' + c.name + ' (' + c.rarity + ')' + (resting ? ' 😴 riposa' : ''), 'c' + i);
-      o.disabled = resting;
+      const frozen = myFrozen.has(c.serial);
+      const o = new Option('🐱 ' + c.name + ' (' + c.rarity + ')' + (frozen ? ' 🔒 al mercato' : (resting ? ' 😴 riposa' : '')), 'c' + i);
+      o.disabled = resting || frozen;
       qrSel.add(o);
     });
     if (Array.prototype.some.call(qrSel.options, o => o.value === keepQ)) qrSel.value = keepQ;
@@ -1629,10 +1651,11 @@ function refreshArena(){
     collection.forEach((c, i) => {
       if (myActive.has(c.serial)){
         const resting = coolLeft(c) > 0;
-        const o = new Option('🐱 ' + c.name + ' (' + c.rarity + ')' + (resting ? ' 😴 riposa' : ''), String(i));
-        o.disabled = resting;
+        const frozen = myFrozen.has(c.serial);
+        const o = new Option('🐱 ' + c.name + ' (' + c.rarity + ')' + (frozen ? ' 🔒 al mercato' : (resting ? ' 😴 riposa' : '')), String(i));
+        o.disabled = resting || frozen;
         selMine.add(o);
-        if (!resting) eligible++;
+        if (!resting && !frozen) eligible++;
       }
     });
     if (!eligible) selMine.add(new Option('— pubblica prima una carta —', ''));
@@ -3093,7 +3116,7 @@ async function migrateMelodies(){
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
 /* ---------- versione e aggiornamento automatico ---------- */
-const APP_VERSION = '13.3';   // unica fonte di verità: aggiorna anche version.txt a ogni release
+const APP_VERSION = '13.4';   // unica fonte di verità: aggiorna anche version.txt a ogni release
 try { document.getElementById('appVer').textContent = 'v' + APP_VERSION; } catch(e){}
 function verNewer(a, b){   // a più recente di b? confronto numerico 11.10 > 11.9
   const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);
@@ -3214,6 +3237,7 @@ function updatePubBtn(){
 }
 let myPublished = new Set();
 let myActive = new Set();   // pubblicate e non ritirate: le uniche che possono sfidare
+let myFrozen = new Set();   // impegnate in scambio o asta: non selezionabili per nulla
 function renderPubList(){
   const el = document.getElementById('pubList');
   if (!el) return;
@@ -3599,6 +3623,7 @@ function initRealtime(){
       .on('postgres_changes', {event: 'INSERT', schema: 'public', table: 'matches'}, p => { matchToast(p); worldChanged(); })
       .on('postgres_changes', {event: '*', schema: 'public', table: 'meta'}, worldChanged)
       .on('postgres_changes', {event: '*', schema: 'public', table: 'trades'}, () => { try { loadTrades(); reconcileCollection(); } catch(e){} })
+      .on('postgres_changes', {event: '*', schema: 'public', table: 'auctions'}, () => { try { if (window._curTab === 'mercato') loadAuctions(); pullWallet(); reconcileCollection(); } catch(e){} })
       .subscribe();
   } catch(e){}
 }
@@ -3625,6 +3650,8 @@ function openMercato(){
   }
   if (a) a.innerHTML = '';
   loadTrades();
+  initAuctioneer();
+  loadAuctions();
 }
 async function initTrader(){
   // ritratto di Bazar il Mercante: generato UNA volta con l'AI, poi salvato
@@ -3924,6 +3951,180 @@ async function reconcileCollection(){
       renderCollection(); renderStats();
     }
   } catch(e){}
+}
+/* ---------- Aste: Mister Incanto il banditore, offerte, storico ---------- */
+async function pullWallet(){
+  if (!session || !session.access_token) return;
+  try {
+    const r = await fetch(SUPA_URL + '/rest/v1/profiles?select=points&user_id=eq.' + session.user_id, {headers: supaHeaders()});
+    if (r.ok){ const a = await r.json(); if (a.length){ points = a[0].points; walletSynced = points; try { localStorage.setItem('catcards_points', String(points)); } catch(e){} walletDisplay(); } }
+  } catch(e){}
+}
+function incantoSay(t){ const el = document.getElementById('incSay'); if (el) el.textContent = t; }
+function incantoComment(amount, bids){
+  const pool = amount >= 100 ? ['CENTO PUNTI! Che follia magnifica! 😼', 'Offerta da re! E chi osa rilanciare ora?']
+    : amount >= 50 ? ['Cinquanta! Il pubblico freme, signori!', 'Bella cifra! L\'asta si scalda!']
+    : bids >= 3 ? ['E rilancia ancora! Non si fermano più!', 'Battaglia all\'ultimo punto, che spettacolo!']
+    : ['Prima offerta sul banco! Chi dà di più?', 'Si parte! Aggiudicato a chi non molla!'];
+  incantoSay(pool[Math.floor(Math.random() * pool.length)]);
+  try { sfx('charm'); } catch(e){}
+}
+async function initAuctioneer(){
+  try {
+    if (localStorage.getItem('catcards_incv') !== '1'){ await idbSet('auctioneer', null); localStorage.setItem('catcards_incv', '1'); }
+    let img = await idbGet('auctioneer');
+    if (!img){
+      const key = apiKeyEl.value.trim();
+      if (!key) return;
+      const models = await listImageModels(key).catch(() => []);
+      const model = models[0] || GEMINI_MODELS[0];
+      const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent?key=' + encodeURIComponent(key), {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({contents: [{parts: [{text: 'Comic book style portrait of a CAT (full feline face clearly visible): an energetic auctioneer cat mid-shout, one paw raised holding a wooden auction gavel, monocle, elegant bow tie, wide theatrical grin, excited wide eyes. Lively showman vibes. Bold ink outlines, flat cel shading, warm colors, dark purple background. Square bust portrait.'}]}]})
+      });
+      if (!r.ok) return;
+      const j = await r.json();
+      const parts = (((j.candidates || [])[0] || {}).content || {}).parts || [];
+      const p = parts.find(x => x.inlineData && x.inlineData.data);
+      if (!p) return;
+      img = 'data:' + (p.inlineData.mimeType || 'image/png') + ';base64,' + p.inlineData.data;
+      await idbSet('auctioneer', img);
+    }
+    const el = document.getElementById('incImg');
+    if (el && img){ el.src = img; el.style.display = 'block'; const em = document.getElementById('incEmoji'); if (em) em.style.display = 'none'; }
+  } catch(e){}
+}
+let _aucSelSerial = null;
+function openCreateAuction(){
+  if (!session || !session.access_token){ alert('Accedi prima (scheda 🌍 Mondo).'); return; }
+  const mine = collection.filter(c => myActive.has(c.serial) && !myFrozen.has(c.serial));
+  const body = document.getElementById('auctionModalBody');
+  if (!mine.length){ body.innerHTML = '<h2>🔨 Asta</h2><p class="count">Ti serve una carta pubblicata e libera (non già al mercato) da mettere all\'asta.</p><button class="btn secondary" onclick="document.getElementById(\'auctionModal\').style.display=\'none\'">Chiudi</button>'; document.getElementById('auctionModal').style.display = 'flex'; return; }
+  _aucSelSerial = null;
+  const list = mine.map(c =>
+    '<div class="aucRow" data-serial="' + c.serial + '" onclick="selAucCard(this)" style="display:flex; align-items:center; gap:8px; padding:8px; border:1px solid #363057; border-radius:8px; margin-top:6px; cursor:pointer;">' +
+    (c.img ? '<img src="' + c.img + '" style="width:38px; border-radius:6px;">' : '') +
+    '<span style="flex:1; font-size:.85rem;"><strong>' + c.name + '</strong> · ' + (c.rarity || '') + ' · Lv.' + cardLevel(c.serial) + '</span></div>'
+  ).join('');
+  body.innerHTML = '<h2>🔨 Metti all\'asta</h2>' +
+    '<label class="small" style="margin-top:8px;">Tocca la carta da vendere:</label>' +
+    '<div style="max-height:30vh; overflow-y:auto; margin-top:4px;">' + list + '</div>' +
+    '<label class="small" style="margin-top:10px;">Prezzo minimo (punti)</label>' +
+    '<input type="number" id="aucMin" value="20" min="0" max="1000">' +
+    '<label class="small" style="margin-top:8px;">Durata</label>' +
+    '<select id="aucHours"><option value="1">1 ora</option><option value="6">6 ore</option><option value="24" selected>24 ore</option><option value="48">2 giorni</option></select>' +
+    '<button class="btn" style="margin-top:12px;" onclick="confirmCreateAuction()">🔨 Bandisci l\'asta</button>' +
+    '<button class="btn secondary" onclick="document.getElementById(\'auctionModal\').style.display=\'none\'">✖ Annulla</button>';
+  document.getElementById('auctionModal').style.display = 'flex';
+}
+function selAucCard(row){
+  _aucSelSerial = row.getAttribute('data-serial');
+  document.querySelectorAll('#auctionModalBody .aucRow').forEach(r => { r.style.borderColor = '#363057'; r.style.background = 'transparent'; });
+  row.style.borderColor = 'var(--accent)'; row.style.background = 'rgba(255,209,102,.12)';
+}
+async function confirmCreateAuction(){
+  if (!_aucSelSerial){ alert('Tocca prima una carta.'); return; }
+  const min = Math.max(0, parseInt(document.getElementById('aucMin').value, 10) || 0);
+  const hours = parseInt(document.getElementById('aucHours').value, 10) || 24;
+  document.getElementById('auctionModal').style.display = 'none';
+  await refreshSessionIfNeeded();
+  try {
+    const r = await fetch(SUPA_URL + '/rest/v1/rpc/create_auction', {method: 'POST', headers: supaHeaders(), body: JSON.stringify({p_serial: _aucSelSerial, p_min: min, p_hours: hours})});
+    if (r.status === 404){ alert('⚠️ Le aste non sono ancora attive sul server (manca il SQL).'); return; }
+    if (!r.ok){ const t = await r.text(); alert('Asta non creata: ' + t.slice(0, 140)); return; }
+    toast('🔨 Asta bandita! La tua carta è ora al mercato.');
+    loadMyWorldCards(); loadAuctions();
+  } catch(e){ alert('Errore di rete: ' + e.message); }
+}
+async function closeDueAuctions(){
+  try { await fetch(SUPA_URL + '/rest/v1/rpc/close_due_auctions', {method: 'POST', headers: supaHeaders(), body: '{}'}); } catch(e){}
+}
+async function loadAuctions(){
+  const el = document.getElementById('auctionList');
+  if (!el) return;
+  await closeDueAuctions();
+  try {
+    const r = await fetch(SUPA_URL + '/rest/v1/auctions?select=*&status=eq.open&order=ends_at.asc', {headers: supaHeaders()});
+    if (r.status === 404){ el.innerHTML = '<span class="count">⚠️ Aste non ancora attive sul server (manca il passaggio SQL).</span>'; return; }
+    if (!r.ok){ el.innerHTML = '<span class="count">Errore ' + r.status + '.</span>'; return; }
+    const rows = await r.json();
+    if (!rows.length){ el.innerHTML = '<span class="count">Nessuna asta in corso. Bandiscine una!</span>'; return; }
+    const mineId = session ? session.user_id : null;
+    el.innerHTML = rows.map(a => {
+      const mins = Math.max(0, Math.round((new Date(a.ends_at).getTime() - Date.now()) / 60000));
+      const timeTxt = mins >= 60 ? Math.floor(mins / 60) + 'h ' + (mins % 60) + 'm' : mins + 'm';
+      const cur = a.current_bid ? ('💰 ' + a.current_bid + ' pt di ' + (a.current_bidder_name || '?')) : 'nessuna offerta';
+      const isMine = mineId && a.seller_id === mineId;
+      const nextMin = a.current_bid ? a.current_bid + 1 : a.min_price;
+      let ctl;
+      if (isMine){
+        ctl = '<span class="count">🔨 la tua asta</span>' + (a.current_bid ? '' : ' <button class="btn secondary" style="width:auto; margin:0; padding:6px 10px;" onclick="cancelAuction(' + a.id + ')">↩️ Ritira</button>');
+      } else {
+        ctl = '<input type="number" id="bid_' + a.id + '" value="' + nextMin + '" min="' + nextMin + '" style="width:80px; display:inline-block; padding:6px;"> ' +
+          '<button class="btn secondary" style="width:auto; margin:0; padding:6px 10px;" onclick="placeBid(' + a.id + ',' + nextMin + ')">💰 Rilancia</button>';
+      }
+      return '<div style="border:1px solid #363057; border-radius:10px; padding:10px; margin-top:8px;">' +
+        '<div style="display:flex; gap:8px; align-items:center;">' +
+        (a.card_img ? '<img src="' + a.card_img + '" style="width:46px; border-radius:6px;">' : '') +
+        '<div style="flex:1; min-width:0;"><strong>' + a.card_name + '</strong> di ' + (a.seller_owner || '?') +
+        '<br><span class="count">Base ' + a.min_price + ' pt · ' + cur + ' · ⏳ ' + timeTxt + '</span></div></div>' +
+        '<div style="margin-top:8px;">' + ctl + '</div>' +
+        '<button class="btn secondary" style="width:auto; margin:6px 0 0; padding:6px 10px; font-size:.75rem;" onclick="showBidHistory(' + a.id + ')">📜 Storico offerte</button>' +
+        '<div id="hist_' + a.id + '" style="margin-top:6px;"></div></div>';
+    }).join('');
+    try { reconcileCollection(); } catch(e){}
+  } catch(e){ el.innerHTML = '<span class="count">Errore di rete.</span>'; }
+}
+async function placeBid(id, nextMin){
+  const inp = document.getElementById('bid_' + id);
+  const amount = parseInt(inp.value, 10);
+  if (!(amount >= nextMin)){ alert('Devi offrire almeno ' + nextMin + ' punti.'); return; }
+  if (amount > points){ alert('Non hai abbastanza punti (ne hai ' + points + ').'); return; }
+  await refreshSessionIfNeeded();
+  try {
+    const r = await fetch(SUPA_URL + '/rest/v1/rpc/place_bid', {method: 'POST', headers: supaHeaders(), body: JSON.stringify({p_auction: id, p_amount: amount})});
+    if (!r.ok){ const t = await r.text(); alert('Offerta rifiutata: ' + t.slice(0, 140)); return; }
+    const bids = await r.json();   // la RPC ritorna il numero di offerte
+    incantoComment(amount, typeof bids === 'number' ? bids : 1);
+    pullWallet(); loadAuctions();
+  } catch(e){ alert('Errore di rete: ' + e.message); }
+}
+async function showBidHistory(id){
+  const box = document.getElementById('hist_' + id);
+  if (!box) return;
+  if (box.innerHTML){ box.innerHTML = ''; return; }   // toggle
+  box.innerHTML = '<span class="count">…</span>';
+  try {
+    const r = await fetch(SUPA_URL + '/rest/v1/bids?select=bidder_name,amount,created_at&auction_id=eq.' + id + '&order=id.desc&limit=20', {headers: supaHeaders()});
+    const rows = r.ok ? await r.json() : [];
+    if (!rows.length){ box.innerHTML = '<span class="count">Ancora nessuna offerta.</span>'; return; }
+    box.innerHTML = rows.map(b => {
+      const d = new Date(b.created_at);
+      const when = d.toLocaleDateString('it-IT', {day: 'numeric', month: 'short'}) + ' ' + d.toLocaleTimeString('it-IT', {hour: '2-digit', minute: '2-digit'});
+      return '<div style="font-size:.78rem; color:var(--muted);">💰 ' + b.amount + ' pt — ' + (b.bidder_name || '?') + ' · ' + when + '</div>';
+    }).join('');
+  } catch(e){ box.innerHTML = '<span class="count">Errore.</span>'; }
+}
+async function cancelAuction(id){
+  if (!confirm('Ritirare la carta dall\'asta?')) return;
+  await refreshSessionIfNeeded();
+  try {
+    const r = await fetch(SUPA_URL + '/rest/v1/rpc/cancel_auction', {method: 'POST', headers: supaHeaders(), body: JSON.stringify({p_auction: id})});
+    if (!r.ok){ const t = await r.text(); alert('Non ritirata: ' + t.slice(0, 140)); return; }
+    toast('↩️ Asta ritirata.');
+    loadMyWorldCards(); loadAuctions();
+  } catch(e){}
+}
+async function simBotAuctions(){
+  if (!session || session.email !== ADMIN_EMAIL) return;
+  const out = document.getElementById('botOut');
+  await refreshSessionIfNeeded();
+  if (out) out.textContent = '🔨 Metto all\'asta qualche carta dei bot…';
+  try {
+    const r = await fetch(SUPA_URL + '/rest/v1/rpc/sim_bot_auctions', {method: 'POST', headers: supaHeaders(), body: JSON.stringify({n: 4})});
+    if (r.status === 404){ if (out) out.textContent = '⚠️ Manca il SQL delle aste bot.'; return; }
+    if (out) out.textContent = r.ok ? '✅ Aste dei bot bandite.' : '❌ HTTP ' + r.status;
+  } catch(e){ if (out) out.textContent = '❌ ' + e.message; }
 }
 function renderWorldList(){
   const msg = document.getElementById('onlineMsg');
@@ -4461,10 +4662,11 @@ function renderBosses(){
   collection.forEach((c, i) => {
     if (!myActive.has(c.serial)) return;   // contro i Boss scendono solo le carte pubblicate nel Mondo
     const rest = coolLeft(c) > 0;
-    const o = new Option('🐱 ' + c.name + ' (Lv.' + cardLevel(c.serial) + ')' + (rest ? ' 😴 riposa' : ''), String(i));
-    o.disabled = rest;
+    const frozen = myFrozen.has(c.serial);
+    const o = new Option('🐱 ' + c.name + ' (Lv.' + cardLevel(c.serial) + ')' + (frozen ? ' 🔒 al mercato' : (rest ? ' 😴 riposa' : '')), String(i));
+    o.disabled = rest || frozen;
     sel.add(o);
-    if (!rest) eligible++;
+    if (!rest && !frozen) eligible++;
   });
   if (!sel.options.length) sel.add(new Option('— pubblica prima una carta nel Mondo —', ''));
   if (Array.prototype.some.call(sel.options, o => o.value === keep && !o.disabled)) sel.value = keep;
@@ -4797,8 +4999,11 @@ function renderGym(){
   const keep = sel.value;
   sel.innerHTML = '';
   collection.forEach((c, i) => {
-    const rest = coolLeft(c) > 0 ? ' 😴 riposa' : '';
-    sel.add(new Option('🐱 ' + c.name + ' (Lv.' + cardLevel(c.serial) + ')' + rest, String(i)));
+    const frozen = myFrozen.has(c.serial);
+    const rest = frozen ? ' 🔒 al mercato' : (coolLeft(c) > 0 ? ' 😴 riposa' : '');
+    const o = new Option('🐱 ' + c.name + ' (Lv.' + cardLevel(c.serial) + ')' + rest, String(i));
+    o.disabled = frozen;
+    sel.add(o);
   });
   if (Array.prototype.some.call(sel.options, o => o.value === keep)) sel.value = keep;
   const e = gymCat();
