@@ -321,8 +321,8 @@
       <img id="trdImg" alt="Mercante" style="width:64px; height:64px; border-radius:50%; object-fit:cover; border:2px solid var(--accent2); display:none; flex-shrink:0;">
       <div id="trdEmoji" style="font-size:2.6rem; flex-shrink:0;">😼</div>
       <div style="flex:1; min-width:0;">
-        <strong>Bazar, il Mercante</strong>
-        <p class="count" id="trdSay" style="margin-top:2px; line-height:1.5;">Benvenuto al bazar, amico! Chiedi pure: so io come si fanno i buoni affari.</p>
+        <strong>Mister Baratto, il Mercante</strong>
+        <p class="count" id="trdSay" style="margin-top:2px; line-height:1.5;">Benvenuto al bazar, amico! Sono Mister Baratto: chiedi pure, so io come si fanno i buoni affari.</p>
       </div>
     </div>
     <button class="btn secondary" onclick="traderAdvice()" style="margin-top:8px;">💰 Chiedi consiglio al Mercante</button>
@@ -3093,7 +3093,7 @@ async function migrateMelodies(){
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
 /* ---------- versione e aggiornamento automatico ---------- */
-const APP_VERSION = '13.2';   // unica fonte di verità: aggiorna anche version.txt a ogni release
+const APP_VERSION = '13.3';   // unica fonte di verità: aggiorna anche version.txt a ogni release
 try { document.getElementById('appVer').textContent = 'v' + APP_VERSION; } catch(e){}
 function verNewer(a, b){   // a più recente di b? confronto numerico 11.10 > 11.9
   const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);
@@ -3783,7 +3783,7 @@ function compareRowsHtml(give, get){
   return '<div style="border-top:1px solid #2e2950; margin-top:8px; padding-top:8px;">' +
     '<div style="font-size:.82rem; color:var(--muted); margin-bottom:4px;">Dai <strong>' + give.name + '</strong> → Ricevi <strong>' + get.name + '</strong></div>' +
     stat + line('❤️ HP', give.hp, get.hp) + line('📊 Elo', give.elo, get.elo) + line('📈 Livello', give.lvl, get.lvl) +
-    '<p class="count" style="margin-top:6px;">😼 <strong>Bazar</strong>: ' + bazarVerdict(gs, ts) + '</p></div>';
+    '<p class="count" style="margin-top:6px;">😼 <strong>Mister Baratto</strong>: ' + bazarVerdict(gs, ts) + '</p></div>';
 }
 function renderProposeCompare(mySerial){
   const box = document.getElementById('tradeCompare');
