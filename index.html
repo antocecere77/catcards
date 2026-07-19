@@ -174,7 +174,7 @@
 </head>
 <body>
   <h1>🐱 Cat<span>Cards</span></h1>
-  <p class="tag">Fotografa il tuo gatto e trasformalo in una carta da collezione · <strong style="color:var(--accent)">v11.0</strong></p>
+  <p class="tag">Fotografa il tuo gatto e trasformalo in una carta da collezione · <strong style="color:var(--accent)">v11.1</strong></p>
   <p id="bootErr" style="display:none; color:#ff6b6b; font-size:.8rem; max-width:440px; text-align:center; margin-bottom:10px;"></p>
 
   <div id="tabs" style="display:flex; flex-direction:column; gap:8px; width:100%; max-width:440px; margin-bottom:6px;">
@@ -1137,7 +1137,12 @@ function showTab(t){
   document.querySelectorAll('.tabBtn').forEach(b => b.classList.toggle('active', b.dataset.tab === t));
   window._curTab = t;
   if (t === 'mondo') openMondoNews();
-  if (t === 'boss'){ try { renderBosses(); } catch(e){} }
+  if (t === 'boss'){
+    try {
+      renderBosses();
+      if (!myActive.size && collection.length) checkWorldNews().then(() => renderBosses());   // menu vuoto? risincronizza dal server
+    } catch(e){}
+  }
 }
 
 /* ---------- notiziario: cosa è successo alle tue carte mentre eri via ---------- */
@@ -1145,9 +1150,15 @@ async function checkWorldNews(){
   if (!collection.length) return;
   try {
     const serials = collection.map(c => c.serial).join(',');
-    const r = await fetch(SUPA_URL + '/rest/v1/cards?select=serial,name,wins,losses,rest_until&serial=in.(' + serials + ')', {headers: supaHeaders()});
+    const r = await fetch(SUPA_URL + '/rest/v1/cards?select=serial,name,wins,losses,rest_until,retired&serial=in.(' + serials + ')', {headers: supaHeaders()});
     if (!r.ok) return;
     const rows = await r.json();
+    // già che ci siamo: queste sono le tue carte nel mondo — così Boss e sfide
+    // sanno chi è pubblicato anche senza passare dalla scheda Mondo
+    try {
+      myPublished = new Set(rows.map(x => x.serial));
+      myActive = new Set(rows.filter(x => !x.retired).map(x => x.serial));
+    } catch(e){}
     // riposo dal server: se una tua carta ha combattuto ALTROVE (es. battuta da un altro giocatore),
     // il sonnellino vale anche qui — palestra, arena e selettori la vedranno 😴
     try {
