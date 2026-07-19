@@ -174,7 +174,7 @@
 </head>
 <body>
   <h1>🐱 Cat<span>Cards</span></h1>
-  <p class="tag">Fotografa il tuo gatto e trasformalo in una carta da collezione · <strong style="color:var(--accent)">v10.7</strong></p>
+  <p class="tag">Fotografa il tuo gatto e trasformalo in una carta da collezione · <strong style="color:var(--accent)">v10.8</strong></p>
   <p id="bootErr" style="display:none; color:#ff6b6b; font-size:.8rem; max-width:440px; text-align:center; margin-bottom:10px;"></p>
 
   <div id="tabs" style="display:flex; flex-direction:column; gap:8px; width:100%; max-width:440px; margin-bottom:6px;">
@@ -376,7 +376,7 @@
     <p>La classifica ufficiale è in ordine di Elo, ma la cintura è un'altra cosa: <strong>campione si diventa SOLO battendo il campione in carica 👑</strong> in una sfida mondiale o dal vivo. Puoi superarlo di punti quanto vuoi: resti primo contendente finché non lo stendi sul ring. Il campione sta sempre in cima al ranking, e chi è stato campione conserva per sempre il 🏆. Puoi sfidare solo chi sta <strong>da 5 posizioni sopra a 5 sotto</strong> la tua: per il titolo bisogna scalare (in top 5 il campione è a tiro). Il ranking mostra le strisce — 🔥 vittorie di fila, 🧊 sconfitte di fila, e la miglior striscia di sempre. Il <strong>🎩 Manager</strong> studia i numeri e ti consiglia il prossimo incontro giusto, se conviene l'erba gatta 🌿, e quando è meglio ritirarsi un po' in palestra.</p>
 
     <h2 style="font-size:1rem; margin-top:16px; color:var(--accent);">🤖 I Boss dell'Arena</h2>
-    <p>Otto leggende generate dal sistema, con statistiche fuori scala. Ogni giorno ne sono attive <strong>2, uguali per tutto il mondo</strong> (le decide la data). Batterne uno paga <strong>+10 punti e 25 XP</strong>, ma il premio si ritira <strong>una volta al giorno per boss</strong>: le rivincite extra danno solo gloria (e allenamento). Perdere costa solo 2 XP di consolazione. Dopo il match il gatto <strong>riposa un'ora</strong> come in ogni incontro vero, e l'erba gatta 🌿 comprata prima vale anche qui. I boss <strong>non toccano il ranking Elo</strong>. Ogni boss ha la sua medaglia nel 🏅 Medagliere, più la 🤖 Ammazzaboss per chi li doma tutti — dal 🥫 Micio di Latta fino al 🌑 Gatto Mammone, quasi imbattibile senza livelli alti.</p>
+    <p>Otto leggende generate dal sistema, con statistiche fuori scala. Ogni giorno ne sono attive <strong>2, uguali per tutto il mondo</strong> (le decide la data). Batterne uno paga <strong>+10 punti e 25 XP</strong>, ma il premio si ritira <strong>una volta al giorno per boss</strong>: le rivincite extra danno solo gloria (e allenamento). Perdere costa solo 2 XP di consolazione. Dopo il match il gatto <strong>riposa un'ora</strong> come in ogni incontro vero, e l'erba gatta 🌿 comprata prima vale anche qui. Contro i Boss scendono in campo <strong>solo le carte pubblicate nel Mondo</strong>, e i boss <strong>non toccano il ranking Elo</strong>. Ogni boss ha la sua medaglia nel 🏅 Medagliere, più la 🤖 Ammazzaboss per chi li doma tutti — dal 🥫 Micio di Latta fino al 🌑 Gatto Mammone, quasi imbattibile senza livelli alti.</p>
 
     <h2 style="font-size:1rem; margin-top:16px; color:var(--accent);">⚡ La sfida dal vivo (QR)</h2>
     <p>Due telefoni: uno mostra il QR della sua carta (⚔️ Arena → 📱), l'altro lo inquadra (📷) e il duello si gioca sul suo schermo. <strong>Vale come una sfida mondiale</strong>: punti, XP pieni, medaglie, riposo, scommesse e risultato registrato se le carte sono pubblicate.</p>
@@ -3198,6 +3198,8 @@ async function publishCards(){
   if (!session || !session.access_token){ msg.textContent = '🔑 Prima accedi con la tua email (qui sopra).'; return; }
   if (owner.length < 3){
     msg.textContent = '⚠️ Il nome giocatore è obbligatorio (almeno 3 lettere): è il nome che vedranno gli sfidanti.';
+    const pd = document.getElementById('pubDetails');
+    if (pd) pd.open = true;   // il campo nome ora vive qui dentro: aprilo per mostrarlo
     playerNameEl.style.borderColor = '#e63946';
     playerNameEl.focus();
     return;
@@ -4346,7 +4348,7 @@ async function onQrFound(data, mine){
   initRealtime();
   checkWorldNews();
   setInterval(checkWorldNews, 60000);   // controlla novità ogni minuto anche senza ricaricare
-  setInterval(() => { try { refreshArena(); renderGym(); if (window._curTab === 'mondo') renderBosses(); } catch(e){} }, 60000);   // aggiorna i 😴 quando il riposo finisce
+  setInterval(() => { try { refreshArena(); renderGym(); if (window._curTab === 'boss') renderBosses(); } catch(e){} }, 60000);   // aggiorna i 😴 quando il riposo finisce
   setInterval(() => {
     // il mondo cambia di continuo: con la scheda Mondo aperta, tutto si rinfresca da solo
     if (window._curTab === 'mondo'){
