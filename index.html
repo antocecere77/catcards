@@ -175,7 +175,7 @@
 <body>
   <h1>🐱 Cat<span>Cards</span></h1>
   <p class="tag">Fotografa il tuo gatto e trasformalo in una carta da collezione · <strong style="color:var(--accent)" id="appVer"></strong></p>
-  <div id="updBanner" style="display:none; position:fixed; top:0; left:0; right:0; z-index:9999; background:var(--accent); color:#1a1626; font-weight:700; text-align:center; padding:12px; cursor:pointer; box-shadow:0 2px 12px rgba(0,0,0,.5);" onclick="location.reload()">🔄 Nuova versione disponibile — tocca per aggiornare</div>
+  <div id="updBanner" style="display:none; position:fixed; top:0; left:0; right:0; z-index:9999; background:var(--accent); color:#1a1626; font-weight:700; text-align:center; padding:12px; cursor:pointer; box-shadow:0 2px 12px rgba(0,0,0,.5);" onclick="applyUpdate()">🔄 Nuova versione disponibile — tocca per aggiornare</div>
   <p id="bootErr" style="display:none; color:#ff6b6b; font-size:.8rem; max-width:440px; text-align:center; margin-bottom:10px;"></p>
 
   <div id="tabs" style="display:flex; flex-direction:column; gap:8px; width:100%; max-width:440px; margin-bottom:6px;">
@@ -449,7 +449,7 @@
     <div id="blog"></div>
     <button class="btn secondary" id="bracketBtn" onclick="showBracket()" style="max-width:320px; display:none;">📋 Tabellone</button>
     <button class="btn secondary" data-snd onclick="toggleSound(this)" style="max-width:320px;">🔊 Suoni: ON</button>
-    <button class="btn secondary" onclick="closeBattle()" style="max-width:320px;">✖ Chiudi</button>
+    <button class="btn secondary" id="closeBattleBtn" onclick="closeBattle()" style="max-width:320px;">✖ Chiudi</button>
     <div id="vsFlash"><span>VS</span></div>
     <div id="vsIntro"></div>
   </div>
@@ -2314,6 +2314,10 @@ async function runBattle(ea, eb, title){
   document.getElementById('blog').innerHTML = '';
   document.getElementById('battleScreen').scrollTop = 0;
   if (title) blog('🏟️ — ' + title + ' —', 'winner');
+  // incontri seri (mondiale, dal vivo, boss): niente ritirata a metà, il risultato conta
+  const noQuit = (title === 'SFIDA MONDIALE' || title === 'SFIDA DAL VIVO' || title === 'BOSS DELL\'ARENA');
+  const closeBtn = document.getElementById('closeBattleBtn');
+  if (closeBtn) closeBtn.style.display = noQuit ? 'none' : 'block';
   updateBars(a, b);
   const rng = mulberry32((Date.now() & 0xffffffff) >>> 0);
   const side = f => f === a ? 'A' : 'B';
@@ -2508,6 +2512,7 @@ async function runBattle(ea, eb, title){
   }
   blog('🏆 ' + w.name + ' vince il combattimento!', 'winner');
   sfx('win');
+  if (closeBtn) closeBtn.style.display = 'block';   // verdetto emesso: ora si può chiudere
   // esperienza: piena per mondiali, dal vivo e boss (25), ridotta per locale e tornei (5/2)
   const seria = (title === 'SFIDA MONDIALE' || title === 'SFIDA DAL VIVO');
   const bossFight = (title === 'BOSS DELL\'ARENA');
@@ -2986,19 +2991,35 @@ async function migrateMelodies(){
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
 /* ---------- versione e aggiornamento automatico ---------- */
-const APP_VERSION = '11.6';   // unica fonte di verità: aggiorna anche version.txt a ogni release
+const APP_VERSION = '11.7';   // unica fonte di verità: aggiorna anche version.txt a ogni release
 try { document.getElementById('appVer').textContent = 'v' + APP_VERSION; } catch(e){}
+function verNewer(a, b){   // a più recente di b? confronto numerico 11.10 > 11.9
+  const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);
+  for (let i = 0; i < Math.max(pa.length, pb.length); i++){
+    const x = pa[i] || 0, y = pb[i] || 0;
+    if (x !== y) return x > y;
+  }
+  return false;
+}
 async function checkUpdate(){
   try {
     const r = await fetch('version.txt?ts=' + Date.now(), {cache: 'no-store'});
     if (!r.ok) return;
     const v = (await r.text()).trim();
-    if (v && /^[\d.]+$/.test(v) && v !== APP_VERSION){
+    // mostra il banner SOLO per una versione davvero più nuova (non per un file in cache più vecchio)
+    if (v && /^[\d.]+$/.test(v) && verNewer(v, APP_VERSION)){
       const el = document.getElementById('updBanner');
       el.textContent = '🔄 Nuova versione v' + v + ' disponibile — tocca per aggiornare';
       el.style.display = 'block';
+      window._newVer = v;
     }
   } catch(e){}
+}
+function applyUpdate(){
+  // ricarica bypassando la cache: senza cache-bust il browser rimette la versione VECCHIA
+  // e il banner ricompare all'infinito. Il ?v= forza il download del nuovo index.html.
+  const base = location.href.split('#')[0].split('?')[0];
+  location.replace(base + '?v=' + (window._newVer || Date.now()));
 }
 /* ---------- Arena Mondiale (Supabase) ---------- */
 const SUPA_URL = 'https://jcopltczbhbmmjpvchqd.supabase.co';
