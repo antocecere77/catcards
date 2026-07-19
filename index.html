@@ -173,7 +173,7 @@
 </head>
 <body>
   <h1>🐱 Cat<span>Cards</span></h1>
-  <p class="tag">Fotografa il tuo gatto e trasformalo in una carta da collezione · <strong style="color:var(--accent)">v10.4</strong></p>
+  <p class="tag">Fotografa il tuo gatto e trasformalo in una carta da collezione · <strong style="color:var(--accent)">v10.5</strong></p>
   <p id="bootErr" style="display:none; color:#ff6b6b; font-size:.8rem; max-width:440px; text-align:center; margin-bottom:10px;"></p>
 
   <div id="tabs" style="display:flex; flex-direction:column; gap:8px; width:100%; max-width:440px; margin-bottom:6px;">
@@ -359,7 +359,7 @@
 
     <h2 style="font-size:1rem; margin-top:16px; color:var(--accent);">📊 Il ranking (stile UFC)</h2>
     <p>Ogni carta pubblicata ha un punteggio <strong>Elo</strong>, che parte da <strong>1000</strong>. A ogni incontro il vincitore <strong>prende</strong> punti e lo sconfitto <strong>cede gli stessi punti</strong> — e la quantità dipende dalla differenza di forza: battere un avversario <strong>più forte</strong> vale fino a <strong>~32 punti</strong>, battere uno molto più debole ne vale il minimo, <strong>8</strong> (vincere facile rende poco, l'impresa rende tanto). Nessuna carta scende mai sotto quota 100. Il calcolo lo fa il server, uguale per tutti.</p>
-    <p>La classifica ufficiale è in ordine di Elo: il <strong>#1 è il CAMPIONE 👑</strong>, e chi è stato campione conserva per sempre il 🏆. Puoi sfidare solo chi sta <strong>da 5 posizioni sopra a 5 sotto</strong> la tua: per il titolo bisogna scalare (in top 5 il campione è a tiro). Il ranking mostra le strisce — 🔥 vittorie di fila, 🧊 sconfitte di fila, e la miglior striscia di sempre. Il <strong>🎩 Manager</strong> studia i numeri e ti consiglia il prossimo incontro giusto, se conviene l'erba gatta 🌿, e quando è meglio ritirarsi un po' in palestra.</p>
+    <p>La classifica ufficiale è in ordine di Elo, ma la cintura è un'altra cosa: <strong>campione si diventa SOLO battendo il campione in carica 👑</strong> in una sfida mondiale o dal vivo. Puoi superarlo di punti quanto vuoi: resti primo contendente finché non lo stendi sul ring. Il campione sta sempre in cima al ranking, e chi è stato campione conserva per sempre il 🏆. Puoi sfidare solo chi sta <strong>da 5 posizioni sopra a 5 sotto</strong> la tua: per il titolo bisogna scalare (in top 5 il campione è a tiro). Il ranking mostra le strisce — 🔥 vittorie di fila, 🧊 sconfitte di fila, e la miglior striscia di sempre. Il <strong>🎩 Manager</strong> studia i numeri e ti consiglia il prossimo incontro giusto, se conviene l'erba gatta 🌿, e quando è meglio ritirarsi un po' in palestra.</p>
 
     <h2 style="font-size:1rem; margin-top:16px; color:var(--accent);">⚡ La sfida dal vivo (QR)</h2>
     <p>Due telefoni: uno mostra il QR della sua carta (⚔️ Arena → 📱), l'altro lo inquadra (📷) e il duello si gioca sul suo schermo. <strong>Vale come una sfida mondiale</strong>: punti, XP pieni, medaglie, riposo, scommesse e risultato registrato se le carte sono pubblicate.</p>
@@ -1294,6 +1294,9 @@ async function managerAdvice(){
       parts.push('il prossimo incontro giusto per ' + mine.name + ' (#' + rk + ') è ' + best.name + ' di ' + (best.owner || '?') +
         ' (#' + rankOf(best.serial) + ', ' + (best.elo || 1000) + ' pt): ' +
         (gap > 60 ? 'rischioso, ma se lo batti fai il botto in classifica.' : gap < -60 ? 'sulla carta è battibile: vittoria di gestione.' : 'incontro alla pari, di quelli che piacciono al pubblico.'));
+      if (rankOf(best.serial) === 1){
+        parts.push('E ricordatelo: quello ha la CINTURA 👑 — la classifica non conta niente, lo batti e sei TU il campione.');
+      }
       if ((best.win_streak || 0) >= 2){
         parts.push('Occhio però: è un avversario tosto, arriva da una striscia di ' + best.win_streak + ' vittorie 🔥.');
       } else if ((best.loss_streak || 0) >= 2){
@@ -3196,7 +3199,23 @@ async function publishCards(){
   }
 }
 let worldCards = [];
-let worldAll = [];   // TUTTE le carte attive in ordine di ranking (Elo): è la graduatoria ufficiale
+let worldAll = [];   // graduatoria ufficiale: campione in testa, poi tutti per Elo
+let champSerial = null;
+async function fetchChampion(){
+  try {
+    const r = await fetch(SUPA_URL + '/rest/v1/meta?select=v&k=eq.champion', {
+      headers: {apikey: SUPA_KEY, Authorization: 'Bearer ' + SUPA_KEY}
+    });
+    if (r.ok){ const rows = await r.json(); champSerial = rows.length ? rows[0].v : null; }
+  } catch(e){}
+}
+function orderWithChampion(list){
+  // la cintura non si perde ai punti: il campione sta in cima finché qualcuno non lo batte
+  if (!champSerial) return list;
+  const i = list.findIndex(c => c.serial === champSerial);
+  if (i > 0){ const c = list.splice(i, 1)[0]; list.unshift(c); }
+  return list;
+}
 function rankOf(serial){
   const i = worldAll.findIndex(c => c.serial === serial);
   return i >= 0 ? i + 1 : null;
@@ -3207,7 +3226,8 @@ async function loadWorldCards(){
   try {
     const r = await fetch(SUPA_URL + '/rest/v1/cards?select=serial,name,owner,nick,rarity,potere,statsv,hp,dna,strum,annuncio,img,wins,losses,rest_until,elo,win_streak,loss_streak,best_streak,was_champion&retired=not.is.true&order=elo.desc.nullslast,wins.desc&limit=100', {headers: supaHeaders()});
     if (!r.ok) throw new Error('HTTP ' + r.status);
-    worldAll = await r.json();
+    await fetchChampion();
+    worldAll = orderWithChampion(await r.json());
     renderWorldList();
   } catch(err){
     msg.textContent = '❌ Errore di rete: ' + err.message;
@@ -3222,20 +3242,29 @@ function renderWorldList(){
   const selV = document.getElementById('selMine').value;
   const myCard = collection[parseInt(selV, 10)];
   const myRank = myCard ? rankOf(myCard.serial) : null;
-  worldCards = worldAll.filter(c => !mineSet[c.serial]);
   list.innerHTML = '';
-  if (!worldCards.length){
-    msg.textContent = 'Nessuno sfidante trovato (oltre alle tue carte). Invita qualcuno a pubblicare!';
+  worldCards = [];
+  if (!myCard){
+    msg.textContent = '👆 Scegli prima il tuo gatto qui sopra: ti mostro solo gli avversari che può sfidare.';
     return;
   }
-  msg.textContent = (myRank ? '📊 ' + myCard.name + ' è #' + myRank + ' nel ranking. Puoi sfidare dalle 5 posizioni sopra alle 5 sotto.' : '📊 Il ranking mondiale:');
+  if (myRank == null){
+    msg.textContent = '⏳ ' + myCard.name + ' non è ancora nel ranking (appena pubblicata? riprova tra poco con 🔄).';
+    return;
+  }
+  // solo gli sfidabili: entro ±5 posizioni dal mio rank
+  worldCards = worldAll.filter(c => !mineSet[c.serial] && Math.abs(rankOf(c.serial) - myRank) <= 5);
+  if (!worldCards.length){
+    msg.textContent = '📊 ' + myCard.name + ' è #' + myRank + ', ma nessuno sfidante nel raggio ±5 al momento. Invita qualcuno a pubblicare!';
+    return;
+  }
+  msg.textContent = '📊 ' + myCard.name + ' è #' + myRank + ' nel ranking. Ecco chi può sfidare (da 5 posizioni sopra a 5 sotto):';
   worldCards.forEach((c, i) => {
     const rk = rankOf(c.serial);
     const resting = c.rest_until && new Date(c.rest_until).getTime() > Date.now();
     const restMin = resting ? Math.ceil((new Date(c.rest_until).getTime() - Date.now()) / 60000) : 0;
-    const inRange = myRank == null || Math.abs(rk - myRank) <= 5;
     const row = document.createElement('div');
-    row.style.cssText = 'display:flex; align-items:center; gap:10px; padding:8px; border:1px solid ' + (rk === 1 ? 'var(--accent)' : '#363057') + '; border-radius:10px; margin-top:8px;' + ((resting || !inRange) ? ' opacity:.55;' : '');
+    row.style.cssText = 'display:flex; align-items:center; gap:10px; padding:8px; border:1px solid ' + (rk === 1 ? 'var(--accent)' : '#363057') + '; border-radius:10px; margin-top:8px;' + (resting ? ' opacity:.55;' : '');
     const rkEl = document.createElement('div');
     rkEl.style.cssText = 'width:40px; text-align:center; font-weight:700; flex-shrink:0;' + (rk === 1 ? ' color:var(--accent);' : '');
     rkEl.innerHTML = (rk === 1 ? '👑' : '#' + rk) + '<br><span style="font-size:.65rem; color:var(--muted); font-weight:400;">' + (c.elo || 1000) + '</span>';
@@ -3249,13 +3278,13 @@ function renderWorldList(){
     const streak = (c.win_streak > 1 ? ' · 🔥' + c.win_streak : (c.loss_streak > 1 ? ' · 🧊' + c.loss_streak : ''));
     info.innerHTML = '<strong>' + c.name + '</strong>' + (c.was_champion && rk !== 1 ? ' 🏆' : '') + ' di ' + (c.owner || 'anonimo') +
       '<br><span style="color:var(--muted)">' + (c.wins || 0) + ' V / ' + (c.losses || 0) + ' S' + streak +
-      (resting ? ' · 😴 riposa (' + restMin + 'm)' : (!inRange ? ' · fuori portata (±5)' : '')) + '</span>';
+      (resting ? ' · 😴 riposa (' + restMin + 'm)' : '') + '</span>';
     const btn = document.createElement('button');
     btn.className = 'btn secondary';
     btn.style.cssText = 'width:auto; margin:0; padding:10px 14px;';
-    btn.textContent = resting ? '😴' : (!inRange ? '🔒' : '⚔️ Sfida');
-    btn.disabled = !!(resting || !inRange);
-    if (!resting && inRange) btn.onclick = () => fightWorld(i);
+    btn.textContent = resting ? '😴' : '⚔️ Sfida';
+    btn.disabled = !!resting;
+    if (!resting) btn.onclick = () => fightWorld(i);
     row.appendChild(rkEl); row.appendChild(im); row.appendChild(info); row.appendChild(btn);
     list.appendChild(row);
   });
@@ -3379,13 +3408,15 @@ async function loadLeaderboard(){
   const el = document.getElementById('leaderList');
   el.textContent = 'Carico la classifica…';
   try {
-    const r = await fetch(SUPA_URL + '/rest/v1/cards?select=name,owner,wins,losses,retired,elo,win_streak,loss_streak,best_streak,was_champion&order=elo.desc.nullslast,wins.desc&limit=15', {headers: supaHeaders()});
+    const r = await fetch(SUPA_URL + '/rest/v1/cards?select=serial,name,owner,wins,losses,retired,elo,win_streak,loss_streak,best_streak,was_champion&order=elo.desc.nullslast,wins.desc&limit=15', {headers: supaHeaders()});
     if (!r.ok) throw new Error('HTTP ' + r.status);
-    const rows = (await r.json()).filter(x => !x.retired);
+    await fetchChampion();
+    const rows = orderWithChampion((await r.json()).filter(x => !x.retired));
     el.innerHTML = rows.map((x, i) => {
       const streak = x.win_streak > 1 ? ' 🔥' + x.win_streak : (x.loss_streak > 1 ? ' 🧊' + x.loss_streak : '');
-      return (i === 0 ? '👑 <strong style="color:var(--accent)">CAMPIONE</strong> ' : '#' + (i + 1) + ' ') +
-        '<strong>' + x.name + '</strong>' + (x.was_champion && i > 0 ? ' 🏆<small>ex</small>' : '') +
+      const isChamp = i === 0 && (!champSerial || x.serial === champSerial);
+      return (isChamp ? '👑 <strong style="color:var(--accent)">CAMPIONE</strong> ' : '#' + (i + 1) + ' ') +
+        '<strong>' + x.name + '</strong>' + (x.was_champion && !isChamp ? ' 🏆<small>ex</small>' : '') +
         ' di ' + (x.owner || 'anonimo') +
         ' — ' + (x.elo || 1000) + ' pt · ' + (x.wins || 0) + 'V/' + (x.losses || 0) + 'S' + streak +
         (x.best_streak > 1 ? ' · max 🔥' + x.best_streak : '');
@@ -4080,7 +4111,7 @@ async function onQrFound(data, mine){
     if (window._curTab === 'mondo'){
       loadLeaderboard();
       loadMyWorldCards();
-      if (worldCards.length) loadWorldCards();   // anche la lista sfidanti (riposi inclusi)
+      if (worldAll.length) loadWorldCards();   // anche la lista sfidanti (riposi inclusi)
     }
   }, 30000);
   migrateCards();
