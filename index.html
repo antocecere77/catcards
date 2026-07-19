@@ -314,7 +314,7 @@
   <div id="tab-boss" style="width:100%; max-width:440px; display:none;">
   <div class="panel" style="margin-top:20px;">
     <h2>🤖 Boss dell'Arena</h2>
-    <p class="count" style="line-height:1.6;">Ogni giorno 2 leggende scendono nell'Arena, uguali per tutto il mondo. Batterle paga <strong>+10 punti</strong>, XP pieni e una medaglia dedicata. <strong>Un solo tentativo al giorno per boss</strong>, vinto o perso; i boss non toccano il ranking Elo. Combattono solo le carte <strong>pubblicate nel Mondo</strong>.</p>
+    <p class="count" style="line-height:1.6;">64 leggende in 8 divisioni: ogni giorno ne compaiono 2, uguali per tutto il mondo. Batterle paga <strong>+10 punti</strong>, XP pieni e una medaglia dedicata. <strong>Un solo tentativo al giorno per boss</strong>, vinto o perso; i boss non toccano il ranking Elo. Combattono solo le carte <strong>pubblicate nel Mondo</strong>.</p>
     <label class="small" style="margin-top:10px;">Il tuo sfidante (carte pubblicate)</label>
     <select id="bossCat"></select>
     <div id="bossList" style="margin-top:10px;"></div>
@@ -352,6 +352,10 @@
     <h2>🏅 Medagliere</h2>
     <div id="medalList" style="display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-top:12px;"></div>
     <div id="medalInfo" style="display:none; margin-top:12px; padding:12px; background:var(--panel2); border:1px solid #4d4477; border-radius:10px; font-size:.9rem; line-height:1.6;"></div>
+    <details style="margin-top:14px;">
+      <summary style="cursor:pointer; font-weight:600;" id="bossMedalSum">🤖 Boss domati</summary>
+      <div id="bossMedalList" style="display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-top:12px;"></div>
+    </details>
     <p class="count" style="margin-top:12px;">Le medaglie premiano con punti: spendili in scommesse, vantaggio mondiale, Cornice d'Oro, rigenerazioni e nella dispensa della Palestra.</p>
   </div>
   </div>
@@ -392,7 +396,7 @@
     <p>Ogni mezzanotte arrivano <strong>3 missioni</strong>, uguali per tutto il mondo: una di combattimento, una di palestra, una a sorpresa (boss, scommesse, QR…). Ognuna paga <strong>5 punti</strong>, il tris completo altri <strong>10 di bonus</strong>. Le trovi in cima al 🏅 Medagliere, con la spunta ✅ su quelle già fatte. Massimo 25 punti al giorno: quanto basta per un allenamento, o poco più.</p>
 
     <h2 style="font-size:1rem; margin-top:16px; color:var(--accent);">🤖 I Boss dell'Arena</h2>
-    <p>Otto leggende generate dal sistema, con statistiche fuori scala. Ogni giorno ne sono attive <strong>2, uguali per tutto il mondo</strong> (le decide la data). Batterne uno paga <strong>+10 punti e 25 XP</strong>. Attenzione: hai <strong>UN solo tentativo al giorno per boss</strong> — vinto, perso o abbandonato, si torna domani. Scegli bene il gatto prima di scendere in arena. Perdere costa solo 2 XP di consolazione. Dopo il match il gatto <strong>riposa un'ora</strong> come in ogni incontro vero, e l'erba gatta 🌿 comprata prima vale anche qui. Contro i Boss scendono in campo <strong>solo le carte pubblicate nel Mondo</strong>, e i boss <strong>non toccano il ranking Elo</strong>. Ogni boss ha la sua medaglia nel 🏅 Medagliere, più la 🤖 Ammazzaboss per chi li doma tutti — dal 🥫 Micio di Latta fino al 🌑 Gatto Mammone, quasi imbattibile senza livelli alti.</p>
+    <p><strong>64 leggende in 8 divisioni</strong> a difficoltà crescente: dai Randagi di Quartiere (facili) fino ai Boss Finali come il 🌑 Gatto Mammone o 🤖 MIAO-9000, mostruosi. Ogni giorno ne sono attive <strong>2, uguali per tutto il mondo</strong> (le decide la data). Batterne uno paga <strong>+10 punti e 25 XP</strong>. Attenzione: hai <strong>UN solo tentativo al giorno per boss</strong> — vinto, perso o abbandonato, si torna domani. Scegli bene il gatto prima di scendere in arena. Perdere costa solo 2 XP di consolazione. Dopo il match il gatto <strong>riposa un'ora</strong> come in ogni incontro vero, e l'erba gatta 🌿 comprata prima vale anche qui. Contro i Boss scendono in campo <strong>solo le carte pubblicate nel Mondo</strong>, e i boss <strong>non toccano il ranking Elo</strong>. Ogni boss ha la sua medaglia (sezione «🤖 Boss domati» nel 🏅 Medagliere, premi più ricchi per le divisioni alte), più la 🏆 Ammazzaboss per chi li doma tutti e 64.</p>
 
     <h2 style="font-size:1rem; margin-top:16px; color:var(--accent);">⚡ La sfida dal vivo (QR)</h2>
     <p>Due telefoni: uno mostra il QR della sua carta (⚔️ Arena → 📱), l'altro lo inquadra (📷) e il duello si gioca sul suo schermo. <strong>Vale come una sfida mondiale</strong>: punti, XP pieni, medaglie, riposo, scommesse e risultato registrato se le carte sono pubblicate.</p>
@@ -2991,7 +2995,7 @@ async function migrateMelodies(){
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
 /* ---------- versione e aggiornamento automatico ---------- */
-const APP_VERSION = '11.7';   // unica fonte di verità: aggiorna anche version.txt a ogni release
+const APP_VERSION = '11.8';   // unica fonte di verità: aggiorna anche version.txt a ogni release
 try { document.getElementById('appVer').textContent = 'v' + APP_VERSION; } catch(e){}
 function verNewer(a, b){   // a più recente di b? confronto numerico 11.10 > 11.9
   const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);
@@ -3799,49 +3803,97 @@ function renderMissions(){
   }).join('') +
   (st.tris ? '<p style="color:#51cf66; font-weight:700; margin-top:8px;">🎉 Tris completato: +10 punti bonus incassati. A domani!</p>' : '');
 }
-/* ---------- Boss dell'Arena: 8 leggende scritte a codice, zero costi AI (solo ritratti una tantum) ---------- */
-const BOSSES = [
-  {id:'latta',   serial:'B0550001', name:'Il Micio di Latta',      nick:'La Scatoletta Vivente', em:'🥫', tier:1,
-   lore:'Nato in un magazzino di scatolette, è convinto di essere una di loro. Duro fuori, tonno dentro.',
-   statsv:[8,6,7,7,5,8],    hp:110, potere:6,
-   ann:'Dal reparto conserve... con l\'armatura che fa crick... IL MICIO DI LATTAAA!',
-   prompt:'Cartoon boss cat made of dented tin cans: round tin armor body, goofy proud face, a sardine tail sticking out of his helmet. Flat cel shading, bold outlines, dark purple background. Square bust portrait.'},
-  {id:'spettro', serial:'B0550002', name:'Lo Spettro dei Tetti',   nick:'L\'Ombra di Mezzanotte', em:'👻', tier:1,
-   lore:'Nessuno l\'ha mai visto arrivare. Molti l\'hanno visto andarsene con la loro cena.',
-   statsv:[9,8,12,15,7,9],  hp:95,  potere:4,
-   ann:'Dai tetti della città... veloce come un brivido... LO SPETTRO DEI TETTIII!',
-   prompt:'Cartoon ghostly ninja cat boss: sleek smoky grey-blue fur fading into mist, glowing yellow eyes, crouched on a moonlit rooftop. Flat cel shading, bold outlines, dark purple background. Square bust portrait.'},
-  {id:'sfinge',  serial:'B0550003', name:'La Sfinge di Cortile',   nick:'L\'Enigma Peloso', em:'🦁', tier:2,
-   lore:'Ti fissa finché non confessi cose che non hai fatto. Parla solo per indovinelli.',
-   statsv:[9,14,10,8,10,12], hp:130, potere:5,
-   ann:'Dall\'antico Egitto... anzi no, dal cortile qui dietro... LA SFINGE DI CORTIIILE!',
-   prompt:'Cartoon sphinx cat boss: elegant hairless sphynx cat with golden pharaoh headdress and hypnotic teal eyes, mysterious smile, sitting like an Egyptian statue. Flat cel shading, bold outlines, dark purple background. Square bust portrait.'},
-  {id:'barone',  serial:'B0550004', name:'Il Barone von Baffen',   nick:'L\'Artiglio Aristocratico', em:'🎖️', tier:2,
-   lore:'Duella solo secondo l\'antico galateo felino: prima l\'inchino, poi la doppia zampata.',
-   statsv:[11,10,9,9,13,8], hp:140, potere:3,
-   ann:'Dai saloni della vecchia nobiltà... con i baffi impomatati... IL BARONE VON BAFFEEEN!',
-   prompt:'Cartoon aristocratic cat boss: fluffy white persian cat with a monocle, magnificent curled moustache-like whiskers, red military jacket with gold medals. Haughty expression. Flat cel shading, bold outlines, dark purple background. Square bust portrait.'},
-  {id:'nonna',   serial:'B0550005', name:'La Nonna dei Vicoli',    nick:'Sette Vite e Mezza', em:'👵', tier:3,
-   lore:'Ha cresciuto tre generazioni di randagi. Le sue fusa curano, le sue sberle educano.',
-   statsv:[10,9,11,7,14,13], hp:150, potere:2,
-   ann:'Dal vicolo dietro la pescheria... rispettata da tutti... LA NONNA DEI VICOLIII!',
-   prompt:'Cartoon elderly grandma cat boss: plump calico cat with a knitted shawl and tiny glasses, kind but steely eyes, one paw holding a wooden spoon like a weapon. Flat cel shading, bold outlines, dark purple background. Square bust portrait.'},
-  {id:'pescatore', serial:'B0550006', name:'Il Pescatore Fantasma', nick:'La Rete del Destino', em:'🎣', tier:3,
-   lore:'Si dice appaia solo nelle notti di nebbia, con l\'odore di sardine e vendetta.',
-   statsv:[12,8,12,11,6,10], hp:160, potere:1,
-   ann:'Dalle banchine avvolte nella nebbia... puzza di sardine e gloria... IL PESCATORE FANTASMAAA!',
-   prompt:'Cartoon ghost fisherman cat boss: rugged scarred grey tabby in a yellow rain coat and rain hat, one eye scarred shut, fishing hook paw, fog around him. Flat cel shading, bold outlines, dark purple background. Square bust portrait.'},
-  {id:'imperatore', serial:'B0550007', name:'L\'Imperatore Soriano', nick:'Il Trono di Cuscini', em:'👑', tier:4,
-   lore:'Regna dal cuscino più alto del mondo. Il suo caos non segue regole: le detta.',
-   statsv:[13,12,11,10,12,11], hp:190, potere:7,
-   ann:'Dal trono di mille cuscini... il sovrano del caos... L\'IMPERATORE SORIANOOO!',
-   prompt:'Cartoon emperor cat boss: majestic brown tabby cat on a throne of cushions, golden crown tilted, royal purple cape, chaotic grin with one fang. Flat cel shading, bold outlines, dark purple background. Square bust portrait.'},
-  {id:'mammone', serial:'B0550008', name:'Il Gatto Mammone',       nick:'La Leggenda delle Leggende', em:'🌑', tier:5,
-   lore:'Il mostro delle fiabe sussurrate ai gattini. Non è cattivo: è solo enorme, antico e permaloso.',
-   statsv:[15,13,12,11,10,14], hp:260, potere:0,
-   ann:'Dalle fiabe più antiche... colui che non dovrebbe esistere... IL GATTO... MAMMONEEEE!',
-   prompt:'Cartoon mythical giant cat boss: colossal ancient black cat with glowing amber eyes, faint golden markings in his fur like constellations, looming in the dark, small bats flying around. Epic but slightly grumpy. Flat cel shading, bold outlines, dark purple background. Square bust portrait.'},
+/* ---------- Boss dell'Arena: 64 leggende in 8 divisioni, scritte a codice (solo ritratti una tantum) ---------- */
+/* dati compatti: id, n(ome), k(soprannome), e(moji), d(ivisione 1-8), v(isual per il ritratto AI), l(ore) */
+const BOSS_DATA = [
+  // Divisione 1 — Randagi di Quartiere
+  {id:'latta', n:'Il Micio di Latta', k:'La Scatoletta Vivente', e:'🥫', d:1, v:'made of dented tin cans, round tin armor body, goofy proud face, a sardine tail out of his helmet', l:'Convinto di essere una scatoletta. Duro fuori, tonno dentro.'},
+  {id:'b02', n:'Baffo Mozzo', k:'Il Ladro del Mercato', e:'🐟', d:1, v:'scruffy street cat with half a whisker, clutching a stolen fish, sly grin', l:'Ruba al mercato e sparisce prima che tu dica «miao».'},
+  {id:'b03', n:'Zampasporca', k:'Il Signore dei Bidoni', e:'🗑️', d:1, v:'grimy alley cat covered in dust, proud king pose among trash cans', l:'Regna sui bidoni del quartiere, immune a ogni disgusto.'},
+  {id:'b04', n:'La Palla di Pelo', k:'Il Rullo Compressore', e:'🧶', d:1, v:'enormously fluffy perfectly round cat, unstoppable rolling pose', l:'Rotola addosso e non si ferma. Semplice, ma efficace.'},
+  {id:'b05', n:'Trippa Molle', k:'Il Pigrone', e:'😴', d:1, v:'very fat lazy tabby lying down, too heavy to move, smug half-closed eyes', l:'Troppo pigro per schivare, troppo grasso per cadere.'},
+  {id:'b06', n:'Fiuto', k:'Il Segugio Felino', e:'👃', d:1, v:'lean cat with a huge twitching nose sniffing the air, food-obsessed eyes', l:'Segue l\'odore del cibo in capo al mondo.'},
+  {id:'b07', n:'Mezza Coda', k:'Il Furioso', e:'😾', d:1, v:'battle-scarred cat with only half a tail, furious hissing expression', l:'Perse metà coda, guadagnò il doppio della rabbia.'},
+  {id:'b08', n:'Il Gatto del Fornaio', k:'Il Forno Vivente', e:'🥖', d:1, v:'cat dusted with flour beside a warm oven, glowing ember eyes', l:'Profuma di pane, morde di brace.'},
+  // Divisione 2 — Domestici Ribelli
+  {id:'b09', n:'Divano Distrutto', k:'L\'Artiglio del Cuoio', e:'🛋️', d:2, v:'cat perched on a shredded leather sofa, claws fully out', l:'Le sue unghie tagliano il cuoio come burro.'},
+  {id:'b10', n:'Il Re del Frigo', k:'Sua Maestà Affamata', e:'🧊', d:2, v:'chubby cat on top of a fridge like a throne, crown of ice cubes', l:'Apre gli sportelli con la sola forza della fame.'},
+  {id:'b11', n:'Micetta Viziata', k:'L\'Angelo con gli Artigli', e:'🎀', d:2, v:'cute white kitten with a pink bow and gleaming steel claws, deceptively sweet', l:'Fiocco rosa, artigli d\'acciaio.'},
+  {id:'b12', n:'Palla di Lana', k:'La Trappola Soffice', e:'🧵', d:2, v:'adorable ball of yarn-like fluff hiding sharp claws underneath', l:'Sembra tenero. È una trappola.'},
+  {id:'b13', n:'Sveglia delle 4', k:'L\'Incubo Notturno', e:'⏰', d:2, v:'wide-eyed cat yowling at night surrounded by alarm-clock chaos', l:'Ti attacca quando meno te l\'aspetti: le 4 del mattino.'},
+  {id:'b14', n:'Il Gatto della Tastiera', k:'Il Sabotatore', e:'⌨️', d:2, v:'cat sprawled smugly across a computer keyboard, troublemaker face', l:'Cammina sui nervi. E sui tasti.'},
+  {id:'b15', n:'Tenda Strappata', k:'Lo Scalatore', e:'🪟', d:2, v:'cat clinging halfway up torn window curtains, mischievous climber', l:'Si arrampica dove non dovrebbe. Sempre.'},
+  {id:'b16', n:'Vaso Rotto', k:'L\'Innocente Distruttore', e:'🏺', d:2, v:'cat beside a shattered vase with an exaggeratedly innocent face', l:'Lascia distruzione e uno sguardo angelico.'},
+  // Divisione 3 — Nobili e Aristogatti
+  {id:'barone', n:'Il Barone von Baffen', k:'L\'Artiglio Aristocratico', e:'🎖️', d:3, v:'fluffy white persian with a monocle, magnificent curled moustache whiskers, red military jacket with gold medals, haughty', l:'Duella secondo l\'antico galateo: prima l\'inchino, poi la doppia zampata.'},
+  {id:'b18', n:'Contessa Vellutata', k:'Lo Sguardo che Stordisce', e:'💜', d:3, v:'elegant longhair cat with velvet-purple fur, hypnotic eyes, jeweled collar', l:'Una pelliccia così morbida da stordire l\'avversario.'},
+  {id:'b19', n:'Sir Graffio III', k:'Il Duellante', e:'⚔️', d:3, v:'dashing cat swordsman with a rapier, waxed whiskers, plumed hat', l:'Spadaccino leggendario, mai perso un duello all\'alba.'},
+  {id:'b20', n:'Madame Persia', k:'La Regina del Cuscino', e:'👑', d:3, v:'regal flat-faced persian cat on a silk pillow, extremely haughty', l:'Regna dal cuscino di seta e non si alza per nessuno.'},
+  {id:'b21', n:'Il Duca Certosino', k:'L\'Acciaio Grigio', e:'🩶', d:3, v:'cold steel-grey chartreux cat, stern proud noble bearing', l:'Grigio come l\'acciaio, freddo come il ferro.'},
+  {id:'b22', n:'Lady Siam', k:'Il Colpo di Ghiaccio', e:'💎', d:3, v:'sleek siamese cat with sapphire-blue eyes, icy elegant pose', l:'Occhi di zaffiro, colpo che gela il sangue.'},
+  {id:'b23', n:'Don Gattone', k:'Il Padrino', e:'🕴️', d:3, v:'heavy-set mob-boss cat in a dark pinstripe suit, cigar, one raised eyebrow', l:'Il padrino del vicolo: offerte che non puoi rifiutare.'},
+  {id:'b24', n:'Il Maggiordomo Smoking', k:'L\'Ombra Elegante', e:'🤵', d:3, v:'tuxedo cat in butler attire with white gloves, lethal calm expression', l:'Bianco e nero, impeccabile e letale.'},
+  // Divisione 4 — Bestie Selvatiche
+  {id:'sfinge', n:'La Sfinge di Cortile', k:'L\'Enigma Peloso', e:'🦁', d:4, v:'hairless sphynx cat with a golden pharaoh headdress and hypnotic teal eyes, sitting like a statue', l:'Ti fissa finché non confessi. Parla solo per indovinelli.'},
+  {id:'b26', n:'Zanna di Lince', k:'L\'Agguato', e:'🐾', d:4, v:'lynx cat with tufted pointed ears, crouched in a deadly ambush pose', l:'Non lo senti arrivare. Lo senti solo dopo.'},
+  {id:'b27', n:'Il Gatto Selvatico', k:'L\'Indomito', e:'🌿', d:4, v:'wild brown tabby with fierce untamed eyes among brambles', l:'Non è mai stato addomesticato. Mai lo sarà.'},
+  {id:'b28', n:'Ombra della Giungla', k:'Il Silenzio Nero', e:'🐆', d:4, v:'black panther-like cat with glowing eyes in deep jungle shadow', l:'Nero come la notte, silenzioso come la morte.'},
+  {id:'b29', n:'Ruggito', k:'La Grande Voce', e:'🦁', d:4, v:'small cat with an enormous open-mouthed roar, tiny body huge sound', l:'Piccolo di taglia, enorme di voce.'},
+  {id:'b30', n:'Artiglio delle Nevi', k:'Il Colpo Gelido', e:'❄️', d:4, v:'snow leopard cat with frosty spotted fur on an icy mountain peak', l:'Scende dalle vette con un colpo che congela.'},
+  {id:'b31', n:'La Tigre di Cartone', k:'L\'Inganno a Strisce', e:'🐯', d:4, v:'cat painted with tiger stripes, looks fake and flat until it bites', l:'Sembra finta finché non ti azzanna.'},
+  {id:'b32', n:'Il Puma dei Tetti', k:'Il Saltatore', e:'🌆', d:4, v:'muscular tawny puma-cat leaping between city rooftops at dusk', l:'Salta da un palazzo all\'altro senza sfiorare terra.'},
+  // Divisione 5 — Miti e Leggende
+  {id:'nonna', n:'La Nonna dei Vicoli', k:'Sette Vite e Mezza', e:'👵', d:5, v:'plump calico grandma cat with a knitted shawl, tiny glasses, wielding a wooden spoon', l:'Le sue fusa curano, le sue sberle educano.'},
+  {id:'pescatore', n:'Il Pescatore Fantasma', k:'La Rete del Destino', e:'🎣', d:5, v:'scarred grey tabby in a yellow rain coat and hat, one eye shut, foggy docks', l:'Appare nelle notti di nebbia, odore di sardine e vendetta.'},
+  {id:'b35', n:'Il Gatto con gli Stivali', k:'La Lama Leggendaria', e:'👢', d:5, v:'swashbuckling cat in tall boots with a feathered hat and drawn sword', l:'Lo spadaccino delle fiabe, in carne, pelo e stivali.'},
+  {id:'b36', n:'Bastet Minore', k:'La Sacerdotessa', e:'🔱', d:5, v:'elegant Egyptian temple cat with nine golden rings, ceremonial pose', l:'Sacerdotessa dai nove anelli, guardiana dei riti.'},
+  {id:'b37', n:'Il Gatto Guardiano', k:'Il Custode della Soglia', e:'🚪', d:5, v:'stoic large cat guarding a glowing sacred granary door', l:'Custodisce la soglia del granaio sacro da secoli.'},
+  {id:'b38', n:'Coda di Volpe', k:'I Nove Inganni', e:'🦊', d:5, v:'cunning cat with nine flowing fox-like tails and a sly smile', l:'Nove code, nove inganni, nessuna pietà.'},
+  {id:'b39', n:'Il Randagio Immortale', k:'Otto Vite Spese', e:'☠️', d:5, v:'ragged battle-worn stray with glowing eyes and a ghostly aura of past lives', l:'Dicono abbia già speso otto vite. Ne resta una.'},
+  {id:'b40', n:'Maneki il Portafortuna', k:'La Zampa del Destino', e:'🐾', d:5, v:'golden beckoning maneki-neko cat with one raised paw and a glowing coin', l:'La zampa alzata che sigilla i destini altrui.'},
+  // Divisione 6 — Spettri e Soprannaturale
+  {id:'spettro', n:'Lo Spettro dei Tetti', k:'L\'Ombra di Mezzanotte', e:'👻', d:6, v:'smoky grey-blue ninja cat fading into mist, glowing yellow eyes, moonlit rooftop', l:'Nessuno l\'ha mai visto arrivare. Molti andarsene con la cena.'},
+  {id:'b42', n:'Il Gatto Nero del Venerdì', k:'La Sfortuna Fatta Pelo', e:'🐈‍⬛', d:6, v:'sleek black cat crossing under a broken ladder, ominous glowing eyes', l:'Porta sfortuna a chiunque osi sfidarlo.'},
+  {id:'b43', n:'Occhi nel Buio', k:'Il Predatore Invisibile', e:'👁️', d:6, v:'only two glowing eyes visible in total darkness with a faint cat silhouette', l:'Lo vedi solo quando è già troppo tardi.'},
+  {id:'b44', n:'Il Mietitore Baffuto', k:'Il Signore della Nona Vita', e:'⚰️', d:6, v:'skeletal grim-reaper cat with a tiny scythe and a hooded black cloak', l:'Viene a riscuotere la tua nona vita.'},
+  {id:'b45', n:'Fantasma del Camino', k:'La Cenere Vivente', e:'🔥', d:6, v:'ghostly cat made of glowing embers and ash rising from a fireplace', l:'Vive nella cenere calda del camino.'},
+  {id:'b46', n:'La Strega Gatta', k:'L\'Incantatrice', e:'🧙', d:6, v:'witch cat with a pointed hat riding a broom, casting green sparks', l:'Trasforma i topi in tempeste con un miagolio.'},
+  {id:'b47', n:'Il Vampiro Persiano', k:'Il Succhia-Velocità', e:'🦇', d:6, v:'aristocratic persian vampire cat with tiny fangs, a cape and small bat wings', l:'Succhia la Velocità agli avversari e la fa sua.'},
+  {id:'b48', n:'Ectoplasma Felino', k:'L\'Intoccabile', e:'💧', d:6, v:'translucent gelatinous ghost cat with a semi-liquid glowing body', l:'Non puoi colpire ciò che non è solido.'},
+  // Divisione 7 — Divinità Feline
+  {id:'imperatore', n:'L\'Imperatore Soriano', k:'Il Trono di Cuscini', e:'👑', d:7, v:'majestic brown tabby on a throne of cushions, tilted golden crown, royal cape, chaotic grin with one fang', l:'Regna dal cuscino più alto. Il suo caos detta le regole.'},
+  {id:'b50', n:'Bastet la Dea', k:'L\'Antica Protettrice', e:'🌙', d:7, v:'divine black Egyptian goddess cat with golden jewelry and a glowing ankh', l:'L\'antica dea protettrice di tutti i gatti.'},
+  {id:'b51', n:'Il Gatto di Schrödinger', k:'Vivo e Morto', e:'📦', d:7, v:'a cat half-glowing and half-skeletal emerging from a quantum box, split down the middle', l:'Vivo e morto insieme, finché non lo attacchi.'},
+  {id:'b52', n:'Ra-Miao il Sole', k:'L\'Accecante', e:'☀️', d:7, v:'radiant golden cat wreathed in blinding solar flames with a sun-disc halo', l:'Accecante: brucia chi osa guardarlo.'},
+  {id:'b53', n:'Sekhmet Felina', k:'La Furia Divina', e:'🔥', d:7, v:'fierce lioness-headed war goddess cat with a red mane and blazing eyes', l:'La furia divina fatta artigli.'},
+  {id:'b54', n:'Il Guardiano delle Piramidi', k:'Mille Dinastie', e:'🏛️', d:7, v:'colossal ancient stone-furred cat guarding pyramids under a starry sky', l:'Vecchio di mille dinastie, immoto come la pietra.'},
+  {id:'b55', n:'Luna Crescente', k:'La Dea della Notte', e:'🌘', d:7, v:'silver moon-goddess cat glowing under a crescent moon, star-flecked fur', l:'La dea della notte: al buio è invincibile.'},
+  {id:'b56', n:'Il Gatto delle Stelle', k:'Il Manto Cosmico', e:'✨', d:7, v:'cat whose fur is a field of galaxies and constellations, cosmic glowing eyes', l:'Il suo manto è un cielo di costellazioni.'},
+  // Divisione 8 — Boss Finali
+  {id:'mammone', n:'Il Gatto Mammone', k:'La Leggenda delle Leggende', e:'🌑', d:8, v:'colossal ancient black cat with glowing amber eyes and golden constellation markings, looming in darkness with small bats', l:'Il mostro delle fiabe. Enorme, antico e permaloso.'},
+  {id:'b58', n:'Behemoth', k:'Il Colosso dell\'Abisso', e:'🌋', d:8, v:'titanic monstrous cat rising from a volcanic abyss with molten cracks in its fur', l:'Il colosso che dorme sotto i vulcani.'},
+  {id:'b59', n:'Il Primo Gatto', k:'L\'Antenato', e:'🗿', d:8, v:'primordial monumental stone-and-gold ancestral cat, the first of all cats', l:'Colui da cui discendono tutti i mici del mondo.'},
+  {id:'b60', n:'Divoratore di Nove Soli', k:'Il Mito Cosmico', e:'🌞', d:8, v:'vast cosmic cat devouring suns, mouth full of starlight, deep space background', l:'Il mito che ingoia i soli, uno dopo l\'altro.'},
+  {id:'b61', n:'Il Signore dei Randagi', k:'Il Re di Tutti', e:'😼', d:8, v:'battle-scarred king cat with a crown of bones commanding a horde of shadowy cats', l:'Comanda ogni gatto randagio del mondo.'},
+  {id:'b62', n:'Chronos Felino', k:'Il Mangiatore di Tempo', e:'⏳', d:8, v:'ancient cosmic cat entwined with clock gears and hourglass eyes, an aging aura', l:'Mangia il tempo e invecchia gli avversari.'},
+  {id:'b63', n:'Il Gatto Vuoto', k:'L\'Assenza Fatta Felino', e:'⚫', d:8, v:'a cat-shaped void of pure black nothingness with two faint white eyes', l:'L\'assenza fatta felino. Il nulla che miagola.'},
+  {id:'b64', n:'MIAO-9000', k:'Il Gatto-Macchina Definitivo', e:'🤖', d:8, v:'massive menacing chrome robot cat with a single glowing red eye, sci-fi plating', l:'Il gatto-macchina definitivo. Errore: pietà non trovata.'},
 ];
+const DIV_STATS = {1:[25,40], 2:[32,48], 3:[40,55], 4:[48,62], 5:[55,70], 6:[62,78], 7:[70,85], 8:[78,95]};
+const DIV_HP    = {1:[90,115], 2:[110,135], 3:[130,155], 4:[150,175], 5:[170,195], 6:[190,215], 7:[215,245], 8:[245,300]};
+const DIV_INTRO = {1:'Dai vicoli del quartiere', 2:'Dai salotti in subbuglio', 3:'Dai saloni della nobiltà', 4:'Dalle terre selvagge', 5:'Dalle antiche leggende', 6:'Dall\'aldilà felino', 7:'Dai troni celesti', 8:'Dalla fine di ogni cosa'};
+const BOSSES = BOSS_DATA.map((b, i) => {
+  const serial = 'B055' + String(i + 1).padStart(4, '0');
+  const rng = mulberry32(((i + 1) * 2654435761) >>> 0);
+  const sR = DIV_STATS[b.d], hR = DIV_HP[b.d];
+  const statsv = [0, 0, 0, 0, 0, 0].map(() => Math.round(sR[0] + rng() * (sR[1] - sR[0])));
+  const hp = Math.round(hR[0] + rng() * (hR[1] - hR[0]));
+  const potere = Math.floor(rng() * POWERS.length);
+  return {id: b.id, serial: serial, name: b.n, nick: b.k, em: b.e, tier: b.d, lore: b.l, statsv: statsv, hp: hp, potere: potere,
+    ann: DIV_INTRO[b.d] + '... ' + b.k + '... ' + b.n.toUpperCase() + '!',
+    prompt: 'Comic book cartoon portrait of a CAT boss, full feline face clearly visible: ' + b.v + '. Bold ink outlines, flat cel shading, warm colors, dark purple background. Square bust portrait.'};
+});
+const BOSS_BY_ID = {}; BOSSES.forEach(b => { BOSS_BY_ID[b.id] = b; });
 let bossWins = {};
 try { bossWins = JSON.parse(localStorage.getItem('catcards_boss') || '{}'); } catch(e){}
 function activeBosses(){
@@ -3901,13 +3953,13 @@ function renderBosses(){
     const wonToday = bw.last === today;
     const beaten = bw.n > 0;
     const row = document.createElement('div');
-    row.style.cssText = 'border:1px solid ' + (b.tier >= 5 ? 'var(--accent)' : '#363057') + '; border-radius:10px; padding:10px; margin-top:8px;';
+    row.style.cssText = 'border:1px solid ' + (b.tier >= 7 ? 'var(--accent)' : '#363057') + '; border-radius:10px; padding:10px; margin-top:8px;';
     row.innerHTML =
       '<div style="display:flex; gap:10px; align-items:center;">' +
         '<img id="bossImg_' + b.id + '" style="width:56px; height:56px; border-radius:8px; object-fit:cover; display:none; flex-shrink:0;">' +
         '<div id="bossEm_' + b.id + '" style="font-size:2.2rem; flex-shrink:0;">' + b.em + '</div>' +
         '<div style="flex:1; min-width:0;"><strong>' + b.name + '</strong> <span style="color:var(--muted); font-size:.8rem;">«' + b.nick + '»</span>' +
-        '<br><span class="count">' + '☠️'.repeat(b.tier) + ' · ' + b.hp + ' HP · 🌟 ' + POWERS[b.potere].name + (beaten ? ' · ✅ già domato' : '') + '</span></div>' +
+        '<br><span class="count">Div.' + b.tier + ' ' + '☠️'.repeat(Math.min(b.tier, 5)) + ' · ' + b.hp + ' HP · 🌟 ' + POWERS[b.potere].name + (beaten ? ' · ✅ già domato' : '') + '</span></div>' +
       '</div>' +
       '<p class="count" style="margin-top:6px; line-height:1.5;">' + b.lore + '</p>' +
       (tried ? '<p class="count" style="color:' + (wonToday ? '#51cf66' : '#ffb703') + ';">' +
@@ -3990,16 +4042,17 @@ const ACHS = [
   {id:'ricco',       ic:'💰', nm:'Riccone',            ds:'Possiedi 150 punti',                 pt:20, ck:() => points >= 150},
   {id:'onore',       ic:'🚪', nm:'Ritiro con onore',   ds:'Ritira una carta con record positivo', pt:20, ck:() => Array.isArray(window._myWorldRows) && window._myWorldRows.some(x => x.retired && (x.wins || 0) > (x.losses || 0))},
   {id:'disfatta',    ic:'💀', nm:'Disfatta',           ds:'Perdi 10 sfide mondiali di fila',    pt:30, ck:() => counters.lossStreak >= 10},
-  {id:'b_latta',     ic:'🥫', nm:'Apriscatole',        ds:'Sconfiggi Il Micio di Latta',        pt:15, ck:() => (bossWins['latta'] || {}).n >= 1},
-  {id:'b_spettro',   ic:'👻', nm:'Acchiappafantasmi',  ds:'Sconfiggi Lo Spettro dei Tetti',     pt:15, ck:() => (bossWins['spettro'] || {}).n >= 1},
-  {id:'b_sfinge',    ic:'🦁', nm:'Indovinello risolto', ds:'Sconfiggi La Sfinge di Cortile',    pt:20, ck:() => (bossWins['sfinge'] || {}).n >= 1},
-  {id:'b_barone',    ic:'🎖️', nm:'Lesa maestà',        ds:'Sconfiggi Il Barone von Baffen',     pt:20, ck:() => (bossWins['barone'] || {}).n >= 1},
-  {id:'b_nonna',     ic:'👵', nm:'Che nipote!',        ds:'Sconfiggi La Nonna dei Vicoli',      pt:25, ck:() => (bossWins['nonna'] || {}).n >= 1},
-  {id:'b_pescatore', ic:'🎣', nm:'Pesce fuor d\'acqua', ds:'Sconfiggi Il Pescatore Fantasma',   pt:25, ck:() => (bossWins['pescatore'] || {}).n >= 1},
-  {id:'b_imperatore', ic:'👑', nm:'Colpo di stato',    ds:'Sconfiggi L\'Imperatore Soriano',    pt:30, ck:() => (bossWins['imperatore'] || {}).n >= 1},
-  {id:'b_mammone',   ic:'🌑', nm:'Sfata-leggende',     ds:'Sconfiggi Il Gatto Mammone',         pt:50, ck:() => (bossWins['mammone'] || {}).n >= 1},
-  {id:'b_all',       ic:'🤖', nm:'Ammazzaboss',        ds:'Sconfiggi tutti gli 8 Boss dell\'Arena', pt:100, ck:() => BOSSES.every(x => (bossWins[x.id] || {}).n >= 1)},
 ];
+/* medaglie dei Boss: una per ognuno dei 64, generate dai dati + premio per divisione ---------- */
+const BOSS_MEDAL_PT = {1:5, 2:5, 3:8, 4:8, 5:10, 6:12, 7:15, 8:25};
+const BOSS_MEDALS = BOSSES.map(b => ({
+  id: 'bm_' + b.id, ic: b.em, nm: b.name, ds: 'Sconfiggi ' + b.name + ' (Div. ' + b.tier + ')',
+  pt: BOSS_MEDAL_PT[b.tier] || 10, boss: true,
+  ck: () => (bossWins[b.id] || {}).n >= 1
+})).concat([
+  {id:'bm_all', ic:'🏆', nm:'Ammazzaboss', ds:'Sconfiggi tutti e 64 i Boss dell\'Arena', pt:200, boss: true,
+   ck: () => BOSSES.every(x => (bossWins[x.id] || {}).n >= 1)}
+]);
 let toastT = null;
 function toast(t){
   const el = document.getElementById('achToast');
@@ -4032,11 +4085,40 @@ function renderMedals(){
     };
     el.appendChild(d);
   });
+  renderBossMedals();
+}
+function renderBossMedals(){
+  const el = document.getElementById('bossMedalList');
+  const sum = document.getElementById('bossMedalSum');
+  if (!el) return;
+  const doneN = BOSSES.filter(b => (bossWins[b.id] || {}).n >= 1).length;
+  if (sum) sum.innerHTML = '🤖 Boss domati — <strong>' + doneN + '/' + BOSSES.length + '</strong> <span class="count">(tocca per aprire)</span>';
+  el.innerHTML = '';
+  BOSS_MEDALS.forEach(a => {
+    const d = document.createElement('div');
+    d.className = 'medal' + (ach[a.id] ? '' : ' locked');
+    d.style.cursor = 'pointer';
+    d.title = a.ds + ' · premio: ' + a.pt + ' punti';
+    d.innerHTML = '<div class="mi">' + a.ic + '</div><div class="mn">' + a.nm + '</div>';
+    d.onclick = () => {
+      const info = document.getElementById('medalInfo');
+      if (!info) return;
+      const won = ach[a.id];
+      info.style.display = 'block';
+      info.innerHTML = '<span style="font-size:1.4rem;">' + a.ic + '</span> <strong>' + a.nm + '</strong>' +
+        (won ? ' <span style="color:#51cf66;">✓ conquistata</span>' : ' <span style="color:var(--muted);">🔒 da conquistare</span>') +
+        '<br>Come si ottiene: ' + a.ds +
+        '<br>Premio: <strong>+' + a.pt + ' punti</strong>' +
+        (won ? '<br><span class="count">Sbloccata il ' + new Date(won).toLocaleDateString('it-IT') + '</span>' : '');
+    };
+    el.appendChild(d);
+  });
 }
 function checkAchievements(){
   let got = false;
+  const all = ACHS.concat(BOSS_MEDALS);
   for (let pass = 0; pass < 2; pass++){   // secondo giro: un premio può sbloccare «Riccone»
-    ACHS.forEach(a => {
+    all.forEach(a => {
       if (ach[a.id]) return;
       let ok = false;
       try { ok = a.ck(); } catch(e){}
