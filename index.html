@@ -185,6 +185,7 @@
       <button class="tabBtn" data-tab="mondo" onclick="showTab('mondo')">🌍 Mondo<span id="mondoDot" style="display:none; width:9px; height:9px; background:#e63946; border-radius:50%; margin-left:5px; vertical-align:middle;"></span></button>
     </div>
     <div style="display:flex; gap:8px;">
+      <button class="tabBtn" data-tab="boss" onclick="showTab('boss')">🤖 Boss</button>
       <button class="tabBtn" data-tab="pal" onclick="showTab('pal')">🏋️ Palestra</button>
       <button class="tabBtn" data-tab="med" onclick="showTab('med')">🏅 Medagliere</button>
       <button class="tabBtn" data-tab="reg" onclick="showTab('reg')">📖 Regole</button>
@@ -272,11 +273,11 @@
     <div id="authBox" style="margin-top:8px;"></div>
     <div id="mondoMember" style="display:none;">
       <div id="newsList" class="count" style="line-height:1.9;"></div>
-      <label class="small">Il tuo nome giocatore (obbligatorio, min 3 lettere)</label>
-      <input type="text" id="playerName" placeholder="Es. Antonio" maxlength="20">
-      <button class="btn secondary" id="nameSaveBtn" onclick="applyOwnerName()" style="display:none; margin-top:8px;">💾 Applica il nuovo nome a tutte le carte pubblicate</button>
       <details id="pubDetails" style="margin-top:12px;">
         <summary>🗂️ Scegli quali carte pubblicare</summary>
+        <label class="small" style="margin-top:8px;">Il tuo nome giocatore (obbligatorio, min 3 lettere)</label>
+        <input type="text" id="playerName" placeholder="Es. Antonio" maxlength="20">
+        <button class="btn secondary" id="nameSaveBtn" onclick="applyOwnerName()" style="display:none; margin-top:8px;">💾 Applica il nuovo nome a tutte le carte pubblicate</button>
         <div id="pubList" style="margin-top:8px;"></div>
       </details>
       <button class="btn" id="pubBtn" onclick="publishCards()">📤 Pubblica le carte selezionate</button>
@@ -303,10 +304,13 @@
     <button class="btn secondary" onclick="loadLeaderboard()" style="margin-top:10px;">🏅 Classifica mondiale</button>
     <div id="leaderList" class="count" style="line-height:2; margin-top:8px;"></div>
   </div>
+  </div>
+
+  <div id="tab-boss" style="width:100%; max-width:440px; display:none;">
   <div class="panel" style="margin-top:20px;">
     <h2>🤖 Boss dell'Arena</h2>
-    <p class="count" style="line-height:1.6;">Ogni giorno 2 leggende scendono nell'Arena, uguali per tutto il mondo. Batterle paga <strong>+10 punti</strong>, XP pieni e una medaglia dedicata. Il premio si ritira <strong>1 volta al giorno per boss</strong>; i boss non toccano il ranking Elo.</p>
-    <label class="small" style="margin-top:10px;">Il tuo sfidante</label>
+    <p class="count" style="line-height:1.6;">Ogni giorno 2 leggende scendono nell'Arena, uguali per tutto il mondo. Batterle paga <strong>+10 punti</strong>, XP pieni e una medaglia dedicata. Il premio si ritira <strong>1 volta al giorno per boss</strong>; i boss non toccano il ranking Elo. Combattono solo le carte <strong>pubblicate nel Mondo</strong>.</p>
+    <label class="small" style="margin-top:10px;">Il tuo sfidante (carte pubblicate)</label>
     <select id="bossCat"></select>
     <div id="bossList" style="margin-top:10px;"></div>
   </div>
@@ -1126,13 +1130,14 @@ function stepCard(d){
 
 /* ---------- navigazione a schede ---------- */
 function showTab(t){
-  ['crea', 'coll', 'arena', 'mondo', 'pal', 'med', 'reg', 'opz'].forEach(k => {
+  ['crea', 'coll', 'arena', 'mondo', 'boss', 'pal', 'med', 'reg', 'opz'].forEach(k => {
     const el = document.getElementById('tab-' + k);
     if (el) el.style.display = (k === t) ? 'block' : 'none';
   });
   document.querySelectorAll('.tabBtn').forEach(b => b.classList.toggle('active', b.dataset.tab === t));
   window._curTab = t;
-  if (t === 'mondo'){ openMondoNews(); try { renderBosses(); } catch(e){} }
+  if (t === 'mondo') openMondoNews();
+  if (t === 'boss'){ try { renderBosses(); } catch(e){} }
 }
 
 /* ---------- notiziario: cosa è successo alle tue carte mentre eri via ---------- */
@@ -1205,7 +1210,9 @@ async function openMondoNews(){
       return (mine[m.winner_serial] ? '🏆' : '💥') + ' <strong>' + m.winner_name + '</strong> di ' + (m.winner_owner || '?') +
         ' ha battuto <strong>' + m.loser_name + '</strong> di ' + (m.loser_owner || '?') + ' · ' + when;
     });
-    el.innerHTML = html + (html ? '<br><br>' : '') + '📜 <strong>Ultimi 5 incontri delle tue carte:</strong><br>' + lines.join('<br>');
+    el.innerHTML = html + (html ? '<br>' : '') +
+      '<details style="margin-top:6px;"><summary style="cursor:pointer; font-weight:600;">📜 Ultimi 5 incontri delle tue carte <span class="count">(tocca per aprire)</span></summary>' +
+      '<div style="margin-top:6px; line-height:1.9;">' + lines.join('<br>') + '</div></details>';
   } catch(e){}
   loadLeaderboard();   // classifica sempre fresca quando apri la scheda Mondo
 }
@@ -3591,13 +3598,16 @@ function renderBosses(){
   if (!list || !sel) return;
   const keep = sel.value;
   sel.innerHTML = '';
+  let eligible = 0;
   collection.forEach((c, i) => {
+    if (!myActive.has(c.serial)) return;   // contro i Boss scendono solo le carte pubblicate nel Mondo
     const rest = coolLeft(c) > 0;
     const o = new Option('🐱 ' + c.name + ' (Lv.' + cardLevel(c.serial) + ')' + (rest ? ' 😴 riposa' : ''), String(i));
     o.disabled = rest;
     sel.add(o);
+    if (!rest) eligible++;
   });
-  if (!collection.length) sel.add(new Option('— crea prima una carta —', ''));
+  if (!sel.options.length) sel.add(new Option('— pubblica prima una carta nel Mondo —', ''));
   if (Array.prototype.some.call(sel.options, o => o.value === keep && !o.disabled)) sel.value = keep;
   const today = new Date().toISOString().slice(0, 10);
   list.innerHTML = '';
@@ -3635,7 +3645,7 @@ async function fightBoss(bi){
   if (!b) return;
   const v = document.getElementById('bossCat').value;
   const mine = collection[parseInt(v, 10)];
-  if (!mine){ alert('Scegli prima il tuo sfidante (serve una carta in collezione).'); return; }
+  if (!mine || !myActive.has(mine.serial)){ alert('Contro i Boss combattono solo le carte pubblicate nel Mondo: pubblicane una dalla scheda 🌍.'); return; }
   const restM = coolLeft(mine);
   if (restM > 0){ alert('😴 ' + mine.name + ' sta riposando: torna tra ' + Math.ceil(restM / 60000) + ' minuti.'); return; }
   const img = await bossPortrait(b);
