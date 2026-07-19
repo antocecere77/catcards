@@ -3073,7 +3073,7 @@ async function migrateMelodies(){
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
 /* ---------- versione e aggiornamento automatico ---------- */
-const APP_VERSION = '12.6';   // unica fonte di verità: aggiorna anche version.txt a ogni release
+const APP_VERSION = '12.7';   // unica fonte di verità: aggiorna anche version.txt a ogni release
 try { document.getElementById('appVer').textContent = 'v' + APP_VERSION; } catch(e){}
 function verNewer(a, b){   // a più recente di b? confronto numerico 11.10 > 11.9
   const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);
@@ -3578,7 +3578,7 @@ function proposeTradeFor(theirSerial){
   proposeTradeUI(theirSerial, t.name || 'questa carta', t.owner || '', t.img || null);
 }
 function proposeTradeUI(theirSerial, theirName, theirOwner, theirImg){
-  const mine = collection.filter(c => myActive.has(c.serial) && coolLeft(c) === 0);
+  const mine = collection.filter(c => myActive.has(c.serial));   // anche le carte a riposo sono scambiabili (il riposo vale solo per i combattimenti)
   const body = document.getElementById('tradeModalBody');
   if (!mine.length){
     body.innerHTML = '<h2>🔄 Scambio</h2><p class="count" style="margin-top:8px;">Per scambiare ti serve almeno una TUA carta pubblicata e attiva nel Mondo (e non a riposo).</p>' +
