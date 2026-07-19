@@ -174,7 +174,7 @@
 </head>
 <body>
   <h1>🐱 Cat<span>Cards</span></h1>
-  <p class="tag">Fotografa il tuo gatto e trasformalo in una carta da collezione · <strong style="color:var(--accent)">v10.6</strong></p>
+  <p class="tag">Fotografa il tuo gatto e trasformalo in una carta da collezione · <strong style="color:var(--accent)">v10.7</strong></p>
   <p id="bootErr" style="display:none; color:#ff6b6b; font-size:.8rem; max-width:440px; text-align:center; margin-bottom:10px;"></p>
 
   <div id="tabs" style="display:flex; flex-direction:column; gap:8px; width:100%; max-width:440px; margin-bottom:6px;">
@@ -281,8 +281,10 @@
       </details>
       <button class="btn" id="pubBtn" onclick="publishCards()">📤 Pubblica le carte selezionate</button>
       <p class="count" id="onlineMsg" style="margin-top:6px;"></p>
-      <label class="small" style="margin-top:14px;">🐱 Le tue carte nel mondo</label>
-      <div id="myWorldList" class="count" style="line-height:1.9;"></div>
+      <details style="margin-top:14px;">
+        <summary style="cursor:pointer; font-weight:600;">🐱 Le tue carte nel mondo <span class="count">(tocca per aprire)</span></summary>
+        <div id="myWorldList" class="count" style="line-height:1.9; margin-top:8px;"></div>
+      </details>
       <div style="display:flex; gap:12px; align-items:center; margin-top:14px;">
         <img id="mgrImg" alt="Manager" style="width:64px; height:64px; border-radius:50%; object-fit:cover; border:2px solid var(--accent2); display:none; flex-shrink:0;">
         <div id="mgrEmoji" style="font-size:2.6rem; flex-shrink:0;">😼</div>
@@ -300,6 +302,13 @@
     </div>
     <button class="btn secondary" onclick="loadLeaderboard()" style="margin-top:10px;">🏅 Classifica mondiale</button>
     <div id="leaderList" class="count" style="line-height:2; margin-top:8px;"></div>
+  </div>
+  <div class="panel" style="margin-top:20px;">
+    <h2>🤖 Boss dell'Arena</h2>
+    <p class="count" style="line-height:1.6;">Ogni giorno 2 leggende scendono nell'Arena, uguali per tutto il mondo. Batterle paga <strong>+10 punti</strong>, XP pieni e una medaglia dedicata. Il premio si ritira <strong>1 volta al giorno per boss</strong>; i boss non toccano il ranking Elo.</p>
+    <label class="small" style="margin-top:10px;">Il tuo sfidante</label>
+    <select id="bossCat"></select>
+    <div id="bossList" style="margin-top:10px;"></div>
   </div>
   </div>
 
@@ -362,11 +371,14 @@
     <p>Ogni carta pubblicata ha un punteggio <strong>Elo</strong>, che parte da <strong>1000</strong>. A ogni incontro il vincitore <strong>prende</strong> punti e lo sconfitto <strong>cede gli stessi punti</strong> — e la quantità dipende dalla differenza di forza: battere un avversario <strong>più forte</strong> vale fino a <strong>~32 punti</strong>, battere uno molto più debole ne vale il minimo, <strong>8</strong> (vincere facile rende poco, l'impresa rende tanto). Nessuna carta scende mai sotto quota 100. Il calcolo lo fa il server, uguale per tutti.</p>
     <p>La classifica ufficiale è in ordine di Elo, ma la cintura è un'altra cosa: <strong>campione si diventa SOLO battendo il campione in carica 👑</strong> in una sfida mondiale o dal vivo. Puoi superarlo di punti quanto vuoi: resti primo contendente finché non lo stendi sul ring. Il campione sta sempre in cima al ranking, e chi è stato campione conserva per sempre il 🏆. Puoi sfidare solo chi sta <strong>da 5 posizioni sopra a 5 sotto</strong> la tua: per il titolo bisogna scalare (in top 5 il campione è a tiro). Il ranking mostra le strisce — 🔥 vittorie di fila, 🧊 sconfitte di fila, e la miglior striscia di sempre. Il <strong>🎩 Manager</strong> studia i numeri e ti consiglia il prossimo incontro giusto, se conviene l'erba gatta 🌿, e quando è meglio ritirarsi un po' in palestra.</p>
 
+    <h2 style="font-size:1rem; margin-top:16px; color:var(--accent);">🤖 I Boss dell'Arena</h2>
+    <p>Otto leggende generate dal sistema, con statistiche fuori scala. Ogni giorno ne sono attive <strong>2, uguali per tutto il mondo</strong> (le decide la data). Batterne uno paga <strong>+10 punti e 25 XP</strong>, ma il premio si ritira <strong>una volta al giorno per boss</strong>: le rivincite extra danno solo gloria (e allenamento). Perdere costa solo 2 XP di consolazione. Dopo il match il gatto <strong>riposa un'ora</strong> come in ogni incontro vero, e l'erba gatta 🌿 comprata prima vale anche qui. I boss <strong>non toccano il ranking Elo</strong>. Ogni boss ha la sua medaglia nel 🏅 Medagliere, più la 🤖 Ammazzaboss per chi li doma tutti — dal 🥫 Micio di Latta fino al 🌑 Gatto Mammone, quasi imbattibile senza livelli alti.</p>
+
     <h2 style="font-size:1rem; margin-top:16px; color:var(--accent);">⚡ La sfida dal vivo (QR)</h2>
     <p>Due telefoni: uno mostra il QR della sua carta (⚔️ Arena → 📱), l'altro lo inquadra (📷) e il duello si gioca sul suo schermo. <strong>Vale come una sfida mondiale</strong>: punti, XP pieni, medaglie, riposo, scommesse e risultato registrato se le carte sono pubblicate.</p>
 
     <h2 style="font-size:1rem; margin-top:16px; color:var(--accent);">🏆 Tornei e medagliere</h2>
-    <p>Tornei a 4 o 8 tra le tue carte e i rivali: esibizioni automatiche con tabellone (XP ridotti, nessun riposo, nessun punto). Il <strong>🏅 Medagliere</strong> ha 16 medaglie con premi in punti — tocca una medaglia per scoprire come si conquista. Occhio alla 💀 Disfatta…</p>
+    <p>Tornei a 4 o 8 tra le tue carte e i rivali: esibizioni automatiche con tabellone (XP ridotti, nessun riposo, nessun punto). Il <strong>🏅 Medagliere</strong> ha 25 medaglie con premi in punti (9 sono dei Boss) — tocca una medaglia per scoprire come si conquista. Occhio alla 💀 Disfatta…</p>
 
     <h2 style="font-size:1rem; margin-top:16px; color:var(--accent);">⚔️ Il combattimento</h2>
     <p>Automatico a turni: Velocità decide chi parte (di solito), Forza il danno, Destrezza le schivate, Intelligenza i critici (×1.6), Fascino ammalia, Indifferenza riduce i danni. Nessun colpo toglie più del 38% degli HP. Poteri speciali, power-up casuali (🧶🌿📦🐟), colpo finale al rallentatore e replay. La presentazione si può saltare (⏭️ o da Opzioni).</p>
@@ -1120,7 +1132,7 @@ function showTab(t){
   });
   document.querySelectorAll('.tabBtn').forEach(b => b.classList.toggle('active', b.dataset.tab === t));
   window._curTab = t;
-  if (t === 'mondo') openMondoNews();
+  if (t === 'mondo'){ openMondoNews(); try { renderBosses(); } catch(e){} }
 }
 
 /* ---------- notiziario: cosa è successo alle tue carte mentre eri via ---------- */
@@ -2255,7 +2267,7 @@ async function runBattle(ea, eb, title){
   skipIntro = !!window._autoSkip;
   if (musicBus && AC){ try { musicBus.gain.setValueAtTime(1, AC.currentTime); } catch(e){} }
   document.getElementById('skipBtn').style.display = skipIntro ? 'none' : 'block';
-  if (window._buyCatnip && window._mineSerial === a.serial && title === 'SFIDA MONDIALE'){
+  if (window._buyCatnip && window._mineSerial === a.serial && (title === 'SFIDA MONDIALE' || title === 'BOSS DELL\'ARENA')){
     window._buyCatnip = false;
     a.catnip = true;
     blog('🌿 ' + a.name + ' entra in arena già carico di erba gatta!');
@@ -2442,9 +2454,10 @@ async function runBattle(ea, eb, title){
   }
   blog('🏆 ' + w.name + ' vince il combattimento!', 'winner');
   sfx('win');
-  // esperienza: piena per mondiali e dal vivo (25/10), ridotta per locale e tornei (5/2)
+  // esperienza: piena per mondiali, dal vivo e boss (25), ridotta per locale e tornei (5/2)
   const seria = (title === 'SFIDA MONDIALE' || title === 'SFIDA DAL VIVO');
-  recordResult(w.serial, loser.serial, seria ? 25 : 5, seria ? 10 : 2);
+  const bossFight = (title === 'BOSS DELL\'ARENA');
+  recordResult(w.serial, loser.serial, (seria || bossFight) ? 25 : 5, seria ? 10 : 2);
   if (seria) settleBet(w.serial);
   else currentBet = null;   // nessuna scommessa fuori da mondiali e dal vivo: mai puntate "appese"
   if (window._mineSerial && seria){
@@ -2461,8 +2474,30 @@ async function runBattle(ea, eb, title){
     saveCounters();
     checkAchievements();
   }
-  // dopo un incontro vero (locale 1v1, mondiale o dal vivo) i gatti coinvolti riposano un'ora
-  if (title === null || seria){
+  // premi da Boss: +10 punti la prima vittoria del giorno su quel boss, poi solo gloria
+  if (bossFight && window._mineSerial && window._bossId){
+    const bid = window._bossId;
+    if (w.serial === window._mineSerial){
+      const today = new Date().toISOString().slice(0, 10);
+      bossWins[bid] = bossWins[bid] || {n: 0};
+      bossWins[bid].n++;
+      if (bossWins[bid].last !== today){
+        bossWins[bid].last = today;
+        points += 10;
+        try { localStorage.setItem('catcards_points', String(points)); } catch(e){}
+        renderWallet();
+        blog('💰 +10 punti: hai domato un Boss dell\'Arena!', 'winner');
+      } else {
+        blog('🎖️ Boss già battuto oggi: gloria sì, premio domani.');
+      }
+      try { localStorage.setItem('catcards_boss', JSON.stringify(bossWins)); } catch(e){}
+      checkAchievements();
+    } else {
+      blog('🤖 Il Boss resta in piedi... torna più allenato (o con l\'erba gatta 🌿).');
+    }
+  }
+  // dopo un incontro vero (locale 1v1, mondiale, dal vivo o boss) i gatti coinvolti riposano un'ora
+  if (title === null || seria || bossFight){
     restCollectionCards([a.serial, b.serial]);
   }
   window._evOn = false;
@@ -3473,6 +3508,162 @@ try { ach = JSON.parse(localStorage.getItem('catcards_ach') || '{}'); } catch(e)
 let counters = {wins: 0, losses: 0, lossStreak: 0, winStreak: 0, tourn4: 0, tourn8: 0, worldWins: 0, betWins: 0};
 try { counters = Object.assign(counters, JSON.parse(localStorage.getItem('catcards_cnt') || '{}')); } catch(e){}
 function saveCounters(){ try { localStorage.setItem('catcards_cnt', JSON.stringify(counters)); } catch(e){} }
+/* ---------- Boss dell'Arena: 8 leggende scritte a codice, zero costi AI (solo ritratti una tantum) ---------- */
+const BOSSES = [
+  {id:'latta',   serial:'B0550001', name:'Il Micio di Latta',      nick:'La Scatoletta Vivente', em:'🥫', tier:1,
+   lore:'Nato in un magazzino di scatolette, è convinto di essere una di loro. Duro fuori, tonno dentro.',
+   statsv:[8,6,7,7,5,8],    hp:110, potere:6,
+   ann:'Dal reparto conserve... con l\'armatura che fa crick... IL MICIO DI LATTAAA!',
+   prompt:'Cartoon boss cat made of dented tin cans: round tin armor body, goofy proud face, a sardine tail sticking out of his helmet. Flat cel shading, bold outlines, dark purple background. Square bust portrait.'},
+  {id:'spettro', serial:'B0550002', name:'Lo Spettro dei Tetti',   nick:'L\'Ombra di Mezzanotte', em:'👻', tier:1,
+   lore:'Nessuno l\'ha mai visto arrivare. Molti l\'hanno visto andarsene con la loro cena.',
+   statsv:[9,8,12,15,7,9],  hp:95,  potere:4,
+   ann:'Dai tetti della città... veloce come un brivido... LO SPETTRO DEI TETTIII!',
+   prompt:'Cartoon ghostly ninja cat boss: sleek smoky grey-blue fur fading into mist, glowing yellow eyes, crouched on a moonlit rooftop. Flat cel shading, bold outlines, dark purple background. Square bust portrait.'},
+  {id:'sfinge',  serial:'B0550003', name:'La Sfinge di Cortile',   nick:'L\'Enigma Peloso', em:'🦁', tier:2,
+   lore:'Ti fissa finché non confessi cose che non hai fatto. Parla solo per indovinelli.',
+   statsv:[9,14,10,8,10,12], hp:130, potere:5,
+   ann:'Dall\'antico Egitto... anzi no, dal cortile qui dietro... LA SFINGE DI CORTIIILE!',
+   prompt:'Cartoon sphinx cat boss: elegant hairless sphynx cat with golden pharaoh headdress and hypnotic teal eyes, mysterious smile, sitting like an Egyptian statue. Flat cel shading, bold outlines, dark purple background. Square bust portrait.'},
+  {id:'barone',  serial:'B0550004', name:'Il Barone von Baffen',   nick:'L\'Artiglio Aristocratico', em:'🎖️', tier:2,
+   lore:'Duella solo secondo l\'antico galateo felino: prima l\'inchino, poi la doppia zampata.',
+   statsv:[11,10,9,9,13,8], hp:140, potere:3,
+   ann:'Dai saloni della vecchia nobiltà... con i baffi impomatati... IL BARONE VON BAFFEEEN!',
+   prompt:'Cartoon aristocratic cat boss: fluffy white persian cat with a monocle, magnificent curled moustache-like whiskers, red military jacket with gold medals. Haughty expression. Flat cel shading, bold outlines, dark purple background. Square bust portrait.'},
+  {id:'nonna',   serial:'B0550005', name:'La Nonna dei Vicoli',    nick:'Sette Vite e Mezza', em:'👵', tier:3,
+   lore:'Ha cresciuto tre generazioni di randagi. Le sue fusa curano, le sue sberle educano.',
+   statsv:[10,9,11,7,14,13], hp:150, potere:2,
+   ann:'Dal vicolo dietro la pescheria... rispettata da tutti... LA NONNA DEI VICOLIII!',
+   prompt:'Cartoon elderly grandma cat boss: plump calico cat with a knitted shawl and tiny glasses, kind but steely eyes, one paw holding a wooden spoon like a weapon. Flat cel shading, bold outlines, dark purple background. Square bust portrait.'},
+  {id:'pescatore', serial:'B0550006', name:'Il Pescatore Fantasma', nick:'La Rete del Destino', em:'🎣', tier:3,
+   lore:'Si dice appaia solo nelle notti di nebbia, con l\'odore di sardine e vendetta.',
+   statsv:[12,8,12,11,6,10], hp:160, potere:1,
+   ann:'Dalle banchine avvolte nella nebbia... puzza di sardine e gloria... IL PESCATORE FANTASMAAA!',
+   prompt:'Cartoon ghost fisherman cat boss: rugged scarred grey tabby in a yellow rain coat and rain hat, one eye scarred shut, fishing hook paw, fog around him. Flat cel shading, bold outlines, dark purple background. Square bust portrait.'},
+  {id:'imperatore', serial:'B0550007', name:'L\'Imperatore Soriano', nick:'Il Trono di Cuscini', em:'👑', tier:4,
+   lore:'Regna dal cuscino più alto del mondo. Il suo caos non segue regole: le detta.',
+   statsv:[13,12,11,10,12,11], hp:190, potere:7,
+   ann:'Dal trono di mille cuscini... il sovrano del caos... L\'IMPERATORE SORIANOOO!',
+   prompt:'Cartoon emperor cat boss: majestic brown tabby cat on a throne of cushions, golden crown tilted, royal purple cape, chaotic grin with one fang. Flat cel shading, bold outlines, dark purple background. Square bust portrait.'},
+  {id:'mammone', serial:'B0550008', name:'Il Gatto Mammone',       nick:'La Leggenda delle Leggende', em:'🌑', tier:5,
+   lore:'Il mostro delle fiabe sussurrate ai gattini. Non è cattivo: è solo enorme, antico e permaloso.',
+   statsv:[15,13,12,11,10,14], hp:260, potere:0,
+   ann:'Dalle fiabe più antiche... colui che non dovrebbe esistere... IL GATTO... MAMMONEEEE!',
+   prompt:'Cartoon mythical giant cat boss: colossal ancient black cat with glowing amber eyes, faint golden markings in his fur like constellations, looming in the dark, small bats flying around. Epic but slightly grumpy. Flat cel shading, bold outlines, dark purple background. Square bust portrait.'},
+];
+let bossWins = {};
+try { bossWins = JSON.parse(localStorage.getItem('catcards_boss') || '{}'); } catch(e){}
+function activeBosses(){
+  // rotazione mondiale: il giorno UTC decide la coppia, uguale per tutti i giocatori
+  const day = Math.floor(Date.now() / 86400000);
+  const rng = mulberry32(day >>> 0);
+  const i = Math.floor(rng() * BOSSES.length);
+  let j = Math.floor(rng() * (BOSSES.length - 1));
+  if (j >= i) j++;
+  return [BOSSES[Math.min(i, j)], BOSSES[Math.max(i, j)]];
+}
+async function bossPortrait(b){
+  let img = null;
+  try { img = await idbGet('boss_' + b.id); } catch(e){}
+  if (img) return img;
+  try {
+    const key = apiKeyEl.value.trim();
+    if (!key) return null;
+    const models = await listImageModels(key).catch(() => []);
+    const model = models[0] || GEMINI_MODELS[0];
+    const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent?key=' + encodeURIComponent(key), {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({contents: [{parts: [{text: b.prompt}]}]})
+    });
+    if (!r.ok) return null;
+    const j = await r.json();
+    const parts = (((j.candidates || [])[0] || {}).content || {}).parts || [];
+    const p = parts.find(x => x.inlineData && x.inlineData.data);
+    if (!p) return null;
+    img = 'data:' + (p.inlineData.mimeType || 'image/png') + ';base64,' + p.inlineData.data;
+    await idbSet('boss_' + b.id, img);
+    return img;
+  } catch(e){ return null; }
+}
+function renderBosses(){
+  const list = document.getElementById('bossList');
+  const sel = document.getElementById('bossCat');
+  if (!list || !sel) return;
+  const keep = sel.value;
+  sel.innerHTML = '';
+  collection.forEach((c, i) => {
+    const rest = coolLeft(c) > 0;
+    const o = new Option('🐱 ' + c.name + ' (Lv.' + cardLevel(c.serial) + ')' + (rest ? ' 😴 riposa' : ''), String(i));
+    o.disabled = rest;
+    sel.add(o);
+  });
+  if (!collection.length) sel.add(new Option('— crea prima una carta —', ''));
+  if (Array.prototype.some.call(sel.options, o => o.value === keep && !o.disabled)) sel.value = keep;
+  const today = new Date().toISOString().slice(0, 10);
+  list.innerHTML = '';
+  activeBosses().forEach((b, bi) => {
+    const paid = (bossWins[b.id] || {}).last === today;
+    const beaten = (bossWins[b.id] || {}).n > 0;
+    const row = document.createElement('div');
+    row.style.cssText = 'border:1px solid ' + (b.tier >= 5 ? 'var(--accent)' : '#363057') + '; border-radius:10px; padding:10px; margin-top:8px;';
+    row.innerHTML =
+      '<div style="display:flex; gap:10px; align-items:center;">' +
+        '<img id="bossImg_' + b.id + '" style="width:56px; height:56px; border-radius:8px; object-fit:cover; display:none; flex-shrink:0;">' +
+        '<div id="bossEm_' + b.id + '" style="font-size:2.2rem; flex-shrink:0;">' + b.em + '</div>' +
+        '<div style="flex:1; min-width:0;"><strong>' + b.name + '</strong> <span style="color:var(--muted); font-size:.8rem;">«' + b.nick + '»</span>' +
+        '<br><span class="count">' + '☠️'.repeat(b.tier) + ' · ' + b.hp + ' HP · 🌟 ' + POWERS[b.potere].name + (beaten ? ' · ✅ già domato' : '') + '</span></div>' +
+      '</div>' +
+      '<p class="count" style="margin-top:6px; line-height:1.5;">' + b.lore + '</p>' +
+      (paid ? '<p class="count" style="color:#51cf66;">🎖️ Premio di oggi già ritirato: torna domani (puoi comunque allenarti contro di lui).</p>' : '');
+    const btn = document.createElement('button');
+    btn.className = 'btn secondary';
+    btn.style.cssText = 'margin-top:8px;';
+    btn.textContent = '⚔️ Sfida ' + b.name;
+    btn.onclick = () => fightBoss(bi);
+    row.appendChild(btn);
+    list.appendChild(row);
+    bossPortrait(b).then(img => {
+      const im = document.getElementById('bossImg_' + b.id);
+      const em = document.getElementById('bossEm_' + b.id);
+      if (img && im){ im.src = img; im.style.display = 'block'; if (em) em.style.display = 'none'; }
+    });
+  });
+}
+async function fightBoss(bi){
+  if (battleOn) return;
+  const b = activeBosses()[bi];
+  if (!b) return;
+  const v = document.getElementById('bossCat').value;
+  const mine = collection[parseInt(v, 10)];
+  if (!mine){ alert('Scegli prima il tuo sfidante (serve una carta in collezione).'); return; }
+  const restM = coolLeft(mine);
+  if (restM > 0){ alert('😴 ' + mine.name + ' sta riposando: torna tra ' + Math.ceil(restM / 60000) + ' minuti.'); return; }
+  const img = await bossPortrait(b);
+  const bossEntry = {serial: b.serial, name: b.name, nick: b.nick, potere: b.potere,
+    statsv: b.statsv, hp: b.hp, dna: null, strum: null, annuncio: b.ann, img: img};
+  unlockAudio();
+  window._mineSerial = mine.serial;
+  window._bossId = b.id;
+  currentBet = null;
+  loadInstrument(cardInstr(mine));
+  bracketState = null;
+  document.getElementById('bracket').style.display = 'none';
+  document.getElementById('bracketBtn').style.display = 'none';
+  document.getElementById('battleScreen').style.display = 'flex';
+  const w = await runBattle(mine, bossEntry, 'BOSS DELL\'ARENA');
+  window._bossId = null;
+  if (!w) return;
+  renderBosses();
+  // il riposo del boss-match vale anche online, se la carta è pubblicata
+  if (myPublished.has(mine.serial) && session && session.access_token){
+    try {
+      fetch(SUPA_URL + '/rest/v1/cards?serial=eq.' + encodeURIComponent(mine.serial), {
+        method: 'PATCH', headers: supaHeaders(),
+        body: JSON.stringify({rest_until: new Date(Date.now() + TRAIN_COOLDOWN).toISOString()})
+      });
+    } catch(e){}
+  }
+}
 const ACHS = [
   {id:'prima_carta', ic:'🐣', nm:'Prima carta',        ds:'Crea la tua prima carta',            pt:10, ck:() => collection.length >= 1},
   {id:'coll5',       ic:'🎴', nm:'Collezionista',      ds:'5 carte in collezione',              pt:15, ck:() => collection.length >= 5},
@@ -3490,6 +3681,15 @@ const ACHS = [
   {id:'ricco',       ic:'💰', nm:'Riccone',            ds:'Possiedi 150 punti',                 pt:20, ck:() => points >= 150},
   {id:'onore',       ic:'🚪', nm:'Ritiro con onore',   ds:'Ritira una carta con record positivo', pt:20, ck:() => Array.isArray(window._myWorldRows) && window._myWorldRows.some(x => x.retired && (x.wins || 0) > (x.losses || 0))},
   {id:'disfatta',    ic:'💀', nm:'Disfatta',           ds:'Perdi 10 sfide mondiali di fila',    pt:30, ck:() => counters.lossStreak >= 10},
+  {id:'b_latta',     ic:'🥫', nm:'Apriscatole',        ds:'Sconfiggi Il Micio di Latta',        pt:15, ck:() => (bossWins['latta'] || {}).n >= 1},
+  {id:'b_spettro',   ic:'👻', nm:'Acchiappafantasmi',  ds:'Sconfiggi Lo Spettro dei Tetti',     pt:15, ck:() => (bossWins['spettro'] || {}).n >= 1},
+  {id:'b_sfinge',    ic:'🦁', nm:'Indovinello risolto', ds:'Sconfiggi La Sfinge di Cortile',    pt:20, ck:() => (bossWins['sfinge'] || {}).n >= 1},
+  {id:'b_barone',    ic:'🎖️', nm:'Lesa maestà',        ds:'Sconfiggi Il Barone von Baffen',     pt:20, ck:() => (bossWins['barone'] || {}).n >= 1},
+  {id:'b_nonna',     ic:'👵', nm:'Che nipote!',        ds:'Sconfiggi La Nonna dei Vicoli',      pt:25, ck:() => (bossWins['nonna'] || {}).n >= 1},
+  {id:'b_pescatore', ic:'🎣', nm:'Pesce fuor d\'acqua', ds:'Sconfiggi Il Pescatore Fantasma',   pt:25, ck:() => (bossWins['pescatore'] || {}).n >= 1},
+  {id:'b_imperatore', ic:'👑', nm:'Colpo di stato',    ds:'Sconfiggi L\'Imperatore Soriano',    pt:30, ck:() => (bossWins['imperatore'] || {}).n >= 1},
+  {id:'b_mammone',   ic:'🌑', nm:'Sfata-leggende',     ds:'Sconfiggi Il Gatto Mammone',         pt:50, ck:() => (bossWins['mammone'] || {}).n >= 1},
+  {id:'b_all',       ic:'🤖', nm:'Ammazzaboss',        ds:'Sconfiggi tutti gli 8 Boss dell\'Arena', pt:100, ck:() => BOSSES.every(x => (bossWins[x.id] || {}).n >= 1)},
 ];
 let toastT = null;
 function toast(t){
@@ -4136,7 +4336,7 @@ async function onQrFound(data, mine){
   initRealtime();
   checkWorldNews();
   setInterval(checkWorldNews, 60000);   // controlla novità ogni minuto anche senza ricaricare
-  setInterval(() => { try { refreshArena(); renderGym(); } catch(e){} }, 60000);   // aggiorna i 😴 quando il riposo finisce
+  setInterval(() => { try { refreshArena(); renderGym(); if (window._curTab === 'mondo') renderBosses(); } catch(e){} }, 60000);   // aggiorna i 😴 quando il riposo finisce
   setInterval(() => {
     // il mondo cambia di continuo: con la scheda Mondo aperta, tutto si rinfresca da solo
     if (window._curTab === 'mondo'){
