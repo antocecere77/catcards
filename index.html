@@ -3093,7 +3093,7 @@ async function migrateMelodies(){
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
 /* ---------- versione e aggiornamento automatico ---------- */
-const APP_VERSION = '13.1';   // unica fonte di verità: aggiorna anche version.txt a ogni release
+const APP_VERSION = '13.2';   // unica fonte di verità: aggiorna anche version.txt a ogni release
 try { document.getElementById('appVer').textContent = 'v' + APP_VERSION; } catch(e){}
 function verNewer(a, b){   // a più recente di b? confronto numerico 11.10 > 11.9
   const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);
@@ -3327,7 +3327,7 @@ async function populateWorld(){
         drawCard(card, art);
         const full = canvas.toDataURL('image/jpeg', 0.82);
         const thumb = await makeThumb(full, 220).catch(() => full);
-        const elo = 940 + Math.floor(Math.random() * 160);
+        const elo = 1000;   // tutti partono neutri: crescono solo giocando (sim_bots)
         const r = await fetch(SUPA_URL + '/rest/v1/rpc/admin_add_bot_card', {
           method: 'POST', headers: supaHeaders(),
           body: JSON.stringify({
