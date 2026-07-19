@@ -3067,7 +3067,7 @@ async function migrateMelodies(){
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
 /* ---------- versione e aggiornamento automatico ---------- */
-const APP_VERSION = '12.2';   // unica fonte di verità: aggiorna anche version.txt a ogni release
+const APP_VERSION = '12.3';   // unica fonte di verità: aggiorna anche version.txt a ogni release
 try { document.getElementById('appVer').textContent = 'v' + APP_VERSION; } catch(e){}
 function verNewer(a, b){   // a più recente di b? confronto numerico 11.10 > 11.9
   const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);
@@ -3484,7 +3484,7 @@ async function loadWorldCards(){
   const msg = document.getElementById('onlineMsg');
   msg.textContent = '🔎 Aggiorno il ranking…';
   try {
-    const r = await fetch(SUPA_URL + '/rest/v1/cards?select=serial,name,owner,nick,rarity,potere,statsv,hp,dna,strum,annuncio,img,wins,losses,rest_until,elo,win_streak,loss_streak,best_streak,was_champion,frozen&retired=not.is.true&order=elo.desc.nullslast,wins.desc&limit=100', {headers: supaHeaders()});
+    const r = await fetch(SUPA_URL + '/rest/v1/cards?select=serial,name,owner,nick,rarity,potere,statsv,hp,dna,strum,annuncio,img,wins,losses,rest_until,elo,win_streak,loss_streak,best_streak,was_champion&retired=not.is.true&order=elo.desc.nullslast,wins.desc&limit=100', {headers: supaHeaders()});
     if (!r.ok) throw new Error('HTTP ' + r.status);
     await fetchChampion();
     worldAll = orderWithChampion(await r.json());
