@@ -2961,7 +2961,7 @@ async function migrateMelodies(){
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
 /* ---------- versione e aggiornamento automatico ---------- */
-const APP_VERSION = '11.3';   // unica fonte di verità: aggiorna anche version.txt a ogni release
+const APP_VERSION = '11.4';   // unica fonte di verità: aggiorna anche version.txt a ogni release
 try { document.getElementById('appVer').textContent = 'v' + APP_VERSION; } catch(e){}
 async function checkUpdate(){
   try {
@@ -3326,13 +3326,31 @@ function worldChanged(){
     } catch(e){}
   }, 1200);
 }
+function matchToast(p){
+  // notifica in-app istantanea: una TUA carta ha combattuto altrove nel mondo
+  try {
+    const m = (p && p.new) || {};
+    const mine = {};
+    collection.forEach(c => { mine[c.serial] = true; });
+    if (!mine[m.winner_serial] && !mine[m.loser_serial]) return;
+    // niente eco: se l'incontro l'hai giocato tu su questo dispositivo, lo sai già
+    if (window._justFought && Date.now() - (window._justFoughtTs || 0) < 20000 &&
+        (window._justFought.has(m.winner_serial) || window._justFought.has(m.loser_serial))) return;
+    if (mine[m.winner_serial]){
+      toast('🏆 ' + m.winner_name + ' ha difeso l\'onore: battuto ' + m.loser_name + ' di ' + (m.loser_owner || '?') + '!');
+    } else {
+      toast('💥 ' + m.loser_name + ' è stata battuta da ' + m.winner_name + ' di ' + (m.winner_owner || '?') + ' — ora riposa 😴');
+    }
+    try { sfx('bell'); } catch(e){}
+  } catch(e){}
+}
 function initRealtime(){
   try {
     if (!window.supabase || !window.supabase.createClient) return;   // CDN assente: resta il polling di sicurezza
     const cli = window.supabase.createClient(SUPA_URL, SUPA_KEY);
     cli.channel('mondo-live')
       .on('postgres_changes', {event: '*', schema: 'public', table: 'cards'}, worldChanged)
-      .on('postgres_changes', {event: '*', schema: 'public', table: 'matches'}, worldChanged)
+      .on('postgres_changes', {event: 'INSERT', schema: 'public', table: 'matches'}, p => { matchToast(p); worldChanged(); })
       .on('postgres_changes', {event: '*', schema: 'public', table: 'meta'}, worldChanged)
       .subscribe();
   } catch(e){}
@@ -3508,6 +3526,7 @@ async function fightWorld(i){
   try {
     const me = playerNameEl.value.trim() || 'anonimo';
     const won = (w.serial === mineEntry.serial);
+    window._justFought = new Set([winSerial, loseSerial]); window._justFoughtTs = Date.now();   // niente auto-notifica
     await fetch(SUPA_URL + '/rest/v1/matches', {
       method: 'POST', headers: supaHeaders(),
       body: JSON.stringify({
@@ -4354,6 +4373,7 @@ async function onQrFound(data, mine){
       await fetch(SUPA_URL + '/rest/v1/rpc/record_result', {method: 'POST', headers: supaHeaders(), body: JSON.stringify({winner: winSerial, loser: loseSerial})});
       const me = playerNameEl.value.trim() || 'anonimo';
       const won = (w.serial === mine.serial);
+      window._justFought = new Set([winSerial, loseSerial]); window._justFoughtTs = Date.now();   // niente auto-notifica
       await fetch(SUPA_URL + '/rest/v1/matches', {method: 'POST', headers: supaHeaders(), body: JSON.stringify({
         winner_serial: winSerial, winner_name: won ? mine.name : entry.name, winner_owner: won ? me : (ownerNm || 'dal vivo'),
         loser_serial: loseSerial, loser_name: won ? entry.name : mine.name, loser_owner: won ? (ownerNm || 'dal vivo') : me
