@@ -3067,7 +3067,7 @@ async function migrateMelodies(){
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
 /* ---------- versione e aggiornamento automatico ---------- */
-const APP_VERSION = '12.3';   // unica fonte di verità: aggiorna anche version.txt a ogni release
+const APP_VERSION = '12.4';   // unica fonte di verità: aggiorna anche version.txt a ogni release
 try { document.getElementById('appVer').textContent = 'v' + APP_VERSION; } catch(e){}
 function verNewer(a, b){   // a più recente di b? confronto numerico 11.10 > 11.9
   const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);
@@ -3509,6 +3509,7 @@ async function loadTrades(){
   if (!tin || !tout) return;
   try {
     const r = await fetch(SUPA_URL + '/rest/v1/trades?status=eq.pending&or=(from_id.eq.' + session.user_id + ',to_id.eq.' + session.user_id + ')&order=id.desc', {headers: supaHeaders()});
+    if (r.status === 404){ tin.innerHTML = '<span class="count">⚠️ Il Mercato non è ancora attivo sul server (manca il passaggio di configurazione). Le altre funzioni dell\'app funzionano normalmente.</span>'; tout.innerHTML = ''; return; }
     if (!r.ok) return;
     const rows = await r.json();
     const incoming = rows.filter(t => t.to_id === session.user_id);
@@ -3535,8 +3536,9 @@ async function renderTradeBrowse(){
   if (!session || !session.access_token){ el.innerHTML = '<span class="count">Accedi per scambiare.</span>'; return; }
   el.innerHTML = '<span class="count">Carico…</span>';
   try {
-    const r = await fetch(SUPA_URL + '/rest/v1/cards?select=serial,name,owner,owner_id,rarity,img,elo,frozen,retired&retired=not.is.true&order=elo.desc.nullslast&limit=100', {headers: supaHeaders()});
-    const rows = (await r.json()).filter(c => c.owner_id !== session.user_id && !c.frozen);
+    const r = await fetch(SUPA_URL + '/rest/v1/cards?select=serial,name,owner,owner_id,rarity,img,elo,retired&retired=not.is.true&order=elo.desc.nullslast&limit=100', {headers: supaHeaders()});
+    if (!r.ok){ el.innerHTML = '<span class="count">❌ Errore ' + r.status + ' nel caricare le carte.</span>'; return; }
+    const rows = (await r.json()).filter(c => c.owner_id !== session.user_id);
     if (!rows.length){ el.innerHTML = '<span class="count">Nessuna carta disponibile per lo scambio.</span>'; return; }
     el.innerHTML = rows.map(c =>
       '<div style="display:flex; align-items:center; gap:8px; padding:6px; border:1px solid #363057; border-radius:8px; margin-top:6px;">' +
@@ -3560,6 +3562,7 @@ async function proposeTrade(mySerial, theirSerial, theirName){
   await refreshSessionIfNeeded();
   try {
     const r = await fetch(SUPA_URL + '/rest/v1/rpc/propose_trade', {method: 'POST', headers: supaHeaders(), body: JSON.stringify({my_serial: mySerial, their_serial: theirSerial})});
+    if (r.status === 404){ alert('⚠️ Il Mercato non è ancora attivo sul server: manca il passaggio di configurazione (SQL della tappa 2).'); return; }
     if (!r.ok){ const t = await r.text(); alert('Scambio non proposto: ' + t.slice(0, 140)); return; }
     toast('🔄 Proposta inviata! In attesa di risposta.');
     loadTrades(); loadMyWorldCards();
