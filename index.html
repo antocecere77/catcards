@@ -184,6 +184,7 @@
       <button class="tabBtn" data-tab="coll" onclick="showTab('coll')" id="collTabBtn">📚 Carte</button>
       <button class="tabBtn" data-tab="arena" onclick="showTab('arena')">⚔️ Arena</button>
       <button class="tabBtn" data-tab="mondo" onclick="showTab('mondo')">🌍 Mondo<span id="mondoDot" style="display:none; width:9px; height:9px; background:#e63946; border-radius:50%; margin-left:5px; vertical-align:middle;"></span></button>
+      <button class="tabBtn" data-tab="mercato" onclick="showTab('mercato')">🔁 Mercato<span id="tradeTabDot" style="display:none; width:9px; height:9px; background:#e63946; border-radius:50%; margin-left:4px; vertical-align:middle;"></span></button>
     </div>
     <div style="display:flex; gap:8px;">
       <button class="tabBtn" data-tab="boss" onclick="showTab('boss')">🤖 Boss</button>
@@ -308,6 +309,19 @@
     </div>
     <button class="btn secondary" onclick="loadLeaderboard()" style="margin-top:10px;">🏅 Classifica mondiale</button>
     <div id="leaderList" class="count" style="line-height:2; margin-top:8px;"></div>
+  </div>
+  </div>
+
+  <div id="tab-mercato" style="width:100%; max-width:440px; display:none;">
+  <div class="panel" style="margin-top:20px;">
+    <h2>🔁 Mercato</h2>
+    <p class="count" style="line-height:1.6;">Scambia o vendi le tue carte con gli altri giocatori. La carta cambia proprietario con tutto (Elo, vittorie, livello); mentre è in trattativa resta congelata e non combatte. Serve essere connessi e avere carte pubblicate nel Mondo.</p>
+    <div id="mercatoAuth" class="count" style="margin-top:8px;"></div>
+    <h2 style="font-size:1.05rem; margin-top:16px;">🔄 Scambio (baratto)</h2>
+    <div id="tradeIn" style="margin-top:8px;"></div>
+    <div id="tradeOut" style="margin-top:8px;"></div>
+    <button class="btn secondary" onclick="renderTradeBrowse()" style="margin-top:8px;">🔍 Sfoglia carte da scambiare</button>
+    <div id="tradeBrowse" style="margin-top:8px;"></div>
   </div>
   </div>
 
@@ -1159,13 +1173,14 @@ function stepCard(d){
 
 /* ---------- navigazione a schede ---------- */
 function showTab(t){
-  ['crea', 'coll', 'arena', 'mondo', 'boss', 'pal', 'med', 'reg', 'opz'].forEach(k => {
+  ['crea', 'coll', 'arena', 'mondo', 'mercato', 'boss', 'pal', 'med', 'reg', 'opz'].forEach(k => {
     const el = document.getElementById('tab-' + k);
     if (el) el.style.display = (k === t) ? 'block' : 'none';
   });
   document.querySelectorAll('.tabBtn').forEach(b => b.classList.toggle('active', b.dataset.tab === t));
   window._curTab = t;
   if (t === 'mondo') openMondoNews();
+  if (t === 'mercato'){ try { openMercato(); } catch(e){} }
   if (t === 'med'){ try { renderMissions(); } catch(e){} }
   if (t === 'boss'){
     try {
@@ -3052,7 +3067,7 @@ async function migrateMelodies(){
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
 /* ---------- versione e aggiornamento automatico ---------- */
-const APP_VERSION = '12.0';   // unica fonte di verità: aggiorna anche version.txt a ogni release
+const APP_VERSION = '12.2';   // unica fonte di verità: aggiorna anche version.txt a ogni release
 try { document.getElementById('appVer').textContent = 'v' + APP_VERSION; } catch(e){}
 function verNewer(a, b){   // a più recente di b? confronto numerico 11.10 > 11.9
   const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);
@@ -3255,6 +3270,7 @@ function renderAuth(){
     renderPubList();
   }
   if (session && session.access_token && walletSynced === null) initWallet();   // aggancia il portafoglio server una volta
+  if (session && session.access_token) try { loadTrades(); } catch(e){}   // pallino proposte in arrivo
   const adm = document.getElementById('adminGift');
   if (adm) adm.style.display = (session && session.email === ADMIN_EMAIL) ? 'block' : 'none';
   const box = document.getElementById('authBox');
@@ -3460,6 +3476,7 @@ function initRealtime(){
       .on('postgres_changes', {event: '*', schema: 'public', table: 'cards'}, worldChanged)
       .on('postgres_changes', {event: 'INSERT', schema: 'public', table: 'matches'}, p => { matchToast(p); worldChanged(); })
       .on('postgres_changes', {event: '*', schema: 'public', table: 'meta'}, worldChanged)
+      .on('postgres_changes', {event: '*', schema: 'public', table: 'trades'}, () => { try { loadTrades(); reconcileCollection(); } catch(e){} })
       .subscribe();
   } catch(e){}
 }
@@ -3467,7 +3484,7 @@ async function loadWorldCards(){
   const msg = document.getElementById('onlineMsg');
   msg.textContent = '🔎 Aggiorno il ranking…';
   try {
-    const r = await fetch(SUPA_URL + '/rest/v1/cards?select=serial,name,owner,nick,rarity,potere,statsv,hp,dna,strum,annuncio,img,wins,losses,rest_until,elo,win_streak,loss_streak,best_streak,was_champion&retired=not.is.true&order=elo.desc.nullslast,wins.desc&limit=100', {headers: supaHeaders()});
+    const r = await fetch(SUPA_URL + '/rest/v1/cards?select=serial,name,owner,nick,rarity,potere,statsv,hp,dna,strum,annuncio,img,wins,losses,rest_until,elo,win_streak,loss_streak,best_streak,was_champion,frozen&retired=not.is.true&order=elo.desc.nullslast,wins.desc&limit=100', {headers: supaHeaders()});
     if (!r.ok) throw new Error('HTTP ' + r.status);
     await fetchChampion();
     worldAll = orderWithChampion(await r.json());
@@ -3475,6 +3492,143 @@ async function loadWorldCards(){
   } catch(err){
     msg.textContent = '❌ Errore di rete: ' + err.message;
   }
+}
+/* ---------- Mercato degli scambi (baratto carta per carta) ---------- */
+function openMercato(){
+  const a = document.getElementById('mercatoAuth');
+  if (!session || !session.access_token){
+    if (a) a.innerHTML = '🔑 Per usare il Mercato accedi dalla scheda 🌍 Mondo.';
+    return;
+  }
+  if (a) a.innerHTML = '';
+  loadTrades();
+}
+async function loadTrades(){
+  if (!session || !session.access_token) return;
+  const tin = document.getElementById('tradeIn'), tout = document.getElementById('tradeOut');
+  if (!tin || !tout) return;
+  try {
+    const r = await fetch(SUPA_URL + '/rest/v1/trades?status=eq.pending&or=(from_id.eq.' + session.user_id + ',to_id.eq.' + session.user_id + ')&order=id.desc', {headers: supaHeaders()});
+    if (!r.ok) return;
+    const rows = await r.json();
+    const incoming = rows.filter(t => t.to_id === session.user_id);
+    const outgoing = rows.filter(t => t.from_id === session.user_id);
+    const dot = document.getElementById('tradeTabDot');
+    if (dot) dot.style.display = incoming.length ? 'inline-block' : 'none';
+    tin.innerHTML = incoming.length ? '<strong>📥 Proposte ricevute</strong>' + incoming.map(t =>
+      '<div style="border:1px solid var(--accent); border-radius:8px; padding:8px; margin-top:6px; font-size:.85rem;">' +
+      (t.from_owner || '?') + ' ti offre <strong>' + t.from_name + '</strong> in cambio della tua <strong>' + t.to_name + '</strong>' +
+      '<div style="display:flex; gap:8px; margin-top:6px;">' +
+      '<button class="btn secondary" style="margin:0; padding:8px;" onclick="respondTrade(' + t.id + ',true)">✅ Accetta</button>' +
+      '<button class="btn secondary" style="margin:0; padding:8px;" onclick="respondTrade(' + t.id + ',false)">✖ Rifiuta</button></div></div>'
+    ).join('') : '<span class="count">Nessuna proposta ricevuta.</span>';
+    tout.innerHTML = outgoing.length ? '<strong>📤 Proposte inviate</strong>' + outgoing.map(t =>
+      '<div style="border:1px solid #363057; border-radius:8px; padding:8px; margin-top:6px; font-size:.85rem;">' +
+      'Hai offerto <strong>' + t.from_name + '</strong> per <strong>' + t.to_name + '</strong> di ' + (t.to_owner || '?') +
+      ' <button class="btn secondary" style="margin:6px 0 0; padding:8px;" onclick="cancelTrade(' + t.id + ')">↩️ Annulla</button></div>'
+    ).join('') : '';
+  } catch(e){}
+}
+async function renderTradeBrowse(){
+  const el = document.getElementById('tradeBrowse');
+  if (!el) return;
+  if (!session || !session.access_token){ el.innerHTML = '<span class="count">Accedi per scambiare.</span>'; return; }
+  el.innerHTML = '<span class="count">Carico…</span>';
+  try {
+    const r = await fetch(SUPA_URL + '/rest/v1/cards?select=serial,name,owner,owner_id,rarity,img,elo,frozen,retired&retired=not.is.true&order=elo.desc.nullslast&limit=100', {headers: supaHeaders()});
+    const rows = (await r.json()).filter(c => c.owner_id !== session.user_id && !c.frozen);
+    if (!rows.length){ el.innerHTML = '<span class="count">Nessuna carta disponibile per lo scambio.</span>'; return; }
+    el.innerHTML = rows.map(c =>
+      '<div style="display:flex; align-items:center; gap:8px; padding:6px; border:1px solid #363057; border-radius:8px; margin-top:6px;">' +
+      (c.img ? '<img src="' + c.img + '" style="width:40px; border-radius:6px;">' : '') +
+      '<span style="flex:1; font-size:.85rem;"><strong>' + c.name + '</strong> di ' + (c.owner || '?') + ' · ' + (c.rarity || '') + '</span>' +
+      '<button class="btn secondary" style="width:auto; margin:0; padding:8px;" onclick="proposeTradeUI(\'' + c.serial + '\',\'' + (c.name || '').replace(/'/g, '') + '\')">🔄</button></div>'
+    ).join('');
+  } catch(e){ el.innerHTML = '<span class="count">Errore di rete.</span>'; }
+}
+function proposeTradeUI(theirSerial, theirName){
+  const mine = collection.filter(c => myActive.has(c.serial));
+  if (!mine.length){ alert('Per scambiare devi avere almeno una carta pubblicata e attiva nel Mondo.'); return; }
+  const list = mine.map((c, i) => (i + 1) + ') ' + c.name).join('\n');
+  const pick = prompt('Quale TUA carta offri per «' + theirName + '»?\n' + list + '\n\nScrivi il numero:');
+  if (!pick) return;
+  const idx = parseInt(pick, 10) - 1;
+  if (isNaN(idx) || idx < 0 || idx >= mine.length){ alert('Numero non valido.'); return; }
+  proposeTrade(mine[idx].serial, theirSerial, theirName);
+}
+async function proposeTrade(mySerial, theirSerial, theirName){
+  await refreshSessionIfNeeded();
+  try {
+    const r = await fetch(SUPA_URL + '/rest/v1/rpc/propose_trade', {method: 'POST', headers: supaHeaders(), body: JSON.stringify({my_serial: mySerial, their_serial: theirSerial})});
+    if (!r.ok){ const t = await r.text(); alert('Scambio non proposto: ' + t.slice(0, 140)); return; }
+    toast('🔄 Proposta inviata! In attesa di risposta.');
+    loadTrades(); loadMyWorldCards();
+  } catch(e){ alert('Errore di rete: ' + e.message); }
+}
+async function respondTrade(id, accept){
+  await refreshSessionIfNeeded();
+  try {
+    const r = await fetch(SUPA_URL + '/rest/v1/rpc/respond_trade', {method: 'POST', headers: supaHeaders(), body: JSON.stringify({trade_id: id, accept: accept})});
+    if (!r.ok){ const t = await r.text(); alert('Operazione fallita: ' + t.slice(0, 140)); return; }
+    toast(accept ? '✅ Scambio fatto! Le carte hanno cambiato proprietario.' : 'Proposta rifiutata.');
+    if (accept) await reconcileCollection();
+    loadTrades(); loadMyWorldCards();
+  } catch(e){ alert('Errore di rete: ' + e.message); }
+}
+async function cancelTrade(id){
+  await refreshSessionIfNeeded();
+  try {
+    await fetch(SUPA_URL + '/rest/v1/rpc/cancel_trade', {method: 'POST', headers: supaHeaders(), body: JSON.stringify({trade_id: id})});
+    toast('↩️ Proposta annullata.');
+    loadTrades(); loadMyWorldCards();
+  } catch(e){}
+}
+function buildLocalFromRow(row){
+  return {
+    serial: row.serial, name: row.name, nick: row.nick || null, rarity: row.rarity || null,
+    razza: row.razza || null, descr: row.descr || null, potere: (typeof row.potere === 'number') ? row.potere : 0,
+    statsv: Array.isArray(row.statsv) ? row.statsv : null, hp: row.hp || null,
+    dna: row.dna || null, strum: row.strum || null, annuncio: row.annuncio || null,
+    melody: null, layout: 3, img: row.img, date: Date.now()
+  };
+}
+// dopo uno scambio, allinea la collezione locale a chi possiede cosa sul server
+async function reconcileCollection(){
+  if (!session || !session.access_token) return;
+  try {
+    await refreshSessionIfNeeded();
+    const r = await fetch(SUPA_URL + '/rest/v1/cards?select=serial,name,owner,owner_id,nick,rarity,razza,descr,potere,statsv,hp,dna,strum,annuncio,img,wins,losses&owner_id=eq.' + session.user_id, {headers: supaHeaders()});
+    if (!r.ok) return;
+    const owned = await r.json();
+    let changed = false;
+    // carte RICEVUTE: mie sul server ma assenti in locale
+    owned.forEach(row => {
+      if (!collection.find(c => c.serial === row.serial)){
+        collection.unshift(buildLocalFromRow(row));
+        battleStats[row.serial] = {w: row.wins || 0, l: row.losses || 0, xp: (row.wins || 0) * 25 + (row.losses || 0) * 10};   // livello ereditato
+        changed = true;
+        toast('🎁 Hai ricevuto ' + row.name + ' nello scambio!');
+      }
+    });
+    // carte CEDUTE: locali ma sul server ora di un altro
+    const localSerials = collection.map(c => c.serial);
+    if (localSerials.length){
+      const q = await fetch(SUPA_URL + '/rest/v1/cards?select=serial,owner_id,name&serial=in.(' + localSerials.join(',') + ')', {headers: supaHeaders()});
+      if (q.ok){
+        (await q.json()).forEach(row => {
+          if (row.owner_id && row.owner_id !== session.user_id){
+            const i = collection.findIndex(c => c.serial === row.serial);
+            if (i >= 0){ collection.splice(i, 1); try { purgeStats(row.serial); } catch(e){} changed = true; }
+          }
+        });
+      }
+    }
+    if (changed){
+      persistColl();
+      try { localStorage.setItem('catcards_stats', JSON.stringify(battleStats)); } catch(e){}
+      renderCollection(); renderStats();
+    }
+  } catch(e){}
 }
 function renderWorldList(){
   const msg = document.getElementById('onlineMsg');
@@ -3495,8 +3649,8 @@ function renderWorldList(){
     msg.textContent = '⏳ ' + myCard.name + ' non è ancora nel ranking (appena pubblicata? riprova tra poco con 🔄).';
     return;
   }
-  // solo gli sfidabili: entro ±5 posizioni dal mio rank
-  worldCards = worldAll.filter(c => !mineSet[c.serial] && Math.abs(rankOf(c.serial) - myRank) <= 5);
+  // solo gli sfidabili: entro ±5 posizioni dal mio rank, e non congelati in uno scambio
+  worldCards = worldAll.filter(c => !mineSet[c.serial] && !c.frozen && Math.abs(rankOf(c.serial) - myRank) <= 5);
   if (!worldCards.length){
     msg.textContent = '📊 ' + myCard.name + ' è #' + myRank + ', ma nessuno sfidante nel raggio ±5 al momento. Invita qualcuno a pubblicare!';
     return;
@@ -3586,9 +3740,14 @@ async function fightWorld(i){
   }
   // controllo FRESCO dal server: magari ha appena combattuto o fatto palestra
   try {
-    const rr = await fetch(SUPA_URL + '/rest/v1/cards?select=rest_until&serial=eq.' + encodeURIComponent(remote.serial), {headers: supaHeaders()});
+    const rr = await fetch(SUPA_URL + '/rest/v1/cards?select=rest_until,frozen&serial=eq.' + encodeURIComponent(remote.serial), {headers: supaHeaders()});
     if (rr.ok){
       const rows = await rr.json();
+      if (rows.length && rows[0].frozen){
+        alert('🔄 ' + remote.name + ' è impegnata in uno scambio: non è sfidabile ora.');
+        loadWorldCards();
+        return;
+      }
       if (rows.length && rows[0].rest_until && new Date(rows[0].rest_until).getTime() > Date.now()){
         alert('😴 ' + remote.name + ' è appena andato a riposo: riprova tra ' + Math.ceil((new Date(rows[0].rest_until).getTime() - Date.now()) / 60000) + ' minuti.');
         loadWorldCards();
