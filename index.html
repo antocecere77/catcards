@@ -317,6 +317,15 @@
     <h2>🔁 Mercato</h2>
     <p class="count" style="line-height:1.6;">Scambia o vendi le tue carte con gli altri giocatori. La carta cambia proprietario con tutto (Elo, vittorie, livello); mentre è in trattativa resta congelata e non combatte. Serve essere connessi e avere carte pubblicate nel Mondo.</p>
     <div id="mercatoAuth" class="count" style="margin-top:8px;"></div>
+    <div style="display:flex; gap:12px; align-items:center; margin-top:12px;">
+      <img id="trdImg" alt="Mercante" style="width:64px; height:64px; border-radius:50%; object-fit:cover; border:2px solid var(--accent2); display:none; flex-shrink:0;">
+      <div id="trdEmoji" style="font-size:2.6rem; flex-shrink:0;">😼</div>
+      <div style="flex:1; min-width:0;">
+        <strong>Bazar, il Mercante</strong>
+        <p class="count" id="trdSay" style="margin-top:2px; line-height:1.5;">Benvenuto al bazar, amico! Chiedi pure: so io come si fanno i buoni affari.</p>
+      </div>
+    </div>
+    <button class="btn secondary" onclick="traderAdvice()" style="margin-top:8px;">💰 Chiedi consiglio al Mercante</button>
     <h2 style="font-size:1.05rem; margin-top:16px;">🔄 Scambio (baratto)</h2>
     <div id="tradeIn" style="margin-top:8px;"></div>
     <div id="tradeOut" style="margin-top:8px;"></div>
@@ -1329,6 +1338,7 @@ async function loadMyWorldCards(){
     myPublished = new Set(rows.map(x => x.serial));
     myActive = new Set(rows.filter(x => !x.retired).map(x => x.serial));
     window._myWorldRows = rows;
+    if (!worldAll.length){ try { await loadWorldCards(); } catch(e){} }   // serve la classifica per mostrare la posizione
     checkAchievements();
     renderPubList();   // la lista di pubblicazione mostra solo le carte non ancora online
     refreshArena();    // il menu delle sfide mostra solo le pubblicate attive
@@ -1349,7 +1359,9 @@ async function loadMyWorldCards(){
       const span = document.createElement('span');
       span.style.cssText = 'flex:1; min-width:0; cursor:pointer;';
       span.onclick = () => showMyWorldCard(x);
-      span.innerHTML = '<strong>' + x.name + '</strong> — ' + (x.wins || 0) + ' V / ' + (x.losses || 0) + ' S' + (x.retired ? ' · 🚪 ritirata' : '');
+      const rk = rankOf(x.serial);
+      const rkTxt = x.retired ? ' · 🚪 ritirata' : (rk ? ' · <strong style="color:var(--accent)">' + (rk === 1 ? '👑 #1' : '#' + rk) + '</strong> in classifica' : '');
+      span.innerHTML = '<strong>' + x.name + '</strong> — ' + (x.wins || 0) + ' V / ' + (x.losses || 0) + ' S' + rkTxt;
       div.appendChild(span);
       const b = document.createElement('button');
       b.className = 'btn secondary';
@@ -3081,7 +3093,7 @@ async function migrateMelodies(){
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
 /* ---------- versione e aggiornamento automatico ---------- */
-const APP_VERSION = '12.8';   // unica fonte di verità: aggiorna anche version.txt a ogni release
+const APP_VERSION = '12.9';   // unica fonte di verità: aggiorna anche version.txt a ogni release
 try { document.getElementById('appVer').textContent = 'v' + APP_VERSION; } catch(e){}
 function verNewer(a, b){   // a più recente di b? confronto numerico 11.10 > 11.9
   const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);
@@ -3606,12 +3618,59 @@ async function loadWorldCards(){
 /* ---------- Mercato degli scambi (baratto carta per carta) ---------- */
 function openMercato(){
   const a = document.getElementById('mercatoAuth');
+  initTrader();
   if (!session || !session.access_token){
     if (a) a.innerHTML = '🔑 Per usare il Mercato accedi dalla scheda 🌍 Mondo.';
     return;
   }
   if (a) a.innerHTML = '';
   loadTrades();
+}
+async function initTrader(){
+  // ritratto di Bazar il Mercante: generato UNA volta con l'AI, poi salvato
+  try {
+    if (localStorage.getItem('catcards_trdv') !== '1'){ await idbSet('trader', null); localStorage.setItem('catcards_trdv', '1'); }
+    let img = await idbGet('trader');
+    if (!img){
+      const key = apiKeyEl.value.trim();
+      if (!key) return;
+      const models = await listImageModels(key).catch(() => []);
+      const model = models[0] || GEMINI_MODELS[0];
+      const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent?key=' + encodeURIComponent(key), {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({contents: [{parts: [{text: 'Comic book style portrait of a CAT (full feline face clearly visible): a sly charming bazaar-merchant cat with a cunning wide grin, a golden hoop earring, a small tilted red fez, holding shiny gold coins in his paw, colorful oriental market stall behind him. Slippery salesman vibes. Bold ink outlines, flat cel shading, warm colors, dark purple background. Square bust portrait.'}]}]})
+      });
+      if (!r.ok) return;
+      const j = await r.json();
+      const parts = (((j.candidates || [])[0] || {}).content || {}).parts || [];
+      const p = parts.find(x => x.inlineData && x.inlineData.data);
+      if (!p) return;
+      img = 'data:' + (p.inlineData.mimeType || 'image/png') + ';base64,' + p.inlineData.data;
+      await idbSet('trader', img);
+    }
+    const el = document.getElementById('trdImg');
+    if (el && img){ el.src = img; el.style.display = 'block'; const em = document.getElementById('trdEmoji'); if (em) em.style.display = 'none'; }
+  } catch(e){}
+}
+function traderAdvice(){
+  const say = t => { const el = document.getElementById('trdSay'); if (el) el.textContent = t; };
+  const open = ['Psst, amico: ', 'Affari, affari! ', 'Il Mercante sa tutto: ', 'Tra noi che ce ne intendiamo: '];
+  if (!collection.length){ say('Non hai carte da barattare! Creane qualcuna e torna: al bazar si fanno affari, non beneficenza.'); return; }
+  const parts = [];
+  const sorted = collection.slice().sort((a, b) => estStrength(b) - estStrength(a));
+  const best = sorted[0], worst = sorted[sorted.length - 1];
+  if (best) parts.push('tieniti stretto ' + best.name + ', quello vale oro: non cederlo per due spiccioli.');
+  if (worst && worst !== best) parts.push('se proprio devi dare qualcosa, parti da ' + worst.name + ' — ne hai di meglio in mano.');
+  const byRar = {}; collection.forEach(c => { byRar[c.rarity] = (byRar[c.rarity] || 0) + 1; });
+  if ((byRar['Comune'] || 0) >= 3) parts.push('Hai un mucchio di Comuni (' + byRar['Comune'] + '): scambiane un paio per qualcosa di più raro, fidati.');
+  // occhio alle carte pregiate degli altri già caricate nella vetrina
+  try {
+    const gem = (_tradeBrowseRows || []).find(c => c.rarity === 'Leggendaria') || (_tradeBrowseRows || []).find(c => c.rarity === 'Epica');
+    if (gem) parts.push('E occhio: c\'è una ' + gem.rarity + ' di ' + (gem.owner || 'qualcuno') + ' in vetrina — se hai un buon doppione, tenta lo scambio prima che la prenda un altro.');
+    else parts.push('Premi «Sfoglia carte da scambiare» e fammi vedere cosa gira: ti dico io se c\'è un affare.');
+  } catch(e){}
+  say(open[Math.floor(Math.random() * open.length)] + parts.join(' '));
+  try { sfx('charm'); } catch(e){}
 }
 async function loadTrades(){
   if (!session || !session.access_token) return;
