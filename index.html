@@ -321,6 +321,8 @@
     <div id="tradeIn" style="margin-top:8px;"></div>
     <div id="tradeOut" style="margin-top:8px;"></div>
     <button class="btn secondary" onclick="renderTradeBrowse()" style="margin-top:8px;">🔍 Sfoglia carte da scambiare</button>
+    <input type="text" id="tradeOwnerFilter" list="tradeOwners" placeholder="Filtra per proprietario (es. Lu…)" oninput="applyTradeFilter()" style="margin-top:8px; display:none;">
+    <datalist id="tradeOwners"></datalist>
     <div id="tradeBrowse" style="margin-top:8px;"></div>
   </div>
   </div>
@@ -3071,7 +3073,7 @@ async function migrateMelodies(){
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
 /* ---------- versione e aggiornamento automatico ---------- */
-const APP_VERSION = '12.5';   // unica fonte di verità: aggiorna anche version.txt a ogni release
+const APP_VERSION = '12.6';   // unica fonte di verità: aggiorna anche version.txt a ogni release
 try { document.getElementById('appVer').textContent = 'v' + APP_VERSION; } catch(e){}
 function verNewer(a, b){   // a più recente di b? confronto numerico 11.10 > 11.9
   const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);
@@ -3543,18 +3545,34 @@ async function renderTradeBrowse(){
     const r = await fetch(SUPA_URL + '/rest/v1/cards?select=serial,name,owner,owner_id,rarity,img,elo,retired&retired=not.is.true&order=elo.desc.nullslast&limit=100', {headers: supaHeaders()});
     if (!r.ok){ el.innerHTML = '<span class="count">❌ Errore ' + r.status + ' nel caricare le carte.</span>'; return; }
     const rows = (await r.json()).filter(c => c.owner_id !== session.user_id);
-    if (!rows.length){ el.innerHTML = '<span class="count">Nessuna carta disponibile per lo scambio.</span>'; return; }
+    if (!rows.length){ el.innerHTML = '<span class="count">Nessuna carta disponibile per lo scambio.</span>'; document.getElementById('tradeOwnerFilter').style.display = 'none'; return; }
     _tradeTargets = {};
     rows.forEach(c => { _tradeTargets[c.serial] = {name: c.name, owner: c.owner, img: c.img, rarity: c.rarity}; });
-    el.innerHTML = rows.map(c =>
-      '<div style="display:flex; align-items:center; gap:8px; padding:6px; border:1px solid #363057; border-radius:8px; margin-top:6px;">' +
-      (c.img ? '<img src="' + c.img + '" style="width:40px; border-radius:6px;">' : '') +
-      '<span style="flex:1; font-size:.85rem;"><strong>' + c.name + '</strong> di ' + (c.owner || '?') + ' · ' + (c.rarity || '') + '</span>' +
-      '<button class="btn secondary" style="width:auto; margin:0; padding:8px;" onclick="proposeTradeFor(\'' + c.serial + '\')">🔄 Proponi</button></div>'
-    ).join('');
+    _tradeBrowseRows = rows;
+    // autocompletamento proprietari: lista dei nomi disponibili
+    const owners = Array.from(new Set(rows.map(c => c.owner).filter(Boolean))).sort();
+    const dl = document.getElementById('tradeOwners');
+    if (dl) dl.innerHTML = owners.map(o => '<option value="' + o + '">').join('');
+    const filt = document.getElementById('tradeOwnerFilter');
+    if (filt) filt.style.display = 'block';
+    applyTradeFilter();
   } catch(e){ el.innerHTML = '<span class="count">Errore di rete.</span>'; }
 }
 let _tradeTargets = {};
+let _tradeBrowseRows = [];
+function applyTradeFilter(){
+  const el = document.getElementById('tradeBrowse');
+  if (!el) return;
+  const q = (document.getElementById('tradeOwnerFilter').value || '').trim().toLowerCase();
+  const rows = q ? _tradeBrowseRows.filter(c => (c.owner || '').toLowerCase().indexOf(q) === 0) : _tradeBrowseRows;
+  if (!rows.length){ el.innerHTML = '<span class="count">Nessuna carta di «' + q + '».</span>'; return; }
+  el.innerHTML = rows.map(c =>
+    '<div style="display:flex; align-items:center; gap:8px; padding:6px; border:1px solid #363057; border-radius:8px; margin-top:6px;">' +
+    (c.img ? '<img src="' + c.img + '" style="width:40px; border-radius:6px;">' : '') +
+    '<span style="flex:1; font-size:.85rem;"><strong>' + c.name + '</strong> di ' + (c.owner || '?') + ' · ' + (c.rarity || '') + '</span>' +
+    '<button class="btn secondary" style="width:auto; margin:0; padding:8px;" onclick="proposeTradeFor(\'' + c.serial + '\')">🔄 Proponi</button></div>'
+  ).join('');
+}
 function proposeTradeFor(theirSerial){
   const t = _tradeTargets[theirSerial] || {};
   proposeTradeUI(theirSerial, t.name || 'questa carta', t.owner || '', t.img || null);
@@ -3568,22 +3586,35 @@ function proposeTradeUI(theirSerial, theirName, theirOwner, theirImg){
     document.getElementById('tradeModal').style.display = 'flex';
     return;
   }
-  const opts = mine.map((c, i) => '<option value="' + c.serial + '">' + c.name + ' (' + (c.rarity || '') + ')</option>').join('');
+  _selectedOfferSerial = null;
+  const list = mine.map(c =>
+    '<div class="offerRow" data-serial="' + c.serial + '" onclick="selectTradeOffer(this)" style="display:flex; align-items:center; gap:8px; padding:8px; border:1px solid #363057; border-radius:8px; margin-top:6px; cursor:pointer;">' +
+    (c.img ? '<img src="' + c.img + '" style="width:38px; border-radius:6px; flex-shrink:0;">' : '') +
+    '<span style="flex:1; font-size:.85rem;"><strong>' + c.name + '</strong> · ' + (c.rarity || '') + ' · Lv.' + cardLevel(c.serial) + '</span></div>'
+  ).join('');
   body.innerHTML =
     '<h2>🔄 Proponi scambio</h2>' +
     (theirImg ? '<img src="' + theirImg + '" style="width:90px; border-radius:10px; display:block; margin:8px auto;">' : '') +
     '<p class="count">Vuoi <strong>' + theirName + '</strong>' + (theirOwner ? ' di ' + theirOwner : '') + '.</p>' +
-    '<label class="small" style="margin-top:10px;">Quale TUA carta offri in cambio?</label>' +
-    '<select id="tradeOfferSel">' + opts + '</select>' +
-    '<button class="btn" style="margin-top:12px;" onclick="confirmProposeTrade(\'' + theirSerial + '\',\'' + theirName.replace(/'/g, '') + '\')">🔄 Scambia</button>' +
+    '<label class="small" style="margin-top:10px;">Tocca la TUA carta da offrire:</label>' +
+    '<div style="max-height:38vh; overflow-y:auto; margin-top:4px;">' + list + '</div>' +
+    '<button class="btn" id="tradeConfirmBtn" style="margin-top:12px; opacity:.5;" onclick="confirmProposeTrade(\'' + theirSerial + '\',\'' + theirName.replace(/'/g, '') + '\')">🔄 Scambia</button>' +
     '<button class="btn secondary" onclick="document.getElementById(\'tradeModal\').style.display=\'none\'">✖ Annulla</button>';
   document.getElementById('tradeModal').style.display = 'flex';
 }
+let _selectedOfferSerial = null;
+function selectTradeOffer(row){
+  _selectedOfferSerial = row.getAttribute('data-serial');
+  document.querySelectorAll('#tradeModalBody .offerRow').forEach(r => { r.style.borderColor = '#363057'; r.style.background = 'transparent'; });
+  row.style.borderColor = 'var(--accent)';
+  row.style.background = 'rgba(255,209,102,.12)';
+  const b = document.getElementById('tradeConfirmBtn');
+  if (b) b.style.opacity = '1';
+}
 function confirmProposeTrade(theirSerial, theirName){
-  const sel = document.getElementById('tradeOfferSel');
-  if (!sel || !sel.value) return;
+  if (!_selectedOfferSerial){ alert('Tocca prima una tua carta da offrire.'); return; }
   document.getElementById('tradeModal').style.display = 'none';
-  proposeTrade(sel.value, theirSerial, theirName);
+  proposeTrade(_selectedOfferSerial, theirSerial, theirName);
 }
 async function proposeTrade(mySerial, theirSerial, theirName){
   await refreshSessionIfNeeded();
