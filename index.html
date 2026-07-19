@@ -458,6 +458,14 @@
       <button class="btn secondary" onclick="makeGift()" style="margin-top:8px;">Genera codice</button>
       <p class="count" id="giftOut" style="margin-top:6px; word-break:break-all;"></p>
     </div>
+    <div id="adminBots" style="display:none; margin-top:10px; padding:10px; background:var(--panel2); border-radius:10px;">
+      <label class="small">🤖 Admin: popola il mondo con utenti finti</label>
+      <p class="count" style="margin-top:4px;">Ogni utente ha 3 gatti con ritratto AI (usa la tua chiave Gemini). Additivo: ogni volta aggiunge un nuovo lotto.</p>
+      <input type="number" id="botCount" value="15" min="1" max="30" style="width:100%; padding:12px; border-radius:10px; border:1px solid #4d4477; background:var(--panel); color:var(--text);">
+      <button class="btn secondary" onclick="populateWorld()" id="botGenBtn" style="margin-top:8px;">🤖 Popola il mondo</button>
+      <button class="btn secondary" onclick="simBots()" style="margin-top:8px;">🎲 Simula partite tra bot</button>
+      <p class="count" id="botOut" style="margin-top:6px;"></p>
+    </div>
     <label class="small" style="margin-top:18px;">Audio e presentazioni</label>
     <button class="btn secondary" data-snd onclick="toggleSound(this)" style="margin-top:4px;">🔊 Suoni: ON</button>
     <button class="btn secondary" id="autoSkipBtn" onclick="toggleAutoSkip(this)" style="margin-top:8px;">🎬 Presentazioni: ON</button>
@@ -3073,7 +3081,7 @@ async function migrateMelodies(){
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
 /* ---------- versione e aggiornamento automatico ---------- */
-const APP_VERSION = '12.7';   // unica fonte di verità: aggiorna anche version.txt a ogni release
+const APP_VERSION = '12.8';   // unica fonte di verità: aggiorna anche version.txt a ogni release
 try { document.getElementById('appVer').textContent = 'v' + APP_VERSION; } catch(e){}
 function verNewer(a, b){   // a più recente di b? confronto numerico 11.10 > 11.9
   const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);
@@ -3245,6 +3253,100 @@ async function makeGift(){
     try { navigator.clipboard.writeText(code); } catch(e){}
   } catch(err){ out.textContent = '❌ Errore di rete: ' + err.message; }
 }
+/* ---------- Admin: popola il mondo con utenti-bot (carte AI, additivo) ---------- */
+const BOT_OWNERS = ['Luciano','Marco','Giulia','Franca','Enzo','Rosa','Sandro','Lucia','Nico','Teo','Gigi','Rita','Bruno','Carla','Dario','Elsa','Fabio','Gina','Aldo','Vera','Piero','Nadia','Tonio','Mila','Beppe','Sonia','Remo','Ida','Gino','Lella','Ciro','Ada','Dino','Wanda','Ezio','Pina','Turi','Memmo','Rocco','Agnese'];
+const BOT_CATS = ['Fuffi','Micio','Briciola','Nerone','Pallina','Romeo','Luna','Zorro','Birba','Milo','Nina','Pepe','Otto','Maya','Leo','Gigia','Tigro','Frida','Ugo','Stella','Whisky','Mora','Cesare','Nuvola','Pongo','Isotta','Baffo','Cleo','Ciccio','Perla','Diego','Zelda','Fumo','Kira','Oliver','Sissi','Balu','Cannella','Gastone','Minou'];
+const BOT_BREEDS = ['Europeo tigrato','Soriano','Certosino','Persiano','Siamese','Maine Coon','Bengala','Sacro di Birmania','Norvegese delle foreste','Europeo bianco e nero','Rosso soriano','Comune tricolore'];
+const BOT_TRAITS = ['Dorme 20 ore al giorno, combatte nelle altre 4.','Ha un debole per il prosciutto e per la gloria.','Non ha mai perso... quando dorme.','Padrone incontrastato del divano.','Miagola in tre lingue.','Terrore dei topi di quartiere.','Elegante fuori, guerriero dentro.','Cade sempre in piedi, tranne quando conta.','Ex randagio, ora leggenda del cortile.','Fa le fusa come un motore diesel.','Ruba il cibo dai piatti degli altri.','Sogna di diventare campione del mondo.'];
+function loadImg(src){ return new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = src; }); }
+async function aiCatImage(prompt, key, model){
+  try {
+    const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent?key=' + encodeURIComponent(key), {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({contents: [{parts: [{text: prompt}]}]})
+    });
+    if (!r.ok) return null;
+    const j = await r.json();
+    const parts = (((j.candidates || [])[0] || {}).content || {}).parts || [];
+    const p = parts.find(x => x.inlineData && x.inlineData.data);
+    if (!p) return null;
+    return 'data:' + (p.inlineData.mimeType || 'image/png') + ';base64,' + p.inlineData.data;
+  } catch(e){ return null; }
+}
+function botFallbackArt(seed){
+  const c = document.createElement('canvas'); c.width = 400; c.height = 400;
+  const x = c.getContext('2d');
+  x.fillStyle = 'hsl(' + (seed % 360) + ',45%,32%)'; x.fillRect(0, 0, 400, 400);
+  x.font = '210px serif'; x.textAlign = 'center'; x.textBaseline = 'middle';
+  x.fillText('🐱', 200, 215);
+  return c;
+}
+function shuffle(a){ a = a.slice(); for (let i = a.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+async function populateWorld(){
+  const out = document.getElementById('botOut');
+  const btn = document.getElementById('botGenBtn');
+  if (!session || session.email !== ADMIN_EMAIL){ out.textContent = '⚠️ Solo admin.'; return; }
+  const key = apiKeyEl.value.trim();
+  if (!key){ out.textContent = '⚠️ Serve la chiave Gemini (scheda 📸 Crea) per i ritratti.'; return; }
+  let count = parseInt(document.getElementById('botCount').value, 10);
+  if (!(count >= 1 && count <= 30)) count = 15;
+  await refreshSessionIfNeeded();
+  btn.disabled = true;
+  const models = await listImageModels(key).catch(() => []);
+  const model = models[0] || GEMINI_MODELS[0];
+  const owners = shuffle(BOT_OWNERS).slice(0, count).map((n, i) => n + (Math.random() < 0.4 ? '' + (10 + Math.floor(Math.random() * 89)) : ''));
+  let made = 0, fails = 0; const total = count * 3;
+  for (let o = 0; o < owners.length; o++){
+    const owner = owners[o];
+    const ownerId = (crypto.randomUUID ? crypto.randomUUID() : 'bot-' + Math.random().toString(16).slice(2) + '-' + Date.now());
+    const cats = shuffle(BOT_CATS).slice(0, 3);
+    for (let k = 0; k < cats.length; k++){
+      out.textContent = '🎨 ' + owner + ' — ' + cats[k] + ' (' + (made + fails + 1) + '/' + total + ')…';
+      try {
+        const breed = BOT_BREEDS[Math.floor(Math.random() * BOT_BREEDS.length)];
+        const trait = BOT_TRAITS[Math.floor(Math.random() * BOT_TRAITS.length)];
+        const seed = (Math.floor(Math.random() * 0xffffffff)) >>> 0;
+        const card = rollCard(seed, cats[k]);
+        card.potere = seed % POWERS.length;
+        card.razza = breed; card.descr = trait; card.frame = null;
+        const prompt = 'Cartoon trading-card portrait of a ' + breed + ' cat, cute exaggerated proportions, big expressive eyes, flat cel shading, thick black outlines, vibrant colors, dark purple background. Full feline face clearly visible. Illustration only, no text.';
+        let artSrc = await aiCatImage(prompt, key, model);
+        const art = artSrc ? await loadImg(artSrc).catch(() => botFallbackArt(seed)) : botFallbackArt(seed);
+        drawCard(card, art);
+        const full = canvas.toDataURL('image/jpeg', 0.82);
+        const thumb = await makeThumb(full, 220).catch(() => full);
+        const elo = 940 + Math.floor(Math.random() * 160);
+        const r = await fetch(SUPA_URL + '/rest/v1/rpc/admin_add_bot_card', {
+          method: 'POST', headers: supaHeaders(),
+          body: JSON.stringify({
+            p_serial: card.serial, p_owner: owner, p_owner_id: ownerId, p_name: cats[k], p_nick: null,
+            p_rarity: card.rarity.name, p_razza: breed, p_descr: trait, p_potere: card.potere,
+            p_statsv: card.stats.map(s => s.value), p_hp: card.hp, p_img: thumb, p_elo: elo
+          })
+        });
+        if (r.status === 404){ out.textContent = '⚠️ Manca il SQL dei bot (admin_add_bot_card). Eseguilo e riprova.'; btn.disabled = false; return; }
+        if (r.ok) made++; else fails++;
+      } catch(e){ fails++; }
+      await new Promise(res => setTimeout(res, 300));   // gentile con l'API
+    }
+  }
+  out.textContent = '✅ Fatto: ' + made + ' carte create' + (fails ? ' (' + fails + ' non riuscite)' : '') + '. Ora popolano il mondo!';
+  btn.disabled = false;
+  try { loadLeaderboard(); if (worldAll.length) loadWorldCards(); } catch(e){}
+}
+async function simBots(){
+  const out = document.getElementById('botOut');
+  if (!session || session.email !== ADMIN_EMAIL) return;
+  await refreshSessionIfNeeded();
+  out.textContent = '🎲 Simulo partite tra bot…';
+  try {
+    const r = await fetch(SUPA_URL + '/rest/v1/rpc/sim_bots', {method: 'POST', headers: supaHeaders(), body: JSON.stringify({rounds: 10})});
+    if (r.status === 404){ out.textContent = '⚠️ Manca il SQL dei bot (sim_bots).'; return; }
+    if (!r.ok){ out.textContent = '❌ HTTP ' + r.status; return; }
+    out.textContent = '✅ Partite simulate: la classifica si è mossa.';
+    try { loadLeaderboard(); } catch(e){}
+  } catch(e){ out.textContent = '❌ ' + e.message; }
+}
 async function redeemGift(){
   const msg = document.getElementById('giftMsg');
   const code = (document.getElementById('giftCode').value || '').trim().toUpperCase();
@@ -3279,6 +3381,8 @@ function renderAuth(){
   if (session && session.access_token) try { loadTrades(); } catch(e){}   // pallino proposte in arrivo
   const adm = document.getElementById('adminGift');
   if (adm) adm.style.display = (session && session.email === ADMIN_EMAIL) ? 'block' : 'none';
+  const admb = document.getElementById('adminBots');
+  if (admb) admb.style.display = (session && session.email === ADMIN_EMAIL) ? 'block' : 'none';
   const box = document.getElementById('authBox');
   if (!box) return;
   if (session && session.access_token){
