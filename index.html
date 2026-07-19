@@ -318,6 +318,10 @@
     <label class="small" style="margin-top:10px;">Il tuo sfidante (carte pubblicate)</label>
     <select id="bossCat"></select>
     <div id="bossList" style="margin-top:10px;"></div>
+    <details style="margin-top:14px;" id="bestiaryDetails">
+      <summary style="cursor:pointer; font-weight:600;" id="bestiarySum">📖 Bestiario <span class="count">(tocca per aprire)</span></summary>
+      <div id="bestiaryBody" style="margin-top:10px;"></div>
+    </details>
   </div>
   </div>
 
@@ -462,6 +466,10 @@
 
   <div class="modal" id="worldModal" style="z-index:27;" onclick="if(event.target===this)this.style.display='none'">
     <div class="panel" style="max-width:360px; margin-top:30px;" id="worldModalBody"></div>
+  </div>
+
+  <div class="modal" id="bossModal" style="z-index:28;" onclick="if(event.target===this)this.style.display='none'">
+    <div class="panel" style="max-width:360px; margin-top:30px;" id="bossModalBody"></div>
   </div>
 
   <div class="modal" id="qrModal" onclick="if(event.target===this)this.style.display='none'">
@@ -2543,7 +2551,7 @@ async function runBattle(ea, eb, title){
   if (bossFight && window._mineSerial && window._bossId){
     const bid = window._bossId;
     if (w.serial === window._mineSerial){
-      const today = new Date().toISOString().slice(0, 10);
+      const today = todayKey();
       bossWins[bid] = bossWins[bid] || {n: 0};
       bossWins[bid].n++;
       if (bossWins[bid].last !== today){
@@ -2995,7 +3003,7 @@ async function migrateMelodies(){
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
 /* ---------- versione e aggiornamento automatico ---------- */
-const APP_VERSION = '11.8';   // unica fonte di verità: aggiorna anche version.txt a ogni release
+const APP_VERSION = '11.9';   // unica fonte di verità: aggiorna anche version.txt a ogni release
 try { document.getElementById('appVer').textContent = 'v' + APP_VERSION; } catch(e){}
 function verNewer(a, b){   // a più recente di b? confronto numerico 11.10 > 11.9
   const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);
@@ -3740,9 +3748,12 @@ const MISSION_POOL = {
     {id:'qr',     ic:'⚡', txt:'Gioca una sfida dal vivo (QR)', evt:'qr_duel', n:1},
   ],
 };
+// giorno LOCALE (cambia a mezzanotte ora tua, non alle 2 UTC): usato da missioni e boss
+function todayNum(){ const off = new Date().getTimezoneOffset() * 60000; return Math.floor((Date.now() - off) / 86400000); }
+function todayKey(){ const off = new Date().getTimezoneOffset() * 60000; return new Date(Date.now() - off).toISOString().slice(0, 10); }
 function todayMissions(){
-  // il giorno UTC decide il tris: 1 combattimento + 1 palestra + 1 varie, uguali per tutti
-  const day = Math.floor(Date.now() / 86400000);
+  // il giorno locale decide il tris: 1 combattimento + 1 palestra + 1 varie, uguali per tutti (stesso fuso)
+  const day = todayNum();
   const rng = mulberry32(((day * 2654435761) + 77) >>> 0);
   const pick = arr => arr[Math.floor(rng() * arr.length)];
   return [pick(MISSION_POOL.combat), pick(MISSION_POOL.gym), pick(MISSION_POOL.extra)];
@@ -3750,7 +3761,7 @@ function todayMissions(){
 let misState = {};
 try { misState = JSON.parse(localStorage.getItem('catcards_missions') || '{}'); } catch(e){}
 function misToday(){
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayKey();
   if (misState.day !== today){
     misState = {day: today, prog: {}, done: {}, tris: false};
     try { localStorage.setItem('catcards_missions', JSON.stringify(misState)); } catch(e){}
@@ -3897,8 +3908,8 @@ const BOSS_BY_ID = {}; BOSSES.forEach(b => { BOSS_BY_ID[b.id] = b; });
 let bossWins = {};
 try { bossWins = JSON.parse(localStorage.getItem('catcards_boss') || '{}'); } catch(e){}
 function activeBosses(){
-  // rotazione mondiale: il giorno UTC decide la coppia, uguale per tutti i giocatori
-  const day = Math.floor(Date.now() / 86400000);
+  // rotazione: il giorno locale decide la coppia, stabile per tutto il giorno
+  const day = todayNum();
   const rng = mulberry32(day >>> 0);
   const i = Math.floor(rng() * BOSSES.length);
   let j = Math.floor(rng() * (BOSSES.length - 1));
@@ -3945,7 +3956,7 @@ function renderBosses(){
   });
   if (!sel.options.length) sel.add(new Option('— pubblica prima una carta nel Mondo —', ''));
   if (Array.prototype.some.call(sel.options, o => o.value === keep && !o.disabled)) sel.value = keep;
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayKey();
   list.innerHTML = '';
   activeBosses().forEach((b, bi) => {
     const bw = bossWins[b.id] || {};
@@ -3978,12 +3989,59 @@ function renderBosses(){
       if (img && im){ im.src = img; im.style.display = 'block'; if (em) em.style.display = 'none'; }
     });
   });
+  renderBestiary();
+}
+const DIV_NAMES = {1:'Randagi di Quartiere', 2:'Domestici Ribelli', 3:'Nobili e Aristogatti', 4:'Bestie Selvatiche', 5:'Miti e Leggende', 6:'Spettri e Soprannaturale', 7:'Divinità Feline', 8:'Boss Finali'};
+const STAT_ICONS = ['💪 Forza', '🧠 Intelligenza', '🎯 Destrezza', '⚡ Velocità', '✨ Fascino', '😼 Indifferenza'];
+function renderBestiary(){
+  const body = document.getElementById('bestiaryBody');
+  const sum = document.getElementById('bestiarySum');
+  if (!body) return;
+  const doneN = BOSSES.filter(b => (bossWins[b.id] || {}).n >= 1).length;
+  if (sum) sum.innerHTML = '📖 Bestiario — <strong>' + doneN + '/' + BOSSES.length + '</strong> domati <span class="count">(tocca per aprire)</span>';
+  let html = '';
+  for (let d = 1; d <= 8; d++){
+    html += '<div style="margin-top:10px; font-weight:600; color:var(--accent); font-size:.9rem;">Div.' + d + ' · ' + DIV_NAMES[d] + '</div>';
+    html += '<div style="display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin-top:6px;">';
+    BOSSES.filter(b => b.tier === d).forEach(b => {
+      const beaten = (bossWins[b.id] || {}).n >= 1;
+      html += '<div onclick="showBossSheet(\'' + b.id + '\')" style="cursor:pointer; text-align:center; padding:6px 2px; border:1px solid ' + (beaten ? 'var(--accent)' : '#363057') + '; border-radius:8px;' + (beaten ? '' : ' opacity:.5;') + '">' +
+        '<div id="bestEm_' + b.id + '" style="font-size:1.7rem;">' + (beaten ? b.em : '❓') + '</div>' +
+        '<div style="font-size:.62rem; line-height:1.1; color:var(--muted); margin-top:2px;">' + (beaten ? b.name : '???') + '</div></div>';
+    });
+    html += '</div>';
+  }
+  body.innerHTML = html;
+}
+function showBossSheet(id){
+  const b = BOSS_BY_ID[id];
+  if (!b) return;
+  const beaten = (bossWins[b.id] || {}).n >= 1;
+  const box = document.getElementById('bossModalBody');
+  const statsHtml = beaten
+    ? STAT_ICONS.map((k, j) => '<div style="display:flex; justify-content:space-between; font-size:.85rem; padding:2px 0;"><span>' + k + '</span><strong>' + b.statsv[j] + '</strong></div>').join('')
+    : '<p class="count">Statistiche ignote: affronta ' + (b.name) + ' per svelarle.</p>';
+  box.innerHTML =
+    (beaten && b._img ? '<img src="' + b._img + '" style="width:100%; border-radius:12px;">' :
+      '<div style="font-size:4rem; text-align:center; padding:20px;">' + (beaten ? b.em : '❓') + '</div>') +
+    '<h2 style="margin-top:8px;">' + (beaten ? b.name : '??? ') + (beaten ? ' <span style="color:var(--muted); font-size:.85rem;">«' + b.nick + '»</span>' : '') + '</h2>' +
+    '<p class="count">Div.' + b.tier + ' · ' + DIV_NAMES[b.tier] + ' · ' + '☠️'.repeat(Math.min(b.tier, 5)) + (beaten ? ' · ✅ domato' : ' · 🔒 mai affrontato') + '</p>' +
+    (beaten ? '<p style="font-size:.9rem; margin-top:6px; line-height:1.6; font-style:italic;">' + b.lore + '</p>' +
+      '<p class="count" style="margin-top:6px;">❤️ ' + b.hp + ' HP · 🌟 ' + POWERS[b.potere].name + '</p>' +
+      '<div style="margin-top:8px;">' + statsHtml + '</div>'
+      : '<p style="font-size:.9rem; margin-top:6px; line-height:1.6;">Un boss della divisione «' + DIV_NAMES[b.tier] + '» ancora avvolto nel mistero. Compare a rotazione: battilo per aggiungerlo al Bestiario.</p>') +
+    '<button class="btn secondary" onclick="document.getElementById(\'bossModal\').style.display=\'none\'">✖ Chiudi</button>';
+  // recupera il ritratto salvato, se c'è, per mostrarlo grande
+  if (beaten && !b._img){
+    idbGet('boss_' + b.id).then(img => { if (img){ b._img = img; if (document.getElementById('bossModal').style.display === 'flex') showBossSheet(id); } }).catch(() => {});
+  }
+  document.getElementById('bossModal').style.display = 'flex';
 }
 async function fightBoss(bi){
   if (battleOn) return;
   const b = activeBosses()[bi];
   if (!b) return;
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayKey();
   const bw = bossWins[b.id] || {};
   if (bw.tryDay === today || bw.last === today){
     alert('⏳ Hai già sfidato ' + b.name + ' oggi: un solo tentativo al giorno per boss, vinto o perso. Torna domani!');
