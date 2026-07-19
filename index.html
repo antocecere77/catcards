@@ -173,7 +173,7 @@
 </head>
 <body>
   <h1>🐱 Cat<span>Cards</span></h1>
-  <p class="tag">Fotografa il tuo gatto e trasformalo in una carta da collezione · <strong style="color:var(--accent)">v10.0</strong></p>
+  <p class="tag">Fotografa il tuo gatto e trasformalo in una carta da collezione · <strong style="color:var(--accent)">v10.3</strong></p>
   <p id="bootErr" style="display:none; color:#ff6b6b; font-size:.8rem; max-width:440px; text-align:center; margin-bottom:10px;"></p>
 
   <div id="tabs" style="display:flex; flex-direction:column; gap:8px; width:100%; max-width:440px; margin-bottom:6px;">
@@ -284,7 +284,7 @@
       <div id="myWorldList" class="count" style="line-height:1.9;"></div>
       <div style="display:flex; gap:12px; align-items:center; margin-top:14px;">
         <img id="mgrImg" alt="Manager" style="width:64px; height:64px; border-radius:50%; object-fit:cover; border:2px solid var(--accent2); display:none; flex-shrink:0;">
-        <div id="mgrEmoji" style="font-size:2.6rem; flex-shrink:0;">🎩</div>
+        <div id="mgrEmoji" style="font-size:2.6rem; flex-shrink:0;">😼</div>
         <div style="flex:1; min-width:0;">
           <strong>Mister Felini, il Manager</strong>
           <p class="count" id="mgrSay" style="margin-top:2px; line-height:1.5;">Il ring è una scacchiera, ragazzo. Scegli il campione e ti dico la prossima mossa.</p>
@@ -1274,9 +1274,11 @@ async function managerAdvice(){
     const chaser = worldAll[1];
     parts.push(mine.name + ' è il CAMPIONE 👑: difendi la corona' + (chaser ? ', e occhio a ' + chaser.name + ' (#2, ' + (chaser.elo || 1000) + ' pt) che scalpita' : '') + '.');
   } else {
+    const mySerials = {};
+    collection.forEach(x => { mySerials[x.serial] = true; });
     const targets = worldAll.filter(c => {
       const r = rankOf(c.serial);
-      return c.serial !== mine.serial && r < rk && (rk - r) <= 5 &&
+      return !mySerials[c.serial] && r < rk && (rk - r) <= 5 &&
         !(c.rest_until && new Date(c.rest_until).getTime() > Date.now());
     });
     let best = null, bestScore = -1e9;
@@ -1292,7 +1294,7 @@ async function managerAdvice(){
         ' (#' + rankOf(best.serial) + ', ' + (best.elo || 1000) + ' pt): ' +
         (gap > 60 ? 'rischioso, ma se lo batti fai il botto in classifica.' : gap < -60 ? 'sulla carta è battibile: vittoria di gestione.' : 'incontro alla pari, di quelli che piacciono al pubblico.'));
     } else {
-      parts.push('nessun bersaglio utile sopra di te ora (o riposano tutti): difendi la posizione, o ripassa più tardi.');
+      parts.push('nessun bersaglio di altri proprietari sopra di te ora (o riposano tutti): difendi la posizione, o ripassa più tardi.');
     }
     if (trainAvail(mine) > 0 && coolLeft(mine) === 0) parts.push('E ha ancora ' + trainAvail(mine) + ' punti di margine in palestra: un buon pasto prima del match non ha mai ucciso nessuno.');
   }
@@ -3879,8 +3881,9 @@ async function initGym(){
       document.getElementById('coachEmoji').style.display = 'none';
     }
   } catch(e){}
-  // ritratto del Manager: anche lui una tantum
+  // ritratto del Manager: anche lui una tantum (v2: gatto viscido fumettoso, non un cappello!)
   try {
+    try { if (localStorage.getItem('catcards_mgrv') !== '2'){ await idbSet('manager', null); localStorage.setItem('catcards_mgrv', '2'); } } catch(e2){}
     let mimg = await idbGet('manager');
     if (!mimg){
       const key = apiKeyEl.value.trim();
@@ -3889,7 +3892,7 @@ async function initGym(){
       const model = models[0] || GEMINI_MODELS[0];
       const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent?key=' + encodeURIComponent(key), {
         method: 'POST', headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({contents: [{parts: [{text: 'Cartoon portrait of a sly elegant cat fight-manager: pinstripe suit, gold chain, dark sunglasses, slicked fur, confident smirk. Flat cel shading, bold outlines, warm colors, dark purple background. Square portrait, bust only.'}]}]})
+        body: JSON.stringify({contents: [{parts: [{text: 'Comic book style portrait of a CAT (full feline face clearly visible, no hat): a sleazy but elegant fight-manager cat with slicked-back grey fur, half-lidded cunning green eyes, oily wide grin with one gold fang, thin curled whiskers like a pencil mustache, pinstripe suit with silk pocket square and gold rings on his paw. Slimy charming villain vibes. Bold ink outlines, flat cel shading, warm colors, dark purple background. Square bust portrait.'}]}]})
       });
       if (!r.ok) return;
       const j = await r.json();
@@ -3980,11 +3983,14 @@ async function onQrFound(data, mine){
     rarity: o.r || undefined, nick: o.k || undefined,
     dna: o.d || null, strum: o.u || null, img: null};
   let ownerNm = null;
-  try {   // se la carta è pubblicata, recupera foto e annuncio dal mondo
-    const r = await fetch(SUPA_URL + '/rest/v1/cards?select=img,owner,annuncio&serial=eq.' + encodeURIComponent(o.s), {headers: supaHeaders()});
+  try {   // se la carta è pubblicata, recupera foto e annuncio dal mondo (lettura pubblica: mai bloccata da sessioni scadute)
+    const r = await fetch(SUPA_URL + '/rest/v1/cards?select=img,owner,annuncio&serial=eq.' + encodeURIComponent(o.s), {
+      headers: {apikey: SUPA_KEY, Authorization: 'Bearer ' + SUPA_KEY}
+    });
     if (r.ok){ const rows = await r.json(); if (rows.length){ entry.img = rows[0].img || null; entry.annuncio = rows[0].annuncio || null; ownerNm = rows[0].owner; } }
   } catch(e){}
-  if (!confirm('⚡ Sfida dal vivo: ' + mine.name + ' contro ' + entry.name + (ownerNm ? ' di ' + ownerNm : '') + '. Si combatte!')) return;
+  if (!confirm('⚡ Sfida dal vivo: ' + mine.name + ' contro ' + entry.name + (ownerNm ? ' di ' + ownerNm : '') +
+    (entry.img ? '' : '\n(Carta avversaria non pubblicata: si combatte senza la sua foto)') + '. Si combatte!')) return;
   unlockAudio();
   window._mineSerial = mine.serial;
   loadInstrument(cardInstr(mine)); loadInstrument(cardInstr(entry));
