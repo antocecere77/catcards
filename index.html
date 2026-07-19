@@ -226,6 +226,10 @@
     <p class="count" id="collCount"></p>
     <p class="count" id="melStatus"></p>
     <div class="collGrid" id="collGrid"></div>
+    <details style="margin-top:14px;">
+      <summary style="cursor:pointer; font-weight:600;" id="catdexSum">🃏 Catdex <span class="count">(tocca per aprire)</span></summary>
+      <div id="catdexBody" style="margin-top:10px; font-size:.88rem; line-height:1.7;"></div>
+    </details>
   </div>
   </div>
 
@@ -380,6 +384,9 @@
     <h2 style="font-size:1rem; margin-top:16px; color:var(--accent);">📊 Il ranking (stile UFC)</h2>
     <p>Ogni carta pubblicata ha un punteggio <strong>Elo</strong>, che parte da <strong>1000</strong>. A ogni incontro il vincitore <strong>prende</strong> punti e lo sconfitto <strong>cede gli stessi punti</strong> — e la quantità dipende dalla differenza di forza: battere un avversario <strong>più forte</strong> vale fino a <strong>~32 punti</strong>, battere uno molto più debole ne vale il minimo, <strong>8</strong> (vincere facile rende poco, l'impresa rende tanto). Nessuna carta scende mai sotto quota 100. Il calcolo lo fa il server, uguale per tutti.</p>
     <p>La classifica ufficiale è in ordine di Elo, ma la cintura è un'altra cosa: <strong>campione si diventa SOLO battendo il campione in carica 👑</strong> in una sfida mondiale o dal vivo. Puoi superarlo di punti quanto vuoi: resti primo contendente finché non lo stendi sul ring. Il campione sta sempre in cima al ranking, e chi è stato campione conserva per sempre il 🏆. Puoi sfidare solo chi sta <strong>da 5 posizioni sopra a 5 sotto</strong> la tua: per il titolo bisogna scalare (in top 5 il campione è a tiro). Il ranking mostra le strisce — 🔥 vittorie di fila, 🧊 sconfitte di fila, e la miglior striscia di sempre. Il <strong>🎩 Manager</strong> studia i numeri e ti consiglia il prossimo incontro giusto, se conviene l'erba gatta 🌿, e quando è meglio ritirarsi un po' in palestra.</p>
+
+    <h2 style="font-size:1rem; margin-top:16px; color:var(--accent);">🃏 Il Catdex</h2>
+    <p>L'album della collezione, in fondo alla scheda 📚 Carte: tiene il conto di <strong>rarità, razze e poteri speciali</strong> che hai scoperto (le caselle mancanti restano ❓) e premia i traguardi con punti <strong>una tantum</strong> — dal poker di rarità (+25) alle 10 razze diverse (+25) fino a tutti gli 8 poteri (+30). La razza la scrive l'AI quando crei la carta: nomi simili (es. "soriano" e "europeo soriano") contano come una famiglia sola. Per completarlo serve una cosa soltanto: fotografare gatti nuovi.</p>
 
     <h2 style="font-size:1rem; margin-top:16px; color:var(--accent);">📅 Le missioni giornaliere</h2>
     <p>Ogni mezzanotte arrivano <strong>3 missioni</strong>, uguali per tutto il mondo: una di combattimento, una di palestra, una a sorpresa (boss, scommesse, QR…). Ognuna paga <strong>5 punti</strong>, il tris completo altri <strong>10 di bonus</strong>. Le trovi in cima al 🏅 Medagliere, con la spunta ✅ su quelle già fatte. Massimo 25 punti al giorno: quanto basta per un allenamento, o poco più.</p>
@@ -1098,6 +1105,7 @@ function renderCollection(){
     grid.appendChild(wrap);
   });
   refreshArena();
+  try { checkCatdex(); renderCatdex(); } catch(e){}
 }
 function openCardModal(i){
   const c = collection[i];
@@ -1597,6 +1605,7 @@ function recordResult(winSerial, loseSerial){
   battleStats[loseSerial].xp = (battleStats[loseSerial].xp || 0) + (arguments.length > 3 ? arguments[3] : 10);
   try { localStorage.setItem('catcards_stats', JSON.stringify(battleStats)); } catch(e){}
   renderStats();
+  try { checkCatdex(); renderCatdex(); } catch(e){}   // un livello nuovo può sbloccare obiettivi Catdex
 }
 function cardLevel(serial){
   const s = battleStats[serial];
@@ -2977,7 +2986,7 @@ async function migrateMelodies(){
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
 /* ---------- versione e aggiornamento automatico ---------- */
-const APP_VERSION = '11.5';   // unica fonte di verità: aggiorna anche version.txt a ogni release
+const APP_VERSION = '11.6';   // unica fonte di verità: aggiorna anche version.txt a ogni release
 try { document.getElementById('appVer').textContent = 'v' + APP_VERSION; } catch(e){}
 async function checkUpdate(){
   try {
@@ -3602,6 +3611,87 @@ try { ach = JSON.parse(localStorage.getItem('catcards_ach') || '{}'); } catch(e)
 let counters = {wins: 0, losses: 0, lossStreak: 0, winStreak: 0, tourn4: 0, tourn8: 0, worldWins: 0, betWins: 0};
 try { counters = Object.assign(counters, JSON.parse(localStorage.getItem('catcards_cnt') || '{}')); } catch(e){}
 function saveCounters(){ try { localStorage.setItem('catcards_cnt', JSON.stringify(counters)); } catch(e){} }
+/* ---------- Catdex: album della collezione, obiettivi e premi una tantum ---------- */
+const RAZZA_FAMS = ['soriano', 'tigrato', 'certosino', 'siamese', 'persiano', 'maine coon', 'ragdoll', 'sphynx', 'bengala', 'british', 'norvegese', 'angora', 'birmano', 'abissino', 'esotico', 'calico', 'tricolore', 'europeo'];
+function razzaFam(r){
+  if (!r) return null;
+  const s = String(r).toLowerCase();
+  for (const f of RAZZA_FAMS) if (s.includes(f)) return f;
+  const w = s.split(/[ ,(/]/)[0];
+  return w && w.length > 2 ? w : null;
+}
+function catdexData(){
+  const rar = {}, pow = {}, fams = new Set();
+  let lv5 = false, hp100 = false, oro = false;
+  collection.forEach(c => {
+    if (c.rarity) rar[c.rarity] = true;
+    if (typeof c.potere === 'number') pow[c.potere] = true;
+    const f = razzaFam(c.razza);
+    if (f) fams.add(f);
+    if (cardLevel(c.serial) >= 5) lv5 = true;
+    if ((c.hp || 0) >= 100) hp100 = true;
+    if (c.frame === 'oro') oro = true;
+  });
+  return {rar: rar, pow: pow, fams: fams, lv5: lv5, hp100: hp100, oro: oro};
+}
+const CATDEX_OBJS = [
+  {id:'rar4',   ic:'💎', txt:'Il poker: una carta per ogni rarità', pt:25, ok:d => ['Comune', 'Rara', 'Epica', 'Leggendaria'].every(r => d.rar[r]), pr:d => Object.keys(d.rar).length + '/4'},
+  {id:'razze3', ic:'🐱', txt:'Scopri 3 razze diverse',              pt:10, ok:d => d.fams.size >= 3,  pr:d => Math.min(d.fams.size, 3) + '/3'},
+  {id:'razze5', ic:'🐈', txt:'Scopri 5 razze diverse',              pt:15, ok:d => d.fams.size >= 5,  pr:d => Math.min(d.fams.size, 5) + '/5'},
+  {id:'razze10', ic:'🦁', txt:'Scopri 10 razze diverse',            pt:25, ok:d => d.fams.size >= 10, pr:d => Math.min(d.fams.size, 10) + '/10'},
+  {id:'pot4',   ic:'🌟', txt:'Colleziona 4 poteri speciali diversi', pt:10, ok:d => Object.keys(d.pow).length >= 4, pr:d => Math.min(Object.keys(d.pow).length, 4) + '/4'},
+  {id:'pot8',   ic:'✨', txt:'Colleziona tutti gli 8 poteri speciali', pt:30, ok:d => Object.keys(d.pow).length >= 8, pr:d => Object.keys(d.pow).length + '/8'},
+  {id:'lv5',    ic:'📈', txt:'Porta un gatto al livello 5',          pt:15, ok:d => d.lv5, pr:null},
+  {id:'hp100',  ic:'❤️', txt:'Una carta con 100+ HP',               pt:10, ok:d => d.hp100, pr:null},
+  {id:'oro',    ic:'🎨', txt:'Una carta con la Cornice d\'Oro',     pt:10, ok:d => d.oro, pr:null},
+];
+let catdex = {};
+try { catdex = JSON.parse(localStorage.getItem('catcards_catdex') || '{}'); } catch(e){}
+function checkCatdex(){
+  const d = catdexData();
+  let got = false;
+  CATDEX_OBJS.forEach(o => {
+    if (catdex[o.id]) return;
+    let ok = false;
+    try { ok = o.ok(d); } catch(e){}
+    if (ok){
+      catdex[o.id] = Date.now();
+      points += o.pt;
+      got = true;
+      toast('🃏 Catdex: ' + o.ic + ' ' + o.txt + '! +' + o.pt + ' punti');
+      try { sfx('win'); } catch(e){}
+    }
+  });
+  if (got){
+    try {
+      localStorage.setItem('catcards_catdex', JSON.stringify(catdex));
+      localStorage.setItem('catcards_points', String(points));
+    } catch(e){}
+    renderWallet();
+  }
+}
+function renderCatdex(){
+  const body = document.getElementById('catdexBody');
+  const sum = document.getElementById('catdexSum');
+  if (!body || !sum) return;
+  const d = catdexData();
+  const doneN = CATDEX_OBJS.filter(o => catdex[o.id]).length;
+  sum.innerHTML = '🃏 Catdex — <strong>' + doneN + '/' + CATDEX_OBJS.length + '</strong> obiettivi <span class="count">(tocca per aprire)</span>';
+  const chip = (found, label) => '<span style="display:inline-block; padding:2px 8px; margin:2px; border-radius:8px; border:1px solid ' + (found ? 'var(--accent)' : '#363057') + '; ' + (found ? '' : 'color:var(--muted); opacity:.6;') + '">' + (found ? label : '❓') + '</span>';
+  const rows = CATDEX_OBJS.map(o => {
+    const done = !!catdex[o.id];
+    return '<div style="display:flex; align-items:center; gap:8px; padding:4px 0;' + (done ? ' opacity:.75;' : '') + '">' +
+      '<span>' + (done ? '✅' : o.ic) + '</span><span style="flex:1;">' + o.txt +
+      (o.pr && !done ? ' <strong>(' + o.pr(d) + ')</strong>' : '') + '</span>' +
+      '<strong style="color:' + (done ? '#51cf66' : 'var(--accent)') + ';">' + (done ? 'fatto' : '+' + o.pt) + '</strong></div>';
+  }).join('');
+  body.innerHTML =
+    '<strong>💎 Rarità</strong><br>' + ['Comune', 'Rara', 'Epica', 'Leggendaria'].map(r => chip(!!d.rar[r], r)).join('') +
+    '<br><strong style="margin-top:8px; display:inline-block;">🌟 Poteri speciali</strong><br>' + POWERS.map((p, i) => chip(!!d.pow[i], p.name)).join('') +
+    '<br><strong style="margin-top:8px; display:inline-block;">🐱 Razze scoperte (' + d.fams.size + ')</strong><br>' +
+    (d.fams.size ? Array.from(d.fams).sort().map(f => chip(true, f)).join('') : '<span class="count">Ancora nessuna: la razza arriva con l\'analisi AI della foto.</span>') +
+    '<div style="margin-top:10px; border-top:1px solid #2e2950; padding-top:6px;"><strong>🎯 Obiettivi</strong>' + rows + '</div>';
+}
 /* ---------- missioni giornaliere: 3 al giorno, uguali per tutti, 5 punti l'una + 10 di tris ---------- */
 const MISSION_POOL = {
   combat: [
