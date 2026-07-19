@@ -173,7 +173,7 @@
 </head>
 <body>
   <h1>🐱 Cat<span>Cards</span></h1>
-  <p class="tag">Fotografa il tuo gatto e trasformalo in una carta da collezione · <strong style="color:var(--accent)">v9.6</strong></p>
+  <p class="tag">Fotografa il tuo gatto e trasformalo in una carta da collezione · <strong style="color:var(--accent)">v10.0</strong></p>
   <p id="bootErr" style="display:none; color:#ff6b6b; font-size:.8rem; max-width:440px; text-align:center; margin-bottom:10px;"></p>
 
   <div id="tabs" style="display:flex; flex-direction:column; gap:8px; width:100%; max-width:440px; margin-bottom:6px;">
@@ -282,8 +282,17 @@
       <p class="count" id="onlineMsg" style="margin-top:6px;"></p>
       <label class="small" style="margin-top:14px;">🐱 Le tue carte nel mondo</label>
       <div id="myWorldList" class="count" style="line-height:1.9;"></div>
+      <div style="display:flex; gap:12px; align-items:center; margin-top:14px;">
+        <img id="mgrImg" alt="Manager" style="width:64px; height:64px; border-radius:50%; object-fit:cover; border:2px solid var(--accent2); display:none; flex-shrink:0;">
+        <div id="mgrEmoji" style="font-size:2.6rem; flex-shrink:0;">🎩</div>
+        <div style="flex:1; min-width:0;">
+          <strong>Mister Felini, il Manager</strong>
+          <p class="count" id="mgrSay" style="margin-top:2px; line-height:1.5;">Il ring è una scacchiera, ragazzo. Scegli il campione e ti dico la prossima mossa.</p>
+        </div>
+      </div>
+      <button class="btn secondary" onclick="managerAdvice()" style="margin-top:8px;">🎩 Consiglio del Manager</button>
       <label class="small">La tua carta per le sfide online</label>
-      <select id="selMine"></select>
+      <select id="selMine" onchange="renderWorldList()"></select>
       <button class="btn secondary" onclick="buyCatnip()" style="margin-top:10px;">🌿 Vantaggio nella prossima sfida mondiale (50 punti)</button>
       <button class="btn secondary" onclick="loadWorldCards()" style="margin-top:10px;">🔄 Cerca sfidanti nel mondo</button>
       <div id="worldList" style="margin-top:10px;"></div>
@@ -347,6 +356,9 @@
 
     <h2 style="font-size:1rem; margin-top:16px; color:var(--accent);">🌍 L'Arena Mondiale</h2>
     <p>Accedi con Google (o email), scegli il nome giocatore (uno per account, rinominabile ovunque in un colpo) e <strong>pubblica le carte che vuoi</strong>: solo le pubblicate e attive possono sfidare online. Sfidi le carte degli altri, il risultato finisce nel registro e in classifica (ordinata per % di vittorie). Puoi <strong>🚪 ritirare</strong> una carta: resta in classifica come "ritirata" ma nessuno può più sfidarla. Il pallino rosso su Mondo ti avvisa quando le tue carte hanno combattuto in tua assenza.</p>
+
+    <h2 style="font-size:1rem; margin-top:16px; color:var(--accent);">📊 Il ranking (stile UFC)</h2>
+    <p>Ogni carta pubblicata ha un punteggio <strong>Elo</strong> (parte da 1000): vinci e sali, perdi e scendi — e battere qualcuno più forte di te vale molto di più. La classifica ufficiale è in ordine di Elo, il <strong>#1 è il CAMPIONE 👑</strong> e chi è stato campione conserva per sempre il 🏆. Puoi sfidare solo chi sta <strong>da 5 posizioni sopra a 5 sotto</strong> la tua: per arrivare al titolo bisogna scalare. Il ranking mostra anche le strisce: 🔥 vittorie di fila, 🧊 sconfitte di fila, e la miglior striscia di sempre. Il <strong>🎩 Manager</strong> studia i numeri e ti consiglia il prossimo incontro giusto — o quando è meglio ritirarsi un po' in palestra.</p>
 
     <h2 style="font-size:1rem; margin-top:16px; color:var(--accent);">⚡ La sfida dal vivo (QR)</h2>
     <p>Due telefoni: uno mostra il QR della sua carta (⚔️ Arena → 📱), l'altro lo inquadra (📷) e il duello si gioca sul suo schermo. <strong>Vale come una sfida mondiale</strong>: punti, XP pieni, medaglie, riposo, scommesse e risultato registrato se le carte sono pubblicate.</p>
@@ -1242,6 +1254,50 @@ async function loadMyWorldCards(){
       el.appendChild(div);
     });
   } catch(e){}
+}
+/* ---------- Mister Felini, il Manager: consigli di carriera a regole (zero costi) ---------- */
+async function managerAdvice(){
+  const say = t => { const el = document.getElementById('mgrSay'); if (el) el.textContent = t; };
+  if (!session || !session.access_token){ say('Prima accedi, ragazzo: gli affari si fanno con un nome sul contratto.'); return; }
+  if (!worldAll.length){ say('Un attimo, consulto i registri…'); await loadWorldCards(); }
+  const selV = document.getElementById('selMine').value;
+  const mine = collection[parseInt(selV, 10)];
+  if (!mine){ say('Non hai un campione pubblicato. Pubblica una carta e parliamo d\'affari.'); return; }
+  const meRow = worldAll.find(c => c.serial === mine.serial);
+  const rk = rankOf(mine.serial);
+  if (!meRow || rk == null){ say('Il tuo campione non risulta nel ranking: ripubblicalo e torna da me.'); return; }
+  const open = ['Ascolta il Manager: ', 'Ho fiutato l\'affare: ', 'Il ring è una scacchiera: ', 'Parlano i numeri, ragazzo: '];
+  const parts = [];
+  if ((meRow.loss_streak || 0) >= 2){
+    parts.push(mine.name + ' ha perso ' + meRow.loss_streak + ' di fila (🧊): toglilo dal giro per un po\', portalo da Coach Baffo, e fallo tornare affamato.');
+  } else if (rk === 1){
+    const chaser = worldAll[1];
+    parts.push(mine.name + ' è il CAMPIONE 👑: difendi la corona' + (chaser ? ', e occhio a ' + chaser.name + ' (#2, ' + (chaser.elo || 1000) + ' pt) che scalpita' : '') + '.');
+  } else {
+    const targets = worldAll.filter(c => {
+      const r = rankOf(c.serial);
+      return c.serial !== mine.serial && r < rk && (rk - r) <= 5 &&
+        !(c.rest_until && new Date(c.rest_until).getTime() > Date.now());
+    });
+    let best = null, bestScore = -1e9;
+    targets.forEach(c => {
+      const gap = (c.elo || 1000) - (meRow.elo || 1000);
+      const gain = rk - rankOf(c.serial);
+      const score = gain * 30 - Math.max(0, gap);   // scalare conta, ma senza suicidarsi
+      if (score > bestScore){ bestScore = score; best = c; }
+    });
+    if (best){
+      const gap = (best.elo || 1000) - (meRow.elo || 1000);
+      parts.push('il prossimo incontro giusto per ' + mine.name + ' (#' + rk + ') è ' + best.name + ' di ' + (best.owner || '?') +
+        ' (#' + rankOf(best.serial) + ', ' + (best.elo || 1000) + ' pt): ' +
+        (gap > 60 ? 'rischioso, ma se lo batti fai il botto in classifica.' : gap < -60 ? 'sulla carta è battibile: vittoria di gestione.' : 'incontro alla pari, di quelli che piacciono al pubblico.'));
+    } else {
+      parts.push('nessun bersaglio utile sopra di te ora (o riposano tutti): difendi la posizione, o ripassa più tardi.');
+    }
+    if (trainAvail(mine) > 0 && coolLeft(mine) === 0) parts.push('E ha ancora ' + trainAvail(mine) + ' punti di margine in palestra: un buon pasto prima del match non ha mai ucciso nessuno.');
+  }
+  say(open[Math.floor(Math.random() * open.length)] + parts.join(' '));
+  sfx('charm');
 }
 function showMyWorldCard(x){
   // se la carta è nella collezione locale, apri la scheda completa; altrimenti mostra l'immagine dal server
@@ -3123,55 +3179,76 @@ async function publishCards(){
   }
 }
 let worldCards = [];
+let worldAll = [];   // TUTTE le carte attive in ordine di ranking (Elo): è la graduatoria ufficiale
+function rankOf(serial){
+  const i = worldAll.findIndex(c => c.serial === serial);
+  return i >= 0 ? i + 1 : null;
+}
 async function loadWorldCards(){
   const msg = document.getElementById('onlineMsg');
-  const list = document.getElementById('worldList');
-  msg.textContent = '🔎 Cerco sfidanti…';
+  msg.textContent = '🔎 Aggiorno il ranking…';
   try {
-    const r = await fetch(SUPA_URL + '/rest/v1/cards?select=serial,name,owner,nick,rarity,potere,statsv,hp,dna,strum,annuncio,img,wins,losses,rest_until&retired=not.is.true&order=created_at.desc&limit=40', {headers: supaHeaders()});
+    const r = await fetch(SUPA_URL + '/rest/v1/cards?select=serial,name,owner,nick,rarity,potere,statsv,hp,dna,strum,annuncio,img,wins,losses,rest_until,elo,win_streak,loss_streak,best_streak,was_champion&retired=not.is.true&order=elo.desc.nullslast,wins.desc&limit=100', {headers: supaHeaders()});
     if (!r.ok) throw new Error('HTTP ' + r.status);
-    const all = await r.json();
-    const mine = {};
-    collection.forEach(c => { mine[c.serial] = true; });
-    worldCards = all.filter(c => !mine[c.serial]);
-    list.innerHTML = '';
-    if (!worldCards.length){
-      msg.textContent = 'Nessuno sfidante trovato (oltre alle tue carte). Invita qualcuno a pubblicare!';
-      return;
-    }
-    msg.textContent = worldCards.length + ' sfidanti trovati:';
-    worldCards.forEach((c, i) => {
-      const resting = c.rest_until && new Date(c.rest_until).getTime() > Date.now();
-      const restMin = resting ? Math.ceil((new Date(c.rest_until).getTime() - Date.now()) / 60000) : 0;
-      const row = document.createElement('div');
-      row.style.cssText = 'display:flex; align-items:center; gap:10px; padding:8px; border:1px solid #363057; border-radius:10px; margin-top:8px;' + (resting ? ' opacity:.6;' : '');
-      const im = document.createElement('img');
-      im.style.cssText = 'width:46px; border-radius:6px; flex-shrink:0; cursor:pointer;';
-      if (c.img) im.src = c.img; else im.style.display = 'none';
-      im.onclick = () => showWorldCard(i);
-      const info = document.createElement('div');
-      info.style.cssText = 'flex:1; min-width:0; font-size:.85rem; cursor:pointer;';
-      info.onclick = () => showWorldCard(i);
-      info.innerHTML = '<strong>' + c.name + '</strong> di ' + (c.owner || 'anonimo') +
-        '<br><span style="color:var(--muted)">' + (c.rarity || '') + ' · ' + (c.wins || 0) + ' V / ' + (c.losses || 0) + ' S' +
-        (resting ? ' · 😴 riposa (' + restMin + 'm)' : ' · tocca per la scheda') + '</span>';
-      const btn = document.createElement('button');
-      btn.className = 'btn secondary';
-      btn.style.cssText = 'width:auto; margin:0; padding:10px 14px;';
-      btn.textContent = resting ? '😴' : '⚔️ Sfida';
-      btn.disabled = !!resting;
-      if (!resting) btn.onclick = () => fightWorld(i);
-      row.appendChild(im); row.appendChild(info); row.appendChild(btn);
-      list.appendChild(row);
-    });
+    worldAll = await r.json();
+    renderWorldList();
   } catch(err){
     msg.textContent = '❌ Errore di rete: ' + err.message;
   }
+}
+function renderWorldList(){
+  const msg = document.getElementById('onlineMsg');
+  const list = document.getElementById('worldList');
+  if (!list || !worldAll.length) return;
+  const mineSet = {};
+  collection.forEach(c => { mineSet[c.serial] = true; });
+  const selV = document.getElementById('selMine').value;
+  const myCard = collection[parseInt(selV, 10)];
+  const myRank = myCard ? rankOf(myCard.serial) : null;
+  worldCards = worldAll.filter(c => !mineSet[c.serial]);
+  list.innerHTML = '';
+  if (!worldCards.length){
+    msg.textContent = 'Nessuno sfidante trovato (oltre alle tue carte). Invita qualcuno a pubblicare!';
+    return;
+  }
+  msg.textContent = (myRank ? '📊 ' + myCard.name + ' è #' + myRank + ' nel ranking. Puoi sfidare dalle 5 posizioni sopra alle 5 sotto.' : '📊 Il ranking mondiale:');
+  worldCards.forEach((c, i) => {
+    const rk = rankOf(c.serial);
+    const resting = c.rest_until && new Date(c.rest_until).getTime() > Date.now();
+    const restMin = resting ? Math.ceil((new Date(c.rest_until).getTime() - Date.now()) / 60000) : 0;
+    const inRange = myRank == null || Math.abs(rk - myRank) <= 5;
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex; align-items:center; gap:10px; padding:8px; border:1px solid ' + (rk === 1 ? 'var(--accent)' : '#363057') + '; border-radius:10px; margin-top:8px;' + ((resting || !inRange) ? ' opacity:.55;' : '');
+    const rkEl = document.createElement('div');
+    rkEl.style.cssText = 'width:40px; text-align:center; font-weight:700; flex-shrink:0;' + (rk === 1 ? ' color:var(--accent);' : '');
+    rkEl.innerHTML = (rk === 1 ? '👑' : '#' + rk) + '<br><span style="font-size:.65rem; color:var(--muted); font-weight:400;">' + (c.elo || 1000) + '</span>';
+    const im = document.createElement('img');
+    im.style.cssText = 'width:46px; border-radius:6px; flex-shrink:0; cursor:pointer;';
+    if (c.img) im.src = c.img; else im.style.display = 'none';
+    im.onclick = () => showWorldCard(i);
+    const info = document.createElement('div');
+    info.style.cssText = 'flex:1; min-width:0; font-size:.85rem; cursor:pointer;';
+    info.onclick = () => showWorldCard(i);
+    const streak = (c.win_streak > 1 ? ' · 🔥' + c.win_streak : (c.loss_streak > 1 ? ' · 🧊' + c.loss_streak : ''));
+    info.innerHTML = '<strong>' + c.name + '</strong>' + (c.was_champion && rk !== 1 ? ' 🏆' : '') + ' di ' + (c.owner || 'anonimo') +
+      '<br><span style="color:var(--muted)">' + (c.wins || 0) + ' V / ' + (c.losses || 0) + ' S' + streak +
+      (resting ? ' · 😴 riposa (' + restMin + 'm)' : (!inRange ? ' · fuori portata (±5)' : '')) + '</span>';
+    const btn = document.createElement('button');
+    btn.className = 'btn secondary';
+    btn.style.cssText = 'width:auto; margin:0; padding:10px 14px;';
+    btn.textContent = resting ? '😴' : (!inRange ? '🔒' : '⚔️ Sfida');
+    btn.disabled = !!(resting || !inRange);
+    if (!resting && inRange) btn.onclick = () => fightWorld(i);
+    row.appendChild(rkEl); row.appendChild(im); row.appendChild(info); row.appendChild(btn);
+    list.appendChild(row);
+  });
 }
 function showWorldCard(i){
   const c = worldCards[i];
   if (!c) return;
   const body = document.getElementById('worldModalBody');
+  const rk = rankOf(c.serial);
+  const streakTxt = c.win_streak > 1 ? ' · 🔥 ' + c.win_streak + ' di fila' : (c.loss_streak > 1 ? ' · 🧊 ' + c.loss_streak + ' ko di fila' : '');
   const lvl = 1 + Math.floor(((c.wins || 0) * 25 + (c.losses || 0) * 10) / 100);   // livello stimato dal record mondiale
   const statKeys = ['💪 Forza', '🧠 Intelligenza', '🎯 Destrezza', '⚡ Velocità', '✨ Fascino', '😼 Indifferenza'];
   let statsHtml = '';
@@ -3185,6 +3262,9 @@ function showWorldCard(i){
   body.innerHTML =
     (c.img ? '<img src="' + c.img + '" style="width:100%; border-radius:12px;">' : '') +
     '<h2 style="margin-top:10px;">' + c.name + (c.nick ? ' <span style="color:var(--muted); font-size:.85rem;">«' + c.nick + '»</span>' : '') + '</h2>' +
+    '<p class="count">' + (rk === 1 ? '👑 CAMPIONE DEL MONDO · ' : (rk ? '#' + rk + ' nel ranking · ' : '')) + (c.elo || 1000) + ' pt Elo' +
+    (c.was_champion && rk !== 1 ? ' · 🏆 ex campione' : '') + streakTxt +
+    (c.best_streak > 1 ? ' · miglior striscia 🔥' + c.best_streak : '') + '</p>' +
     '<p class="count">di ' + (c.owner || 'anonimo') + ' · ' + (c.rarity || '') + ' · Lv.' + lvl + ' · ' + (c.wins || 0) + ' V / ' + (c.losses || 0) + ' S' +
     (c.hp ? ' · ' + c.hp + ' HP' : '') + '</p>' +
     ((c.rest_until && new Date(c.rest_until).getTime() > Date.now()) ? '<p style="color:#ffb703;">😴 Sta riposando: torna tra ' + Math.ceil((new Date(c.rest_until).getTime() - Date.now()) / 60000) + ' minuti</p>' : '') +
@@ -3203,6 +3283,17 @@ async function fightWorld(i){
   if (remote && remote.rest_until && new Date(remote.rest_until).getTime() > Date.now()){
     alert('😴 ' + remote.name + ' sta riposando: riprova tra ' + Math.ceil((new Date(remote.rest_until).getTime() - Date.now()) / 60000) + ' minuti.');
     return;
+  }
+  // vincolo ranking: puoi sfidare solo entro ±5 posizioni
+  {
+    const selV2 = document.getElementById('selMine').value;
+    const my2 = collection[parseInt(selV2, 10)];
+    const rMine = my2 ? rankOf(my2.serial) : null;
+    const rOpp = rankOf(remote.serial);
+    if (rMine != null && rOpp != null && Math.abs(rOpp - rMine) > 5){
+      alert('🔒 Fuori portata: ' + remote.name + ' è #' + rOpp + ', tu sei #' + rMine + '. Puoi sfidare solo tra 5 posizioni sopra e 5 sotto: scala il ranking!');
+      return;
+    }
   }
   // controllo FRESCO dal server: magari ha appena combattuto o fatto palestra
   try {
@@ -3271,20 +3362,17 @@ async function loadLeaderboard(){
   const el = document.getElementById('leaderList');
   el.textContent = 'Carico la classifica…';
   try {
-    const r = await fetch(SUPA_URL + '/rest/v1/cards?select=name,owner,wins,losses,retired&order=wins.desc&limit=50', {headers: supaHeaders()});
+    const r = await fetch(SUPA_URL + '/rest/v1/cards?select=name,owner,wins,losses,retired,elo,win_streak,loss_streak,best_streak,was_champion&order=elo.desc.nullslast,wins.desc&limit=15', {headers: supaHeaders()});
     if (!r.ok) throw new Error('HTTP ' + r.status);
-    let rows = await r.json();
-    // ordine: % di vittorie, a parità chi ha vinto di più, poi chi ha giocato di più
-    rows = rows.filter(x => (x.wins + x.losses) > 0);
-    rows.forEach(x => { x.pct = x.wins / (x.wins + x.losses); });
-    rows.sort((a, b) => (b.pct - a.pct) || (b.wins - a.wins) || ((b.wins + b.losses) - (a.wins + a.losses)));
-    rows = rows.slice(0, 10);
-    const medals = ['🥇', '🥈', '🥉'];
+    const rows = (await r.json()).filter(x => !x.retired);
     el.innerHTML = rows.map((x, i) => {
-      return (medals[i] || (i + 1) + '°') + ' <strong>' + x.name + '</strong> di ' + (x.owner || 'anonimo') +
-        ' — ' + x.wins + ' V / ' + x.losses + ' S (' + Math.round(100 * x.pct) + '%)' +
-        (x.retired ? ' · 🚪 <em>ritirata</em>' : '');
-    }).join('<br>') || 'Nessun incontro mondiale ancora disputato.';
+      const streak = x.win_streak > 1 ? ' 🔥' + x.win_streak : (x.loss_streak > 1 ? ' 🧊' + x.loss_streak : '');
+      return (i === 0 ? '👑 <strong style="color:var(--accent)">CAMPIONE</strong> ' : '#' + (i + 1) + ' ') +
+        '<strong>' + x.name + '</strong>' + (x.was_champion && i > 0 ? ' 🏆<small>ex</small>' : '') +
+        ' di ' + (x.owner || 'anonimo') +
+        ' — ' + (x.elo || 1000) + ' pt · ' + (x.wins || 0) + 'V/' + (x.losses || 0) + 'S' + streak +
+        (x.best_streak > 1 ? ' · max 🔥' + x.best_streak : '');
+    }).join('<br>') || 'Nessuna carta in ranking: pubblicane una!';
   } catch(err){
     el.textContent = '❌ Errore: ' + err.message;
   }
@@ -3789,6 +3877,33 @@ async function initGym(){
       el.src = img;
       el.style.display = 'block';
       document.getElementById('coachEmoji').style.display = 'none';
+    }
+  } catch(e){}
+  // ritratto del Manager: anche lui una tantum
+  try {
+    let mimg = await idbGet('manager');
+    if (!mimg){
+      const key = apiKeyEl.value.trim();
+      if (!key) return;
+      const models = await listImageModels(key).catch(() => []);
+      const model = models[0] || GEMINI_MODELS[0];
+      const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent?key=' + encodeURIComponent(key), {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({contents: [{parts: [{text: 'Cartoon portrait of a sly elegant cat fight-manager: pinstripe suit, gold chain, dark sunglasses, slicked fur, confident smirk. Flat cel shading, bold outlines, warm colors, dark purple background. Square portrait, bust only.'}]}]})
+      });
+      if (!r.ok) return;
+      const j = await r.json();
+      const parts = (((j.candidates || [])[0] || {}).content || {}).parts || [];
+      const p = parts.find(x => x.inlineData && x.inlineData.data);
+      if (!p) return;
+      mimg = 'data:' + (p.inlineData.mimeType || 'image/png') + ';base64,' + p.inlineData.data;
+      await idbSet('manager', mimg);
+    }
+    const mel = document.getElementById('mgrImg');
+    if (mel && mimg){
+      mel.src = mimg;
+      mel.style.display = 'block';
+      document.getElementById('mgrEmoji').style.display = 'none';
     }
   } catch(e){}
 }
