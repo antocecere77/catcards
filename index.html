@@ -3093,7 +3093,7 @@ async function migrateMelodies(){
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
 /* ---------- versione e aggiornamento automatico ---------- */
-const APP_VERSION = '13.0';   // unica fonte di verità: aggiorna anche version.txt a ogni release
+const APP_VERSION = '13.1';   // unica fonte di verità: aggiorna anche version.txt a ogni release
 try { document.getElementById('appVer').textContent = 'v' + APP_VERSION; } catch(e){}
 function verNewer(a, b){   // a più recente di b? confronto numerico 11.10 > 11.9
   const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);
@@ -3688,7 +3688,8 @@ async function loadTrades(){
     tin.innerHTML = incoming.length ? '<strong>📥 Proposte ricevute</strong>' + incoming.map(t =>
       '<div style="border:1px solid var(--accent); border-radius:8px; padding:8px; margin-top:6px; font-size:.85rem;">' +
       (t.from_owner || '?') + ' ti offre <strong>' + t.from_name + '</strong> in cambio della tua <strong>' + t.to_name + '</strong>' +
-      '<div style="display:flex; gap:8px; margin-top:6px;">' +
+      '<div style="display:flex; gap:8px; margin-top:6px; flex-wrap:wrap;">' +
+      '<button class="btn secondary" style="margin:0; padding:8px;" onclick="showIncomingCompare(\'' + t.from_serial + '\',\'' + t.to_serial + '\',' + t.id + ')">🔍 Confronta</button>' +
       '<button class="btn secondary" style="margin:0; padding:8px;" onclick="respondTrade(' + t.id + ',true)">✅ Accetta</button>' +
       '<button class="btn secondary" style="margin:0; padding:8px;" onclick="respondTrade(' + t.id + ',false)">✖ Rifiuta</button></div></div>'
     ).join('') : '<span class="count">Nessuna proposta ricevuta.</span>';
@@ -3736,9 +3737,77 @@ function applyTradeFilter(){
     '<button class="btn secondary" style="width:auto; margin:0; padding:8px;" onclick="proposeTradeFor(\'' + c.serial + '\')">🔄 Proponi</button></div>'
   ).join('');
 }
-function proposeTradeFor(theirSerial){
+let _tradeTargetData = {};
+async function proposeTradeFor(theirSerial){
+  let full = {};
+  try {
+    const r = await fetch(SUPA_URL + '/rest/v1/cards?select=name,owner,img,rarity,statsv,hp,elo,wins,losses,potere&serial=eq.' + encodeURIComponent(theirSerial), {headers: supaHeaders()});
+    if (r.ok){ const a = await r.json(); if (a.length) full = a[0]; }
+  } catch(e){}
+  _tradeTargetData = full;
   const t = _tradeTargets[theirSerial] || {};
-  proposeTradeUI(theirSerial, t.name || 'questa carta', t.owner || '', t.img || null);
+  proposeTradeUI(theirSerial, full.name || t.name || 'questa carta', full.owner || t.owner || '', full.img || t.img || null);
+}
+/* ---------- confronto carte + verdetto di Bazar ---------- */
+function tradeStrength(statsv, hp, lvl){
+  const s = Array.isArray(statsv) ? statsv.reduce((a, b) => a + (b || 0), 0) : 0;
+  return s + (hp || 0) * 0.6 + (Math.max(1, lvl) - 1) * 12;
+}
+function bazarVerdict(giveStr, getStr){
+  const d = getStr - giveStr;
+  if (d > 25) return '🤑 Affarone! Ricevi molto più di quel che dai — chiudi in fretta.';
+  if (d > 8) return '👍 Buon affare: ci guadagni. Il Mercante approva.';
+  if (d > -8) return '⚖️ Scambio alla pari: decidi col cuore, non col portafoglio.';
+  if (d > -25) return '😾 Ci rimetti un po\'... sicuro? Il Mercante storce i baffi.';
+  return '🙀 Pessimo affare! Dai molto più di quel che prendi. Lascia perdere.';
+}
+function normLocal(entry){
+  const sv = Array.isArray(entry.statsv) ? entry.statsv : rollCard(parseInt(entry.serial, 16) >>> 0, entry.name).stats.map(s => s.value);
+  const elo = (worldAll.find(c => c.serial === entry.serial) || {}).elo || 1000;
+  return {name: entry.name, statsv: sv, hp: entry.hp || 0, elo: elo, lvl: cardLevel(entry.serial)};
+}
+function normServer(row){
+  return {name: row.name, statsv: Array.isArray(row.statsv) ? row.statsv : [], hp: row.hp || 0, elo: row.elo || 1000,
+    lvl: 1 + Math.floor(((row.wins || 0) * 25 + (row.losses || 0) * 10) / 100)};
+}
+function compareRowsHtml(give, get){
+  const labels = ['💪 Forza', '🧠 Intel', '🎯 Destr', '⚡ Veloc', '✨ Fasc', '😼 Indif'];
+  const stat = labels.map((ic, i) => {
+    const a = give.statsv[i] || 0, b = get.statsv[i] || 0;
+    const col = b > a ? '#51cf66' : (b < a ? '#e63946' : 'var(--muted)');
+    const arr = b > a ? '▲' : (b < a ? '▼' : '=');
+    return '<div style="display:flex; justify-content:space-between; font-size:.8rem; padding:1px 0;"><span>' + ic + '</span><span>' + a + ' → <strong style="color:' + col + '">' + b + ' ' + arr + '</strong></span></div>';
+  }).join('');
+  const line = (ic, a, b) => '<div style="display:flex; justify-content:space-between; font-size:.8rem; padding:1px 0;"><span>' + ic + '</span><span>' + a + ' → <strong>' + b + '</strong></span></div>';
+  const gs = tradeStrength(give.statsv, give.hp, give.lvl), ts = tradeStrength(get.statsv, get.hp, get.lvl);
+  return '<div style="border-top:1px solid #2e2950; margin-top:8px; padding-top:8px;">' +
+    '<div style="font-size:.82rem; color:var(--muted); margin-bottom:4px;">Dai <strong>' + give.name + '</strong> → Ricevi <strong>' + get.name + '</strong></div>' +
+    stat + line('❤️ HP', give.hp, get.hp) + line('📊 Elo', give.elo, get.elo) + line('📈 Livello', give.lvl, get.lvl) +
+    '<p class="count" style="margin-top:6px;">😼 <strong>Bazar</strong>: ' + bazarVerdict(gs, ts) + '</p></div>';
+}
+function renderProposeCompare(mySerial){
+  const box = document.getElementById('tradeCompare');
+  if (!box) return;
+  const mine = collection.find(c => c.serial === mySerial);
+  if (!mine || !_tradeTargetData){ box.innerHTML = ''; return; }
+  box.innerHTML = compareRowsHtml(normLocal(mine), normServer(_tradeTargetData));
+}
+async function showIncomingCompare(fromSerial, toSerial, tradeId){
+  // il destinatario DÀ la sua (toSerial) e RICEVE quella offerta (fromSerial)
+  const body = document.getElementById('tradeModalBody');
+  body.innerHTML = '<p class="count">Carico il confronto…</p>';
+  document.getElementById('tradeModal').style.display = 'flex';
+  try {
+    const r = await fetch(SUPA_URL + '/rest/v1/cards?select=serial,name,statsv,hp,elo,wins,losses&serial=in.(' + fromSerial + ',' + toSerial + ')', {headers: supaHeaders()});
+    const arr = r.ok ? await r.json() : [];
+    const from = arr.find(x => x.serial === fromSerial) || {name: '?', statsv: []};
+    const to = arr.find(x => x.serial === toSerial) || {name: '?', statsv: []};
+    body.innerHTML = '<h2>🔄 Confronto scambio</h2>' +
+      compareRowsHtml(normServer(to), normServer(from)) +
+      '<button class="btn" style="margin-top:12px;" onclick="document.getElementById(\'tradeModal\').style.display=\'none\'; respondTrade(' + tradeId + ',true)">✅ Accetta lo scambio</button>' +
+      '<button class="btn secondary" onclick="document.getElementById(\'tradeModal\').style.display=\'none\'; respondTrade(' + tradeId + ',false)">✖ Rifiuta</button>' +
+      '<button class="btn secondary" onclick="document.getElementById(\'tradeModal\').style.display=\'none\'">↩️ Chiudi</button>';
+  } catch(e){ body.innerHTML = '<p class="count">Errore nel caricare il confronto.</p><button class="btn secondary" onclick="document.getElementById(\'tradeModal\').style.display=\'none\'">Chiudi</button>'; }
 }
 function proposeTradeUI(theirSerial, theirName, theirOwner, theirImg){
   const mine = collection.filter(c => myActive.has(c.serial));   // anche le carte a riposo sono scambiabili (il riposo vale solo per i combattimenti)
@@ -3760,7 +3829,8 @@ function proposeTradeUI(theirSerial, theirName, theirOwner, theirImg){
     (theirImg ? '<img src="' + theirImg + '" style="width:90px; border-radius:10px; display:block; margin:8px auto;">' : '') +
     '<p class="count">Vuoi <strong>' + theirName + '</strong>' + (theirOwner ? ' di ' + theirOwner : '') + '.</p>' +
     '<label class="small" style="margin-top:10px;">Tocca la TUA carta da offrire:</label>' +
-    '<div style="max-height:38vh; overflow-y:auto; margin-top:4px;">' + list + '</div>' +
+    '<div style="max-height:30vh; overflow-y:auto; margin-top:4px;">' + list + '</div>' +
+    '<div id="tradeCompare"></div>' +
     '<button class="btn" id="tradeConfirmBtn" style="margin-top:12px; opacity:.5;" onclick="confirmProposeTrade(\'' + theirSerial + '\',\'' + theirName.replace(/'/g, '') + '\')">🔄 Scambia</button>' +
     '<button class="btn secondary" onclick="document.getElementById(\'tradeModal\').style.display=\'none\'">✖ Annulla</button>';
   document.getElementById('tradeModal').style.display = 'flex';
@@ -3773,6 +3843,7 @@ function selectTradeOffer(row){
   row.style.background = 'rgba(255,209,102,.12)';
   const b = document.getElementById('tradeConfirmBtn');
   if (b) b.style.opacity = '1';
+  try { renderProposeCompare(_selectedOfferSerial); } catch(e){}   // mostra il confronto + verdetto di Bazar
 }
 function confirmProposeTrade(theirSerial, theirName){
   if (!_selectedOfferSerial){ alert('Tocca prima una tua carta da offrire.'); return; }
