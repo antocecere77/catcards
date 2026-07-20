@@ -303,7 +303,6 @@
       <button class="btn secondary" onclick="managerAdvice()" style="margin-top:8px;">🎩 Consiglio del Manager</button>
       <label class="small">La tua carta per le sfide online</label>
       <select id="selMine" onchange="renderWorldList()"></select>
-      <button class="btn secondary" onclick="buyCatnip()" style="margin-top:10px;">🌿 Vantaggio nella prossima sfida mondiale (50 punti)</button>
       <button class="btn secondary" onclick="loadWorldCards()" style="margin-top:10px;">🔄 Cerca sfidanti nel mondo</button>
       <div id="worldList" style="margin-top:10px;"></div>
     </div>
@@ -560,13 +559,22 @@
   <div id="achToast"></div>
 
   <div class="modal" id="betBox" style="z-index:26;">
-    <div class="panel" style="max-width:340px; margin-top:40px;">
-      <h2>🎲 Pronostico</h2>
-      <p class="count" id="betInfo" style="margin-top:6px;">Scegli la puntata e su chi scommettere. Se sbagli, perdi la puntata.</p>
+    <div class="panel" style="max-width:340px; margin-top:20px; max-height:90vh; overflow-y:auto;">
+      <h2>🥊 L'angolo di Zio Rocco</h2>
+      <div style="display:flex; gap:10px; align-items:center; margin-top:8px;">
+        <img id="cornerImg" alt="Zio Rocco" style="width:60px; height:60px; border-radius:50%; object-fit:cover; border:2px solid var(--accent); display:none; flex-shrink:0;">
+        <div id="cornerEmoji" style="font-size:2.4rem; flex-shrink:0;">😾</div>
+        <p class="count" id="cornerSay" style="flex:1; min-width:0; line-height:1.5; margin:0;"></p>
+      </div>
+      <div id="cornerStats" style="margin-top:8px;"></div>
+      <button class="btn secondary" id="betCatnip" style="margin-top:8px;"></button>
+      <h2 style="font-size:1rem; margin-top:12px;">🎲 Pronostico</h2>
+      <p class="count" id="betInfo" style="margin-top:4px;">Scegli la puntata e su chi scommettere. Se sbagli, perdi la puntata.</p>
       <div id="stakeRow" style="display:flex; gap:8px; margin:10px 0 2px;"></div>
       <button class="btn" id="betA"></button>
       <button class="btn" id="betB"></button>
       <button class="btn secondary" id="betSkip">Non scommetto, via al match!</button>
+      <button class="btn secondary" id="betBack" style="border-color:#e63946; color:#e63946;">↩️ Torna indietro (annulla il match)</button>
     </div>
   </div>
 
@@ -578,8 +586,6 @@
     <p id="modalCap" style="color:var(--text); text-align:center; max-width:360px; font-size:.92rem; margin-top:8px; line-height:1.5;"></p>
     <button class="btn" onclick="downloadSaved()">⬇️ Scarica</button>
     <button class="btn secondary" onclick="playSavedTheme()">▶️ Ascolta il tema</button>
-    <button class="btn secondary" onclick="shareSaved()">📤 Condividi</button>
-    <button class="btn secondary" onclick="copyChallenge()">🔗 Copia codice sfida</button>
     <button class="btn secondary" onclick="retireCard()">🚪 Ritira dal mondo</button>
     <button class="btn secondary" onclick="buyFrame()">🎨 Cornice d'Oro (100 punti)</button>
     <button class="btn secondary" onclick="deleteSaved()">🗑️ Elimina</button>
@@ -1431,6 +1437,16 @@ async function managerAdvice(){
       parts.push('il prossimo incontro giusto per ' + mine.name + ' (#' + rk + ') è ' + best.name + ' di ' + (best.owner || '?') +
         ' (#' + rankOf(best.serial) + ', ' + (best.elo || 1000) + ' pt): ' +
         (gap > 60 ? 'rischioso, ma se lo batti fai il botto in classifica.' : gap < -60 ? 'sulla carta è battibile: vittoria di gestione.' : 'incontro alla pari, di quelli che piacciono al pubblico.'));
+      // parere tecnico: probabilità stimata di vittoria (stesse regole di Zio Rocco)
+      try {
+        const bestLvl = 1 + Math.floor(((best.wins || 0) * 25 + (best.losses || 0) * 10) / 100);
+        const bs = (Array.isArray(best.statsv) ? best.statsv.reduce((x, y) => x + (y || 0), 0) : 300) + (best.hp || 80) * 0.6 + (bestLvl - 1) * 12;
+        const ms = estStrength(mine);
+        const p = Math.round(100 * ms / (ms + bs));
+        if (p < 45) parts.push('Ma parliamoci chiaro: Zio Rocco stima solo il ' + p + '% di vittoria. Io aspetterei — palestra, un livello in più, POI si firma il contratto.');
+        else if (p < 55) parts.push('Le probabilità dicono ' + p + '%: match aperto, decidono i nervi (e magari l\'erba gatta 🌿).');
+        else parts.push('Zio Rocco stima un ' + p + '% di vittoria: alla portata. Vai e chiudi il match.');
+      } catch(e){}
       if (rankOf(best.serial) === 1){
         parts.push('E ricordatelo: quello ha la CINTURA 👑 — la classifica non conta niente, lo batti e sei TU il campione.');
       }
@@ -1845,9 +1861,87 @@ function estStrength(e){
   const hp = (typeof e.hp === 'number' && e.hp > 0) ? e.hp : card.hp;
   return sv.reduce((x, y) => x + y, 0) + hp * 0.6 + (cardLevel(e.serial) - 1) * 12;
 }
+/* ---------- Zio Rocco, il Cornerman: analisi pre-match a regole (zero costi) ---------- */
+async function initCornerman(){
+  try {
+    if (localStorage.getItem('catcards_corv') !== '1'){ await idbSet('corner', null); localStorage.setItem('catcards_corv', '1'); }
+    let img = await idbGet('corner');
+    if (!img){
+      const key = apiKeyEl.value.trim();
+      if (!key) return;
+      const models = await listImageModels(key).catch(() => []);
+      const model = models[0] || GEMINI_MODELS[0];
+      const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent?key=' + encodeURIComponent(key), {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({contents: [{parts: [{text: 'Comic book style portrait of a CAT (full feline face clearly visible): a grizzled old boxing cornerman cat like a veteran trainer from boxing movies, one torn ear, scar over one eye, flat wool cap, white towel over his shoulder, gruff wise squinting expression, chewed toothpick in his mouth. Tough love mentor vibes. Bold ink outlines, flat cel shading, warm colors, dark purple background. Square bust portrait.'}]}]})
+      });
+      if (!r.ok) return;
+      const j = await r.json();
+      const parts = (((j.candidates || [])[0] || {}).content || {}).parts || [];
+      const p = parts.find(x => x.inlineData && x.inlineData.data);
+      if (!p) return;
+      img = 'data:' + (p.inlineData.mimeType || 'image/png') + ';base64,' + p.inlineData.data;
+      await idbSet('corner', img);
+    }
+    const el = document.getElementById('cornerImg');
+    if (el && img){ el.src = img; el.style.display = 'block'; const em = document.getElementById('cornerEmoji'); if (em) em.style.display = 'none'; }
+  } catch(e){}
+}
+const CORNER_STATS = ['💪 Forza', '🧠 Intelligenza', '🎯 Destrezza', '⚡ Velocità', '✨ Fascino', '😼 Indifferenza'];
+function statsOf(e){
+  return (Array.isArray(e.statsv) && e.statsv.length === 6) ? e.statsv
+    : rollCard(parseInt(e.serial, 16) >>> 0, e.name).stats.map(s => s.value);
+}
+function cornerAnalysis(ea, eb, pA){
+  const sa = statsOf(ea), sb = statsOf(eb);
+  const rows = CORNER_STATS.map((k, i) => {
+    const a = sa[i] || 0, b = sb[i] || 0;
+    const col = a > b ? '#51cf66' : (a < b ? '#e63946' : 'var(--muted)');
+    const mark = a > b ? '✓' : (a < b ? '✗' : '=');
+    return '<div style="display:flex; justify-content:space-between; font-size:.8rem; padding:1px 0;"><span>' + k + '</span>' +
+      '<span><strong>' + a + '</strong> vs ' + b + ' <strong style="color:' + col + '">' + mark + '</strong></span></div>';
+  }).join('');
+  const pct = Math.round(pA * 100);
+  const barCol = pct >= 55 ? '#51cf66' : (pct >= 45 ? 'var(--accent)' : '#e63946');
+  return rows +
+    '<div style="display:flex; justify-content:space-between; font-size:.8rem; padding:1px 0;"><span>❤️ HP</span><span><strong>' + (ea.hp || 80) + '</strong> vs ' + (eb.hp || 80) + '</span></div>' +
+    '<div style="margin-top:8px; font-size:.82rem;">Probabilità di vittoria di <strong>' + ea.name + '</strong>: <strong style="color:' + barCol + '">' + pct + '%</strong>' +
+    '<div style="height:8px; background:#2e2950; border-radius:4px; margin-top:4px;"><div style="height:8px; width:' + pct + '%; background:' + barCol + '; border-radius:4px;"></div></div></div>';
+}
+function cornerComment(ea, eb, pA){
+  const sa = statsOf(ea), sb = statsOf(eb);
+  let worst = 0, gap = 0;
+  sa.forEach((v, i) => { const d = (sb[i] || 0) - v; if (d > gap){ gap = d; worst = i; } });
+  const warn = gap >= 12 ? ' Occhio alla sua ' + CORNER_STATS[worst].split(' ')[1] + ': lì ti mangia.' : '';
+  if (pA >= 0.7) return 'Ragazzo, questo lo stendi prima del gong. Non ti montare la testa e chiudi in fretta.' + warn;
+  if (pA >= 0.55) return 'Sei favorito, ma i favoriti che dormono finiscono al tappeto. Colpisci per primo.' + warn;
+  if (pA >= 0.45) return 'Cinquanta e cinquanta, ragazzo: qui decide chi ha più fame. Se hai 50 punti, l\'erba gatta li vale tutti.' + warn;
+  if (pA >= 0.35) return 'Non ti mento: è più grosso di te. Senza erba gatta io questo match non lo farei.' + warn;
+  return 'Ascolta il vecchio Rocco: questo ti spezza. Torna in palestra, cresci un livello, POI ne riparliamo. Se proprio vuoi farlo, almeno l\'erba gatta.' + warn;
+}
+function renderCatnipBtn(){
+  const b = document.getElementById('betCatnip');
+  if (!b) return;
+  if (window._buyCatnip){
+    b.innerHTML = '🌿 Erba gatta PRONTA per questo match ✔';
+    b.style.borderColor = '#51cf66'; b.style.color = '#51cf66';
+    b.onclick = null;
+  } else {
+    b.innerHTML = '🌿 Dagli l\'erba gatta — primo colpo raddoppiato (50 punti)';
+    b.style.borderColor = ''; b.style.color = '';
+    b.onclick = () => {
+      if (points < 50){ alert('Servono 50 punti (ne hai ' + points + ').'); return; }
+      spendPoints(50);
+      window._buyCatnip = true;
+      renderCatnipBtn();
+      const cs = document.getElementById('cornerSay');
+      if (cs) cs.textContent = '🌿 Bravo ragazzo. Ora entra lì e fatti valere: il primo colpo sarà un treno.';
+      try { sfx('charm'); } catch(e){}
+    };
+  }
+}
 function askBet(ea, eb){
   return new Promise(resolve => {
-    if (points < 10){ currentBet = null; resolve(); return; }
     const sA = estStrength(ea), sB = estStrength(eb);
     const pA = sA / (sA + sB);
     const qA = Math.min(5, Math.max(1.05, Math.round(90 / pA) / 100));
@@ -1855,10 +1949,19 @@ function askBet(ea, eb){
     const favA = qA <= qB;
     let stake = 10;
     const box = document.getElementById('betBox');
-    const bA = document.getElementById('betA'), bB = document.getElementById('betB'), bS = document.getElementById('betSkip');
+    const bA = document.getElementById('betA'), bB = document.getElementById('betB'), bS = document.getElementById('betSkip'), bBack = document.getElementById('betBack');
     const row = document.getElementById('stakeRow');
+    // l'angolo di Zio Rocco: confronto, probabilità e consiglio
+    initCornerman();
+    document.getElementById('cornerStats').innerHTML = cornerAnalysis(ea, eb, pA);
+    document.getElementById('cornerSay').textContent = cornerComment(ea, eb, pA);
+    renderCatnipBtn();
+    const canBet = points >= 10;
+    document.getElementById('betInfo').textContent = canBet ? 'Scegli la puntata e su chi scommettere. Se sbagli, perdi la puntata.' : 'Punti insufficienti per scommettere (minimo 10).';
     const chips = [10, 25, 50, 100].filter(v => v <= points);
     function renderBtns(){
+      bA.style.display = canBet ? 'block' : 'none';
+      bB.style.display = canBet ? 'block' : 'none';
       bA.innerHTML = '🔴 ' + ea.name + (favA ? ' ⭐ favorito' : ' 🐾 underdog') + ' — quota ' + qA.toFixed(2) +
         '<br><span style="font-size:.8rem; font-weight:400;">se vince: +' + Math.round(stake * (qA - 1)) + ' punti</span>';
       bB.innerHTML = '🔵 ' + eb.name + (favA ? ' 🐾 underdog' : ' ⭐ favorito') + ' — quota ' + qB.toFixed(2) +
@@ -1866,6 +1969,7 @@ function askBet(ea, eb){
     }
     function renderChips(){
       row.innerHTML = '';
+      if (!canBet) return;
       chips.forEach(v => {
         const c = document.createElement('button');
         c.className = 'btn secondary';
@@ -1877,10 +1981,11 @@ function askBet(ea, eb){
       });
     }
     renderChips(); renderBtns();
-    const done = bet => { currentBet = bet; box.style.display = 'none'; bA.onclick = bB.onclick = bS.onclick = null; resolve(); };
+    const done = (bet, verdict) => { currentBet = bet; box.style.display = 'none'; bA.onclick = bB.onclick = bS.onclick = bBack.onclick = null; resolve(verdict || 'go'); };
     bA.onclick = () => done({serial: ea.serial, name: ea.name, quota: qA, stake: stake});
     bB.onclick = () => done({serial: eb.serial, name: eb.name, quota: qB, stake: stake});
     bS.onclick = () => done(null);
+    bBack.onclick = () => done(null, 'back');
     box.style.display = 'flex';
   });
 }
@@ -3116,7 +3221,7 @@ async function migrateMelodies(){
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
 /* ---------- versione e aggiornamento automatico ---------- */
-const APP_VERSION = '13.4';   // unica fonte di verità: aggiorna anche version.txt a ogni release
+const APP_VERSION = '13.5';   // unica fonte di verità: aggiorna anche version.txt a ogni release
 try { document.getElementById('appVer').textContent = 'v' + APP_VERSION; } catch(e){}
 function verNewer(a, b){   // a più recente di b? confronto numerico 11.10 > 11.9
   const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);
@@ -4269,7 +4374,8 @@ async function fightWorld(i){
   bracketState = null;
   document.getElementById('bracket').style.display = 'none';
   document.getElementById('bracketBtn').style.display = 'none';
-  await askBet(mineEntry, remoteEntry);
+  const verdict = await askBet(mineEntry, remoteEntry);
+  if (verdict === 'back'){ currentBet = null; return; }   // Zio Rocco ha sconsigliato: nessun match, nessun costo
   document.getElementById('battleScreen').style.display = 'flex';
   const w = await runBattle(mineEntry, remoteEntry, 'SFIDA MONDIALE');
   if (!w) return;
@@ -5445,7 +5551,8 @@ async function onQrFound(data, mine){
   bracketState = null;
   document.getElementById('bracket').style.display = 'none';
   document.getElementById('bracketBtn').style.display = 'none';
-  await askBet(mine, entry);   // si scommette anche nei duelli dal vivo
+  const verdict = await askBet(mine, entry);   // si scommette anche nei duelli dal vivo
+  if (verdict === 'back'){ currentBet = null; return; }
   document.getElementById('battleScreen').style.display = 'flex';
   const w = await runBattle(mine, entry, 'SFIDA DAL VIVO');
   if (!w) return;
