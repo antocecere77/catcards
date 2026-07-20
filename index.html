@@ -3608,7 +3608,7 @@ async function migrateMelodies(){
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
 /* ---------- versione e aggiornamento automatico ---------- */
-const APP_VERSION = '14.8';   // unica fonte di verità: aggiorna anche version.txt a ogni release
+const APP_VERSION = '14.9';   // unica fonte di verità: aggiorna anche version.txt a ogni release
 try { document.getElementById('appVer').textContent = 'v' + APP_VERSION; } catch(e){}
 function verNewer(a, b){   // a più recente di b? confronto numerico 11.10 > 11.9
   const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);
@@ -5621,17 +5621,21 @@ const FOOD_GAMES = {
   erba: ['gomitolo', 'laser'], pesce: ['pesca', 'scatto'], chicche: ['fusa', 'sfilata'],
 };
 const _foodGameN = {};   // contatore in memoria: garantisce l'alternanza anche se localStorage è pieno
-function pickFoodGame(f){
-  const list = (FOOD_GAMES[f.id] || [f.game]).filter(g => GAMES[g]);
+function foodGameList(f){ return (FOOD_GAMES[f.id] || [f.game]).filter(g => GAMES[g]); }
+function peekFoodGame(f){   // quale gioco tocca ORA (senza avanzare)
+  const list = foodGameList(f);
   if (!list.length) return f.game;
   if (_foodGameN[f.id] == null){
     let n = 0; try { n = parseInt(localStorage.getItem('catcards_ga_' + f.id) || '0', 10) || 0; } catch(e){}
     _foodGameN[f.id] = n;
   }
-  const pick = list[_foodGameN[f.id] % list.length];
+  return list[_foodGameN[f.id] % list.length];
+}
+function advanceFoodGame(f){   // passa al prossimo: SOLO dopo che l'allenamento è stato giocato
+  if (foodGameList(f).length < 2) return;
+  if (_foodGameN[f.id] == null) _foodGameN[f.id] = 0;
   _foodGameN[f.id]++;
   try { localStorage.setItem('catcards_ga_' + f.id, String(_foodGameN[f.id])); } catch(e){}
-  return pick;
 }
 function playSkillGame(gid){
   return new Promise(resolve => {
@@ -6055,13 +6059,14 @@ async function buyFood(id){
   }
   if (points < f.cost){ toast('💰 Servono ' + f.cost + ' punti (ne hai ' + points + '): vincile nel mondo!'); return; }
   spendPoints(f.cost);
-  const gid = pickFoodGame(f);   // alterna tra i due giochi del cibo
+  const gid = peekFoodGame(f);   // il gioco di turno per questo cibo (non cambia se annulli)
   const res = await playSkillGame(gid);
   if (res === null){
-    spendPoints(-f.cost);   // annullato prima di iniziare: rimborso completo
+    spendPoints(-f.cost);   // annullato prima di iniziare: rimborso completo, gioco invariato
     toast('↩️ Allenamento annullato: ' + f.cost + ' punti restituiti.');
     return;
   }
+  advanceFoodGame(f);   // giocato davvero: la prossima volta l'altro gioco
   const score = res.score;
   let gain = res.gain;
   if (!gain){
