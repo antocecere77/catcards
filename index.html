@@ -1439,8 +1439,7 @@ async function managerAdvice(){
         (gap > 60 ? 'rischioso, ma se lo batti fai il botto in classifica.' : gap < -60 ? 'sulla carta è battibile: vittoria di gestione.' : 'incontro alla pari, di quelli che piacciono al pubblico.'));
       // parere tecnico: probabilità stimata di vittoria (stesse regole di Zio Rocco)
       try {
-        const bestLvl = 1 + Math.floor(((best.wins || 0) * 25 + (best.losses || 0) * 10) / 100);
-        const bs = (Array.isArray(best.statsv) ? best.statsv.reduce((x, y) => x + (y || 0), 0) : 300) + (best.hp || 80) * 0.6 + (bestLvl - 1) * 12;
+        const bs = estStrengthRow(best);
         const ms = estStrength(mine);
         const p = Math.round(100 / (1 + Math.pow(10, (bs - ms) / 155)));   // stessa curva calibrata di Zio Rocco
         if (p < 45) parts.push('Ma parliamoci chiaro: Zio Rocco stima solo il ' + p + '% di vittoria. Io aspetterei — palestra, un livello in più, POI si firma il contratto.');
@@ -1855,11 +1854,26 @@ async function syncWallet(){
   walletBusy = false;
   if (points !== walletSynced) syncWallet();   // eventuale delta accumulato durante l'invio
 }
+// bonus stimato dei poteri speciali (in punti-statistica equivalenti, taratura empirica)
+const POWER_EST = [20, 10, 30, 35, 30, 20, 30, 15];
 function estStrength(e){
-  const card = rollCard(parseInt(e.serial, 16) >>> 0, e.name);
+  const seed = parseInt(e.serial, 16) >>> 0;
+  const card = rollCard(seed, e.name);
   const sv = (Array.isArray(e.statsv) && e.statsv.length === 6) ? e.statsv : card.stats.map(s => s.value);
   const hp = (typeof e.hp === 'number' && e.hp > 0) ? e.hp : card.hp;
-  return sv.reduce((x, y) => x + y, 0) + hp * 0.6 + (cardLevel(e.serial) - 1) * 12;
+  const pi = (typeof e.potere === 'number' && e.potere >= 0 && e.potere < POWERS.length) ? e.potere : seed % POWERS.length;
+  // atkPower pesa ~2 punti-stat a punto (misurato con 4000 battaglie simulate); il potere speciale ha un bonus fisso stimato
+  return sv.reduce((x, y) => x + y, 0) + hp * 0.6 + (cardLevel(e.serial) - 1) * 12 + card.atkPower * 2 + (POWER_EST[pi] || 0);
+}
+function estStrengthRow(row){
+  // come estStrength ma per una riga del server (livello stimato dal record mondiale)
+  const seed = parseInt(row.serial, 16) >>> 0;
+  const card = rollCard(seed, row.name);
+  const sv = (Array.isArray(row.statsv) && row.statsv.length === 6) ? row.statsv : card.stats.map(s => s.value);
+  const hp = row.hp || card.hp;
+  const lvl = 1 + Math.floor(((row.wins || 0) * 25 + (row.losses || 0) * 10) / 100);
+  const pi = (typeof row.potere === 'number' && row.potere >= 0 && row.potere < POWERS.length) ? row.potere : seed % POWERS.length;
+  return sv.reduce((x, y) => x + (y || 0), 0) + hp * 0.6 + (lvl - 1) * 12 + card.atkPower * 2 + (POWER_EST[pi] || 0);
 }
 /* ---------- Zio Rocco, il Cornerman: analisi pre-match a regole (zero costi) ---------- */
 async function initCornerman(){
@@ -1903,7 +1917,11 @@ function cornerAnalysis(ea, eb, pA){
   }).join('');
   const pct = Math.round(pA * 100);
   const barCol = pct >= 55 ? '#51cf66' : (pct >= 45 ? 'var(--accent)' : '#e63946');
+  const apA = rollCard(parseInt(ea.serial, 16) >>> 0, ea.name).atkPower;
+  const apB = rollCard(parseInt(eb.serial, 16) >>> 0, eb.name).atkPower;
+  const apCol = apA > apB ? '#51cf66' : (apA < apB ? '#e63946' : 'var(--muted)');
   return rows +
+    '<div style="display:flex; justify-content:space-between; font-size:.8rem; padding:1px 0;"><span>🗡️ Attacco</span><span><strong>' + apA + '</strong> vs ' + apB + ' <strong style="color:' + apCol + '">' + (apA > apB ? '✓' : (apA < apB ? '✗' : '=')) + '</strong></span></div>' +
     '<div style="display:flex; justify-content:space-between; font-size:.8rem; padding:1px 0;"><span>❤️ HP</span><span><strong>' + (ea.hp || 80) + '</strong> vs ' + (eb.hp || 80) + '</span></div>' +
     '<div style="margin-top:8px; font-size:.82rem;">Probabilità di vittoria di <strong>' + ea.name + '</strong>: <strong style="color:' + barCol + '">' + pct + '%</strong>' +
     '<div style="height:8px; background:#2e2950; border-radius:4px; margin-top:4px;"><div style="height:8px; width:' + pct + '%; background:' + barCol + '; border-radius:4px;"></div></div></div>';
@@ -3223,7 +3241,7 @@ async function migrateMelodies(){
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
 /* ---------- versione e aggiornamento automatico ---------- */
-const APP_VERSION = '13.6';   // unica fonte di verità: aggiorna anche version.txt a ogni release
+const APP_VERSION = '13.7';   // unica fonte di verità: aggiorna anche version.txt a ogni release
 try { document.getElementById('appVer').textContent = 'v' + APP_VERSION; } catch(e){}
 function verNewer(a, b){   // a più recente di b? confronto numerico 11.10 > 11.9
   const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);
