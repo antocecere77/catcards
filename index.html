@@ -175,6 +175,7 @@
 <body>
   <h1>🐱 Cat<span>Cards</span></h1>
   <p class="tag">Fotografa il tuo gatto e trasformalo in una carta da collezione · <strong style="color:var(--accent)" id="appVer"></strong></p>
+  <div id="userBar" style="width:100%; max-width:440px; display:flex; align-items:center; gap:8px; background:var(--panel); border:1px solid #363057; border-radius:10px; padding:8px 12px; margin-bottom:8px; font-size:.85rem;"></div>
   <div id="updBanner" style="display:none; position:fixed; top:0; left:0; right:0; z-index:9999; background:var(--accent); color:#1a1626; font-weight:700; text-align:center; padding:12px; cursor:pointer; box-shadow:0 2px 12px rgba(0,0,0,.5);" onclick="applyUpdate()">🔄 Nuova versione disponibile — tocca per aggiornare</div>
   <p id="bootErr" style="display:none; color:#ff6b6b; font-size:.8rem; max-width:440px; text-align:center; margin-bottom:10px;"></p>
 
@@ -182,7 +183,7 @@
     <div style="display:flex; gap:8px;">
       <button class="tabBtn" data-tab="crea" onclick="showTab('crea')">📸 Crea</button>
       <button class="tabBtn" data-tab="coll" onclick="showTab('coll')" id="collTabBtn">📚 Carte</button>
-      <button class="tabBtn" data-tab="arena" onclick="showTab('arena')">⚔️ Arena</button>
+      <button class="tabBtn" data-tab="arena" onclick="showTab('arena')">🥋 Dojo</button>
       <button class="tabBtn" data-tab="mondo" onclick="showTab('mondo')">🌍 Mondo<span id="mondoDot" style="display:none; width:9px; height:9px; background:#e63946; border-radius:50%; margin-left:5px; vertical-align:middle;"></span></button>
       <button class="tabBtn" data-tab="mercato" onclick="showTab('mercato')">🔁 Mercato<span id="tradeTabDot" style="display:none; width:9px; height:9px; background:#e63946; border-radius:50%; margin-left:4px; vertical-align:middle;"></span></button>
     </div>
@@ -236,7 +237,7 @@
 
   <div id="tab-arena" style="width:100%; max-width:440px; display:none;">
   <div class="panel" id="arenaPanel" style="margin-top:20px; display:none;">
-    <h2>⚔️ Arena</h2>
+    <h2>🥋 Dojo</h2>
     <p class="count" id="wallet"></p>
     <label class="small">La tua carta</label>
     <select id="selA"></select>
@@ -251,6 +252,15 @@
       <h2 style="font-size:1rem;">📊 Albo d'oro</h2>
       <div id="statsList" class="count" style="line-height:2; margin-top:6px;"></div>
     </div>
+    <details id="pubDetails" style="margin-top:12px;">
+      <summary>🗂️ Scegli quali carte pubblicare nel Mondo</summary>
+      <label class="small" style="margin-top:8px;">Il tuo nome giocatore (obbligatorio, min 3 lettere)</label>
+      <input type="text" id="playerName" placeholder="Es. Antonio" maxlength="20">
+      <button class="btn secondary" id="nameSaveBtn" onclick="applyOwnerName()" style="display:none; margin-top:8px;">💾 Applica il nuovo nome a tutte le carte pubblicate</button>
+      <div id="pubList" style="margin-top:8px;"></div>
+      <button class="btn" id="pubBtn" onclick="publishCards()" style="margin-top:8px;">📤 Pubblica le carte selezionate</button>
+      <p class="count" id="pubMsg" style="margin-top:6px;"></p>
+    </details>
     <details style="margin-top:12px;">
       <summary>📥 Importa la carta di un amico</summary>
       <label class="small">Incolla qui il codice sfida ricevuto</label>
@@ -279,14 +289,6 @@
     <div id="authBox" style="margin-top:8px;"></div>
     <div id="mondoMember" style="display:none;">
       <div id="newsList" class="count" style="line-height:1.9;"></div>
-      <details id="pubDetails" style="margin-top:12px;">
-        <summary>🗂️ Scegli quali carte pubblicare</summary>
-        <label class="small" style="margin-top:8px;">Il tuo nome giocatore (obbligatorio, min 3 lettere)</label>
-        <input type="text" id="playerName" placeholder="Es. Antonio" maxlength="20">
-        <button class="btn secondary" id="nameSaveBtn" onclick="applyOwnerName()" style="display:none; margin-top:8px;">💾 Applica il nuovo nome a tutte le carte pubblicate</button>
-        <div id="pubList" style="margin-top:8px;"></div>
-      </details>
-      <button class="btn" id="pubBtn" onclick="publishCards()">📤 Pubblica le carte selezionate</button>
       <p class="count" id="onlineMsg" style="margin-top:6px;"></p>
       <details style="margin-top:14px;">
         <summary style="cursor:pointer; font-weight:600;">🐱 Le tue carte nel mondo <span class="count">(tocca per aprire)</span></summary>
@@ -306,8 +308,9 @@
       <button class="btn secondary" onclick="loadWorldCards()" style="margin-top:10px;">🔄 Cerca sfidanti nel mondo</button>
       <div id="worldList" style="margin-top:10px;"></div>
     </div>
-    <button class="btn secondary" onclick="loadLeaderboard()" style="margin-top:10px;">🏅 Classifica mondiale</button>
+    <h2 style="font-size:1rem; margin-top:14px;">🏅 Classifica mondiale</h2>
     <div id="leaderList" class="count" style="line-height:2; margin-top:8px;"></div>
+    <button class="btn secondary" id="leaderMoreBtn" onclick="moreLeader()" style="margin-top:8px;">⬇️ Mostra altre posizioni</button>
   </div>
   </div>
 
@@ -445,7 +448,7 @@
     <p><strong>64 leggende in 8 divisioni</strong> a difficoltà crescente: dai Randagi di Quartiere (facili) fino ai Boss Finali come il 🌑 Gatto Mammone o 🤖 MIAO-9000, mostruosi. Ogni giorno ne sono attive <strong>2, uguali per tutto il mondo</strong> (le decide la data). Batterne uno paga <strong>+10 punti e 25 XP</strong>. Attenzione: hai <strong>UN solo tentativo al giorno per boss</strong> — vinto, perso o abbandonato, si torna domani. Scegli bene il gatto prima di scendere in arena. Perdere costa solo 2 XP di consolazione. Dopo il match il gatto <strong>riposa un'ora</strong> come in ogni incontro vero, e l'erba gatta 🌿 comprata prima vale anche qui. Contro i Boss scendono in campo <strong>solo le carte pubblicate nel Mondo</strong>, e i boss <strong>non toccano il ranking Elo</strong>. Ogni boss ha la sua medaglia (sezione «🤖 Boss domati» nel 🏅 Medagliere, premi più ricchi per le divisioni alte), più la 🏆 Ammazzaboss per chi li doma tutti e 64.</p>
 
     <h2 style="font-size:1rem; margin-top:16px; color:var(--accent);">⚡ La sfida dal vivo (QR)</h2>
-    <p>Due telefoni: uno mostra il QR della sua carta (⚔️ Arena → 📱), l'altro lo inquadra (📷) e il duello si gioca sul suo schermo. <strong>Vale come una sfida mondiale</strong>: punti, XP pieni, medaglie, riposo, scommesse e risultato registrato se le carte sono pubblicate.</p>
+    <p>Due telefoni: uno mostra il QR della sua carta (🥋 Dojo → 📱), l'altro lo inquadra (📷) e il duello si gioca sul suo schermo. <strong>Vale come una sfida mondiale</strong>: punti, XP pieni, medaglie, riposo, scommesse e risultato registrato se le carte sono pubblicate.</p>
 
     <h2 style="font-size:1rem; margin-top:16px; color:var(--accent);">🏆 Tornei e medagliere</h2>
     <p>Tornei a 4 o 8 tra le tue carte e i rivali: esibizioni automatiche con tabellone (XP ridotti, nessun riposo, nessun punto). Il <strong>🏅 Medagliere</strong> ha 25 medaglie con premi in punti (9 sono dei Boss) — tocca una medaglia per scoprire come si conquista. Occhio alla 💀 Disfatta…</p>
@@ -532,7 +535,7 @@
       <h2>⚡ Sfida dal vivo</h2>
       <p class="count" id="qrName"></p>
       <div id="qrHolder" style="display:flex; justify-content:center; margin:12px 0; background:#fff; border-radius:12px; padding:10px;"></div>
-      <p class="count">Fai inquadrare questo codice dallo sfidante: nella sua app, ⚔️ Arena → 📷 Inquadra QR. Il duello si gioca sul suo telefono.</p>
+      <p class="count">Fai inquadrare questo codice dallo sfidante: nella sua app, 🥋 Dojo → 📷 Inquadra QR. Il duello si gioca sul suo telefono.</p>
       <button class="btn secondary" onclick="document.getElementById('qrModal').style.display='none'">✖ Chiudi</button>
     </div>
   </div>
@@ -3241,7 +3244,7 @@ async function migrateMelodies(){
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
 /* ---------- versione e aggiornamento automatico ---------- */
-const APP_VERSION = '13.7';   // unica fonte di verità: aggiorna anche version.txt a ogni release
+const APP_VERSION = '13.8';   // unica fonte di verità: aggiorna anche version.txt a ogni release
 try { document.getElementById('appVer').textContent = 'v' + APP_VERSION; } catch(e){}
 function verNewer(a, b){   // a più recente di b? confronto numerico 11.10 > 11.9
   const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);
@@ -3532,7 +3535,24 @@ async function redeemGift(){
     document.getElementById('giftCode').value = '';
   } catch(err){ msg.textContent = '❌ Errore di rete: ' + err.message; }
 }
+function renderUserBar(){
+  // con i punti sul server il login è centrale: utente, saldo e uscita sempre in vista
+  const el = document.getElementById('userBar');
+  if (!el) return;
+  if (session && session.access_token){
+    const pn = document.getElementById('playerName');
+    const who = (pn && pn.value.trim()) || session.email || 'utente';
+    el.innerHTML = '<span data-wallet style="font-weight:700; flex-shrink:0;"></span>' +
+      '<span style="flex:1; text-align:right; color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">👤 ' + who + '</span>' +
+      '<button class="btn secondary" onclick="logout()" style="width:auto; margin:0; padding:6px 10px; font-size:.75rem; flex-shrink:0;">Esci</button>';
+    walletDisplay();
+  } else {
+    el.innerHTML = '<span style="flex:1; color:var(--muted);">Accedi: punti, Mercato e sfide vivono sul tuo account</span>' +
+      '<button class="btn" onclick="loginGoogle()" style="width:auto; margin:0; padding:8px 14px; font-size:.8rem; flex-shrink:0;">🔑 Accedi</button>';
+  }
+}
 function renderAuth(){
+  renderUserBar();
   const member = document.getElementById('mondoMember');
   if (member){
     member.style.display = (session && session.access_token) ? 'block' : 'none';
@@ -3631,7 +3651,7 @@ async function republishOne(serial){
   loadMyWorldCards();
 }
 async function publishCards(){
-  const msg = document.getElementById('onlineMsg');
+  const msg = document.getElementById('pubMsg') || document.getElementById('onlineMsg');
   const owner = playerNameEl.value.trim();
   if (!session || !session.access_token){ msg.textContent = '🔑 Prima accedi con la tua email (qui sopra).'; return; }
   if (owner.length < 3){
@@ -4436,11 +4456,13 @@ async function fightWorld(i){
     });
   } catch(err){}
 }
+let leaderN = 15;
+function moreLeader(){ leaderN = Math.min(200, leaderN + 25); loadLeaderboard(); }
 async function loadLeaderboard(){
   const el = document.getElementById('leaderList');
   el.textContent = 'Carico la classifica…';
   try {
-    const r = await fetch(SUPA_URL + '/rest/v1/cards?select=serial,name,owner,wins,losses,retired,elo,win_streak,loss_streak,best_streak,was_champion&order=elo.desc.nullslast,wins.desc&limit=15', {headers: supaHeaders()});
+    const r = await fetch(SUPA_URL + '/rest/v1/cards?select=serial,name,owner,wins,losses,retired,elo,win_streak,loss_streak,best_streak,was_champion&order=elo.desc.nullslast,wins.desc&limit=' + leaderN, {headers: supaHeaders()});
     if (!r.ok) throw new Error('HTTP ' + r.status);
     await fetchChampion();
     let raw = (await r.json()).filter(x => !x.retired);
@@ -4461,6 +4483,8 @@ async function loadLeaderboard(){
         ' — ' + (x.elo || 1000) + ' pt · ' + (x.wins || 0) + 'V/' + (x.losses || 0) + 'S' + streak +
         (x.best_streak > 1 ? ' · max 🔥' + x.best_streak : '');
     }).join('<br>') || 'Nessuna carta in ranking: pubblicane una!';
+    const more = document.getElementById('leaderMoreBtn');
+    if (more) more.style.display = (rows.length >= leaderN && leaderN < 200) ? 'block' : 'none';   // finite le posizioni? niente bottone
   } catch(err){
     el.textContent = '❌ Errore: ' + err.message;
   }
