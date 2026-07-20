@@ -261,13 +261,6 @@
       <button class="btn" id="pubBtn" onclick="publishCards()" style="margin-top:8px;">📤 Pubblica le carte selezionate</button>
       <p class="count" id="pubMsg" style="margin-top:6px;"></p>
     </details>
-    <details style="margin-top:12px;">
-      <summary>📥 Importa la carta di un amico</summary>
-      <label class="small">Incolla qui il codice sfida ricevuto</label>
-      <input type="text" id="rivalCode" placeholder="CATCARD:...">
-      <button class="btn secondary" onclick="importRival()" style="margin-top:10px;">Importa rivale</button>
-      <p id="rivalMsg" class="count" style="margin-top:6px;"></p>
-    </details>
   </div>
 
   <div class="panel" style="margin-top:20px;">
@@ -286,7 +279,6 @@
   <div id="tab-mondo" style="width:100%; max-width:440px; display:none;">
   <div class="panel" id="onlinePanel" style="margin-top:20px; display:none;">
     <h2>🌍 Arena Mondiale</h2>
-    <div id="authBox" style="margin-top:8px;"></div>
     <div id="mondoMember" style="display:none;">
       <div id="newsList" class="count" style="line-height:1.9;"></div>
       <p class="count" id="onlineMsg" style="margin-top:6px;"></p>
@@ -458,9 +450,25 @@
   </div>
   </div>
 
+  <div id="tab-locked" style="width:100%; max-width:440px; display:none;">
+  <div class="panel" style="margin-top:20px; text-align:center;">
+    <div style="font-size:3rem;">🔒</div>
+    <h2>Serve l'accesso</h2>
+    <p class="count" style="margin-top:8px; line-height:1.6;">Punti, Mercato, sfide e allenamenti vivono sul tuo account: per usare Dojo, Mondo, Mercato, Boss e Palestra devi prima accedere.</p>
+    <button class="btn" onclick="loginGoogle()" style="margin-top:12px;">🔵 Accedi con Google</button>
+    <p class="count" style="margin-top:8px;">Oppure via email dal menu ⚙️.</p>
+  </div>
+  </div>
+
   <div id="tab-opz" style="width:100%; max-width:440px; display:none;">
   <div class="panel" style="margin-top:20px;">
     <h2>⚙️ Opzioni</h2>
+    <details style="margin-top:10px;" id="emailLoginBox">
+      <summary>🔑 Accesso via email (link)</summary>
+      <input type="email" id="authEmail" placeholder="la-tua@email.it" style="margin-top:8px;">
+      <button class="btn secondary" onclick="loginRequest()" style="margin-top:8px;">Inviami il link di accesso</button>
+      <p class="count" id="authMsg" style="margin-top:6px;"></p>
+    </details>
     <details open style="margin-top:10px;">
       <summary>🤖 Impostazioni AI</summary>
       <p>Senza chiave API uso un filtro cartoon integrato e gratuito.
@@ -1223,13 +1231,17 @@ function stepCard(d){
 })();
 
 /* ---------- navigazione a schede ---------- */
+const NEED_LOGIN_TABS = ['arena', 'mondo', 'mercato', 'boss', 'pal'];
 function showTab(t){
-  ['crea', 'coll', 'arena', 'mondo', 'mercato', 'boss', 'pal', 'med', 'reg', 'opz'].forEach(k => {
+  const locked = NEED_LOGIN_TABS.indexOf(t) >= 0 && !(session && session.access_token);
+  ['crea', 'coll', 'arena', 'mondo', 'mercato', 'boss', 'pal', 'med', 'reg', 'opz', 'locked'].forEach(k => {
     const el = document.getElementById('tab-' + k);
-    if (el) el.style.display = (k === t) ? 'block' : 'none';
+    if (el) el.style.display = (locked ? (k === 'locked') : (k === t)) ? 'block' : 'none';
   });
   document.querySelectorAll('.tabBtn').forEach(b => b.classList.toggle('active', b.dataset.tab === t));
   window._curTab = t;
+  if (locked) return;   // niente account, niente arena: solo Crea, Carte, Regole e Opzioni
+  if (t === 'arena'){ try { renderPubList(); if (!myPublished.size && collection.length) checkWorldNews().then(() => renderPubList()); } catch(e){} }
   if (t === 'mondo') openMondoNews();
   if (t === 'mercato'){ try { openMercato(); } catch(e){} }
   if (t === 'med'){ try { renderMissions(); } catch(e){} }
@@ -3244,7 +3256,7 @@ async function migrateMelodies(){
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
 /* ---------- versione e aggiornamento automatico ---------- */
-const APP_VERSION = '13.8';   // unica fonte di verità: aggiorna anche version.txt a ogni release
+const APP_VERSION = '13.9';   // unica fonte di verità: aggiorna anche version.txt a ogni release
 try { document.getElementById('appVer').textContent = 'v' + APP_VERSION; } catch(e){}
 function verNewer(a, b){   // a più recente di b? confronto numerico 11.10 > 11.9
   const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);
@@ -3553,6 +3565,8 @@ function renderUserBar(){
 }
 function renderAuth(){
   renderUserBar();
+  // se eri su una scheda bloccata e ora sei connesso (o viceversa), riallinea la vista
+  try { if (window._curTab) showTab(window._curTab); } catch(e){}
   const member = document.getElementById('mondoMember');
   if (member){
     member.style.display = (session && session.access_token) ? 'block' : 'none';
