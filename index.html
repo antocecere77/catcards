@@ -174,24 +174,24 @@
 </head>
 <body>
   <h1>🐱 Cat<span>Cards</span></h1>
-  <p class="tag">Fotografa il tuo gatto e trasformalo in una carta da collezione · <strong style="color:var(--accent)" id="appVer"></strong></p>
+  <p class="tag"><span data-i18n="tagline">Fotografa il tuo gatto e trasformalo in una carta da collezione</span> · <strong style="color:var(--accent)" id="appVer"></strong></p>
   <div id="userBar" style="width:100%; max-width:440px; display:flex; align-items:center; gap:8px; background:var(--panel); border:1px solid #363057; border-radius:10px; padding:8px 12px; margin-bottom:8px; font-size:.85rem;"></div>
   <div id="updBanner" style="display:none; position:fixed; top:0; left:0; right:0; z-index:9999; background:var(--accent); color:#1a1626; font-weight:700; text-align:center; padding:12px; cursor:pointer; box-shadow:0 2px 12px rgba(0,0,0,.5);" onclick="applyUpdate()">🔄 Nuova versione disponibile — tocca per aggiornare</div>
   <p id="bootErr" style="display:none; color:#ff6b6b; font-size:.8rem; max-width:440px; text-align:center; margin-bottom:10px;"></p>
 
   <div id="tabs" style="display:flex; flex-direction:column; gap:8px; width:100%; max-width:440px; margin-bottom:6px;">
     <div style="display:flex; gap:8px;">
-      <button class="tabBtn" data-tab="crea" onclick="showTab('crea')">📸 Crea</button>
-      <button class="tabBtn" data-tab="coll" onclick="showTab('coll')" id="collTabBtn">📚 Carte</button>
-      <button class="tabBtn" data-tab="arena" onclick="showTab('arena')">🥋 Dojo</button>
-      <button class="tabBtn" data-tab="mondo" onclick="showTab('mondo')">🌍 Mondo<span id="mondoDot" style="display:none; width:9px; height:9px; background:#e63946; border-radius:50%; margin-left:5px; vertical-align:middle;"></span></button>
-      <button class="tabBtn" data-tab="mercato" onclick="showTab('mercato')">🔁 Mercato<span id="tradeTabDot" style="display:none; width:9px; height:9px; background:#e63946; border-radius:50%; margin-left:4px; vertical-align:middle;"></span></button>
+      <button class="tabBtn" data-tab="crea" onclick="showTab('crea')"><span data-i18n="tab_crea">📸 Crea</span></button>
+      <button class="tabBtn" data-tab="coll" onclick="showTab('coll')" id="collTabBtn"><span data-i18n="tab_carte">📚 Carte</span><span id="collCountTag"></span></button>
+      <button class="tabBtn" data-tab="arena" onclick="showTab('arena')"><span data-i18n="tab_dojo">🥋 Dojo</span></button>
+      <button class="tabBtn" data-tab="mondo" onclick="showTab('mondo')"><span data-i18n="tab_mondo">🌍 Mondo</span><span id="mondoDot" style="display:none; width:9px; height:9px; background:#e63946; border-radius:50%; margin-left:5px; vertical-align:middle;"></span></button>
+      <button class="tabBtn" data-tab="mercato" onclick="showTab('mercato')"><span data-i18n="tab_mercato">🔁 Mercato</span><span id="tradeTabDot" style="display:none; width:9px; height:9px; background:#e63946; border-radius:50%; margin-left:4px; vertical-align:middle;"></span></button>
     </div>
     <div style="display:flex; gap:8px;">
-      <button class="tabBtn" data-tab="boss" onclick="showTab('boss')">🤖 Boss</button>
-      <button class="tabBtn" data-tab="pal" onclick="showTab('pal')">🏋️ Palestra</button>
-      <button class="tabBtn" data-tab="med" onclick="showTab('med')">🏅 Medagliere</button>
-      <button class="tabBtn" data-tab="reg" onclick="showTab('reg')">📖 Regole</button>
+      <button class="tabBtn" data-tab="boss" onclick="showTab('boss')"><span data-i18n="tab_boss">🤖 Boss</span></button>
+      <button class="tabBtn" data-tab="pal" onclick="showTab('pal')"><span data-i18n="tab_pal">🏋️ Palestra</span></button>
+      <button class="tabBtn" data-tab="med" onclick="showTab('med')"><span data-i18n="tab_med">🏅 Medagliere</span></button>
+      <button class="tabBtn" data-tab="reg" onclick="showTab('reg')"><span data-i18n="tab_reg">📖 Regole</span></button>
       <button class="tabBtn" data-tab="opz" onclick="showTab('opz')">⚙️</button>
     </div>
   </div>
@@ -200,14 +200,14 @@
   <div class="panel" id="uploadPanel">
     <div class="drop" onclick="document.getElementById('fileInput').click()">
       <div class="cat">📸🐈</div>
-      <strong>Tocca per scattare o caricare una foto</strong>
-      <p>JPG o PNG — meglio se il gatto è ben visibile</p>
+      <strong data-i18n="drop_title">Tocca per scattare o caricare una foto</strong>
+      <p data-i18n="drop_sub">JPG o PNG — meglio se il gatto è ben visibile</p>
     </div>
     <input type="file" id="fileInput" accept="image/*">
     <img id="preview" class="preview" alt="anteprima">
-    <label class="small">Nome del gatto (opzionale)</label>
+    <label class="small" data-i18n="cat_name">Nome del gatto (opzionale)</label>
     <input type="text" id="catName" placeholder="Es. Briciola" maxlength="16">
-    <button class="btn" id="genBtn" disabled>✨ Genera la carta</button>
+    <button class="btn" id="genBtn" disabled data-i18n="gen_btn">✨ Genera la carta</button>
     <div id="status"></div>
   </div>
 
@@ -215,16 +215,15 @@
     <p id="cardNote" style="color:var(--accent); font-size:.85rem; text-align:center; max-width:400px; margin-top:8px;"></p>
     <p id="cardDesc" style="color:var(--muted); font-style:italic; font-size:.92rem; text-align:center; max-width:400px; margin-top:4px;"></p>
     <div id="cardHolo"><canvas id="cardCanvas" width="750" height="1050"></canvas></div>
-    <button class="btn" onclick="downloadCard()">⬇️ Scarica la carta (PNG)</button>
-    <button class="btn secondary" onclick="shareCurrent()">📤 Condividi</button>
-    <button class="btn secondary" onclick="regenPaid()">🔁 Rigenera il disegno (30 punti)</button>
-    <button class="btn secondary" onclick="reset()">🔄 Nuova carta</button>
+    <button class="btn" onclick="downloadCard()" data-i18n="dl_card">⬇️ Scarica la carta (PNG)</button>
+    <button class="btn secondary" onclick="regenPaid()" data-i18n="regen_btn">🔁 Rigenera il disegno (30 punti)</button>
+    <button class="btn secondary" onclick="reset()" data-i18n="new_card">🔄 Nuova carta</button>
   </div>
   </div>
 
   <div id="tab-coll" style="width:100%; max-width:440px; display:none;">
   <div class="panel" id="collPanel" style="margin-top:20px; display:none;">
-    <h2>📚 La tua collezione</h2>
+    <h2 data-i18n="coll_title">📚 La tua collezione</h2>
     <p class="count" id="collCount"></p>
     <p class="count" id="melStatus"></p>
     <div class="collGrid" id="collGrid"></div>
@@ -237,40 +236,40 @@
 
   <div id="tab-arena" style="width:100%; max-width:440px; display:none;">
   <div class="panel" id="arenaPanel" style="margin-top:20px; display:none;">
-    <h2>🥋 Dojo</h2>
+    <h2 data-i18n="dojo_title">🥋 Dojo</h2>
     <p class="count" id="wallet"></p>
-    <label class="small">La tua carta</label>
+    <label class="small" data-i18n="your_card">La tua carta</label>
     <select id="selA"></select>
-    <label class="small">Avversario</label>
+    <label class="small" data-i18n="opponent">Avversario</label>
     <select id="selB"></select>
-    <button class="btn" onclick="startBattle()">⚔️ Combatti!</button>
+    <button class="btn" onclick="startBattle()" data-i18n="fight_btn">⚔️ Combatti!</button>
     <div style="display:flex; gap:10px;">
-      <button class="btn secondary" onclick="startTournament(4)" style="margin-top:10px;">🏆 Torneo a 4</button>
-      <button class="btn secondary" onclick="startTournament(8)" style="margin-top:10px;">🏆 Torneo a 8</button>
+      <button class="btn secondary" onclick="startTournament(4)" style="margin-top:10px;" data-i18n="tourn4">🏆 Torneo a 4</button>
+      <button class="btn secondary" onclick="startTournament(8)" style="margin-top:10px;" data-i18n="tourn8">🏆 Torneo a 8</button>
     </div>
     <div id="statsBox" style="margin-top:16px; display:none;">
-      <h2 style="font-size:1rem;">📊 Albo d'oro</h2>
+      <h2 style="font-size:1rem;" data-i18n="albo">📊 Albo d'oro</h2>
       <div id="statsList" class="count" style="line-height:2; margin-top:6px;"></div>
     </div>
     <details id="pubDetails" style="margin-top:12px;">
-      <summary>🗂️ Scegli quali carte pubblicare nel Mondo</summary>
-      <label class="small" style="margin-top:8px;">Il tuo nome giocatore (obbligatorio, min 3 lettere)</label>
+      <summary data-i18n="pub_sum">🗂️ Scegli quali carte pubblicare nel Mondo</summary>
+      <label class="small" style="margin-top:8px;" data-i18n="player_name">Il tuo nome giocatore (obbligatorio, min 3 lettere)</label>
       <input type="text" id="playerName" placeholder="Es. Antonio" maxlength="20">
       <button class="btn secondary" id="nameSaveBtn" onclick="applyOwnerName()" style="display:none; margin-top:8px;">💾 Applica il nuovo nome a tutte le carte pubblicate</button>
       <div id="pubList" style="margin-top:8px;"></div>
-      <button class="btn" id="pubBtn" onclick="publishCards()" style="margin-top:8px;">📤 Pubblica le carte selezionate</button>
+      <button class="btn" id="pubBtn" onclick="publishCards()" style="margin-top:8px;" data-i18n="pub_btn">📤 Pubblica le carte selezionate</button>
       <p class="count" id="pubMsg" style="margin-top:6px;"></p>
     </details>
   </div>
 
   <div class="panel" style="margin-top:20px;">
-    <h2>⚡ Sfida un amico</h2>
+    <h2 data-i18n="duel_title">⚡ Sfida un amico</h2>
     <p class="count" style="margin-top:4px;">Duello dal vivo, telefono contro telefono: vale punti, medaglie e scommesse come una sfida mondiale.</p>
-    <label class="small">Il tuo campione per il duello</label>
+    <label class="small" data-i18n="duel_champ">Il tuo campione per il duello</label>
     <select id="qrCat"></select>
     <div style="display:flex; gap:10px;">
-      <button class="btn secondary" onclick="showQr()" style="margin-top:10px;">📱 Mostra il mio QR</button>
-      <button class="btn secondary" onclick="scanQr()" style="margin-top:10px;">📷 Inquadra il suo</button>
+      <button class="btn secondary" onclick="showQr()" style="margin-top:10px;" data-i18n="qr_show">📱 Mostra il mio QR</button>
+      <button class="btn secondary" onclick="scanQr()" style="margin-top:10px;" data-i18n="qr_scan">📷 Inquadra il suo</button>
     </div>
     <p class="count" style="margin-top:8px;">Uno dei due mostra il QR, l'altro lo inquadra: il duello si gioca sul telefono di chi inquadra.</p>
   </div>
@@ -278,12 +277,12 @@
 
   <div id="tab-mondo" style="width:100%; max-width:440px; display:none;">
   <div class="panel" id="onlinePanel" style="margin-top:20px; display:none;">
-    <h2>🌍 Arena Mondiale</h2>
+    <h2 data-i18n="world_title">🌍 Arena Mondiale</h2>
     <div id="mondoMember" style="display:none;">
       <div id="newsList" class="count" style="line-height:1.9;"></div>
       <p class="count" id="onlineMsg" style="margin-top:6px;"></p>
       <details style="margin-top:14px;">
-        <summary style="cursor:pointer; font-weight:600;">🐱 Le tue carte nel mondo <span class="count">(tocca per aprire)</span></summary>
+        <summary style="cursor:pointer; font-weight:600;"><span data-i18n="my_world">🐱 Le tue carte nel mondo</span></summary>
         <div id="myWorldList" class="count" style="line-height:1.9; margin-top:8px;"></div>
       </details>
       <div style="display:flex; gap:12px; align-items:center; margin-top:14px;">
@@ -295,20 +294,20 @@
         </div>
       </div>
       <button class="btn secondary" onclick="managerAdvice()" style="margin-top:8px;">🎩 Consiglio del Manager</button>
-      <label class="small">La tua carta per le sfide online</label>
+      <label class="small" data-i18n="my_online">La tua carta per le sfide online</label>
       <select id="selMine" onchange="renderWorldList()"></select>
-      <button class="btn secondary" onclick="loadWorldCards()" style="margin-top:10px;">🔄 Cerca sfidanti nel mondo</button>
+      <button class="btn secondary" onclick="loadWorldCards()" style="margin-top:10px;" data-i18n="find_btn">🔄 Cerca sfidanti nel mondo</button>
       <div id="worldList" style="margin-top:10px;"></div>
     </div>
-    <h2 style="font-size:1rem; margin-top:14px;">🏅 Classifica mondiale</h2>
+    <h2 style="font-size:1rem; margin-top:14px;" data-i18n="leader_title">🏅 Classifica mondiale</h2>
     <div id="leaderList" class="count" style="line-height:2; margin-top:8px;"></div>
-    <button class="btn secondary" id="leaderMoreBtn" onclick="moreLeader()" style="margin-top:8px;">⬇️ Mostra altre posizioni</button>
+    <button class="btn secondary" id="leaderMoreBtn" onclick="moreLeader()" style="margin-top:8px;" data-i18n="leader_more">⬇️ Mostra altre posizioni</button>
   </div>
   </div>
 
   <div id="tab-mercato" style="width:100%; max-width:440px; display:none;">
   <div class="panel" style="margin-top:20px;">
-    <h2>🔁 Mercato</h2>
+    <h2 data-i18n="market_title">🔁 Mercato</h2>
     <p class="count" style="line-height:1.6;">Scambia o vendi le tue carte con gli altri giocatori. La carta cambia proprietario con tutto (Elo, vittorie, livello); mentre è in trattativa resta congelata e non combatte. Serve essere connessi e avere carte pubblicate nel Mondo.</p>
     <div id="mercatoAuth" class="count" style="margin-top:8px;"></div>
     <div style="display:flex; gap:12px; align-items:center; margin-top:12px;">
@@ -319,8 +318,8 @@
         <p class="count" id="trdSay" style="margin-top:2px; line-height:1.5;">Benvenuto al bazar, amico! Sono Mister Baratto: chiedi pure, so io come si fanno i buoni affari.</p>
       </div>
     </div>
-    <button class="btn secondary" onclick="traderAdvice()" style="margin-top:8px;">💰 Chiedi consiglio al Mercante</button>
-    <h2 style="font-size:1.05rem; margin-top:16px;">🔄 Scambio (baratto)</h2>
+    <button class="btn secondary" onclick="traderAdvice()" style="margin-top:8px;" data-i18n="trader_ask">💰 Chiedi consiglio al Mercante</button>
+    <h2 style="font-size:1.05rem; margin-top:16px;" data-i18n="trade_title">🔄 Scambio (baratto)</h2>
     <div id="tradeIn" style="margin-top:8px;"></div>
     <div id="tradeOut" style="margin-top:8px;"></div>
     <button class="btn secondary" onclick="renderTradeBrowse()" style="margin-top:8px;">🔍 Sfoglia carte da scambiare</button>
@@ -329,7 +328,7 @@
     <div id="tradeBrowse" style="margin-top:8px;"></div>
   </div>
   <div class="panel" style="margin-top:20px;">
-    <h2>⚖️ Aste</h2>
+    <h2 data-i18n="auc_title">⚖️ Aste</h2>
     <div style="display:flex; gap:12px; align-items:center; margin-top:8px;">
       <img id="incImg" alt="Banditore" style="width:64px; height:64px; border-radius:50%; object-fit:cover; border:2px solid var(--accent2); display:none; flex-shrink:0;">
       <div id="incEmoji" style="font-size:2.6rem; flex-shrink:0;">😼</div>
@@ -338,8 +337,8 @@
         <p class="count" id="incSay" style="margin-top:2px; line-height:1.5;">Signori, si apre l'incanto! Chi offre? Chi rilancia?</p>
       </div>
     </div>
-    <button class="btn secondary" onclick="openCreateAuction()" style="margin-top:10px;">🔨 Metti una carta all'asta</button>
-    <button class="btn secondary" onclick="loadAuctions()" style="margin-top:8px;">🔄 Aggiorna aste</button>
+    <button class="btn secondary" onclick="openCreateAuction()" style="margin-top:10px;" data-i18n="auc_create">🔨 Metti una carta all'asta</button>
+    <button class="btn secondary" onclick="loadAuctions()" style="margin-top:8px;" data-i18n="auc_refresh">🔄 Aggiorna aste</button>
     <div id="auctionList" style="margin-top:10px;"></div>
   </div>
   </div>
@@ -350,9 +349,9 @@
 
   <div id="tab-boss" style="width:100%; max-width:440px; display:none;">
   <div class="panel" style="margin-top:20px;">
-    <h2>🤖 Boss dell'Arena</h2>
+    <h2 data-i18n="boss_title">🤖 Boss dell'Arena</h2>
     <p class="count" style="line-height:1.6;">64 leggende in 8 divisioni: ogni giorno ne compaiono 2, uguali per tutto il mondo. Batterle paga <strong>+10 punti</strong>, XP pieni e una medaglia dedicata. <strong>Un solo tentativo al giorno per boss</strong>, vinto o perso; i boss non toccano il ranking Elo. Combattono solo le carte <strong>pubblicate nel Mondo</strong>.</p>
-    <label class="small" style="margin-top:10px;">Il tuo sfidante (carte pubblicate)</label>
+    <label class="small" style="margin-top:10px;" data-i18n="boss_chall">Il tuo sfidante (carte pubblicate)</label>
     <select id="bossCat"></select>
     <div id="bossList" style="margin-top:10px;"></div>
     <details style="margin-top:14px;" id="bestiaryDetails">
@@ -364,7 +363,7 @@
 
   <div id="tab-pal" style="width:100%; max-width:440px; display:none;">
   <div class="panel" style="margin-top:20px;">
-    <h2>🏋️ Palestra</h2>
+    <h2 data-i18n="gym_title">🏋️ Palestra</h2>
     <div style="display:flex; gap:12px; align-items:center; margin-top:12px;">
       <img id="coachImg" alt="Coach Baffo" style="width:76px; height:76px; border-radius:50%; object-fit:cover; border:2px solid var(--accent); display:none; flex-shrink:0;">
       <div id="coachEmoji" style="font-size:3rem; flex-shrink:0;">😼</div>
@@ -373,11 +372,11 @@
         <p class="count" id="coachSay" style="margin-top:2px; line-height:1.5;">Miao, recluta. Scegli un allievo e mettiamoci al lavoro.</p>
       </div>
     </div>
-    <button class="btn secondary" onclick="coachAdvice()" style="margin-top:10px;">🎓 Chiedi un consiglio al Coach</button>
-    <label class="small" style="margin-top:14px;">L'allievo di oggi</label>
+    <button class="btn secondary" onclick="coachAdvice()" style="margin-top:10px;" data-i18n="coach_ask">🎓 Chiedi un consiglio al Coach</button>
+    <label class="small" style="margin-top:14px;" data-i18n="gym_student">L'allievo di oggi</label>
     <select id="gymCat" onchange="renderGym()"></select>
     <p class="count" id="gymInfo" style="margin-top:6px; line-height:1.6;"></p>
-    <label class="small" style="margin-top:12px;">🍽️ Dispensa — compra, poi guadagnatelo col gioco</label>
+    <label class="small" style="margin-top:12px;" data-i18n="gym_pantry">🍽️ Dispensa — compra, poi guadagnatelo col gioco</label>
     <div id="foodGrid" style="display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:8px;"></div>
     <p class="count" data-wallet style="margin-top:10px;"></p>
   </div>
@@ -385,12 +384,12 @@
 
   <div id="tab-med" style="width:100%; max-width:440px; display:none;">
   <div class="panel" style="margin-top:20px;">
-    <h2>📅 Missioni di oggi</h2>
+    <h2 data-i18n="mis_title">📅 Missioni di oggi</h2>
     <p class="count" style="line-height:1.5;">Tre incarichi nuovi ogni mezzanotte, uguali per tutto il mondo: <strong>5 punti</strong> l'uno, <strong>+10 di bonus</strong> se completi il tris.</p>
     <div id="misList" style="margin-top:8px; line-height:1.5;"></div>
   </div>
   <div class="panel" style="margin-top:20px;">
-    <h2>🏅 Medagliere</h2>
+    <h2 data-i18n="med_title">🏅 Medagliere</h2>
     <div id="medalList" style="display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-top:12px;"></div>
     <div id="medalInfo" style="display:none; margin-top:12px; padding:12px; background:var(--panel2); border:1px solid #4d4477; border-radius:10px; font-size:.9rem; line-height:1.6;"></div>
     <details style="margin-top:14px;">
@@ -403,7 +402,7 @@
 
   <div id="tab-reg" style="width:100%; max-width:440px; display:none;">
   <div class="panel" style="margin-top:20px; font-size:.92rem; line-height:1.7;">
-    <h2>📖 Le regole di CatCards</h2>
+    <h2 data-i18n="reg_title">📖 Le regole di CatCards</h2>
 
     <h2 style="font-size:1rem; margin-top:16px; color:var(--accent);">🎴 Le carte</h2>
     <p>Fotografa un gatto e diventa una carta: l'AI lo ridisegna in cartoon e ne analizza aspetto e carattere per generare <strong>statistiche</strong> (un gattone robusto avrà più Forza), <strong>razza</strong>, <strong>descrizione</strong>, <strong>potere speciale</strong> e <strong>3 mosse</strong> (💥 potente ma imprecisa, ⚡ rapida e quasi infallibile, ✨ astuta che può confondere). La <strong>rarità</strong> è sorteggiata dall'impronta della foto: 55% Comune, 28% Rara, 13% Epica, 4% Leggendaria (Epiche e Leggendarie brillano e hanno statistiche col bonus). La stessa foto dà sempre la stessa carta.</p>
@@ -453,22 +452,15 @@
   <div id="tab-locked" style="width:100%; max-width:440px; display:none;">
   <div class="panel" style="margin-top:20px; text-align:center;">
     <div style="font-size:3rem;">🔒</div>
-    <h2>Serve l'accesso</h2>
-    <p class="count" style="margin-top:8px; line-height:1.6;">Punti, Mercato, sfide e allenamenti vivono sul tuo account: per usare Dojo, Mondo, Mercato, Boss e Palestra devi prima accedere.</p>
-    <button class="btn" onclick="loginGoogle()" style="margin-top:12px;">🔵 Accedi con Google</button>
-    <p class="count" style="margin-top:8px;">Oppure via email dal menu ⚙️.</p>
+    <h2 data-i18n="locked_title">Serve l'accesso</h2>
+    <p class="count" style="margin-top:8px; line-height:1.6;" data-i18n="locked_txt">Punti, Mercato, sfide e allenamenti vivono sul tuo account: per usare Dojo, Mondo, Mercato, Boss e Palestra devi prima accedere.</p>
+    <button class="btn" onclick="loginGoogle()" style="margin-top:12px;" data-i18n="login_google">🔵 Accedi con Google</button>
   </div>
   </div>
 
   <div id="tab-opz" style="width:100%; max-width:440px; display:none;">
   <div class="panel" style="margin-top:20px;">
-    <h2>⚙️ Opzioni</h2>
-    <details style="margin-top:10px;" id="emailLoginBox">
-      <summary>🔑 Accesso via email (link)</summary>
-      <input type="email" id="authEmail" placeholder="la-tua@email.it" style="margin-top:8px;">
-      <button class="btn secondary" onclick="loginRequest()" style="margin-top:8px;">Inviami il link di accesso</button>
-      <p class="count" id="authMsg" style="margin-top:6px;"></p>
-    </details>
+    <h2 data-i18n="opt_title">⚙️ Opzioni</h2>
     <details open style="margin-top:10px;">
       <summary>🤖 Impostazioni AI</summary>
       <p>Senza chiave API uso un filtro cartoon integrato e gratuito.
@@ -515,11 +507,11 @@
       <div class="fighter" id="fA"></div>
       <div class="fighter" id="fB"></div>
     </div>
-    <button class="btn secondary" id="skipBtn" onclick="skipIntroNow()" style="max-width:320px; display:none;">⏭️ Salta la presentazione</button>
+    <button class="btn secondary" id="skipBtn" onclick="skipIntroNow()" style="max-width:320px; display:none;" data-i18n="skip_intro">⏭️ Salta la presentazione</button>
     <div id="blog"></div>
     <button class="btn secondary" id="bracketBtn" onclick="showBracket()" style="max-width:320px; display:none;">📋 Tabellone</button>
     <button class="btn secondary" data-snd onclick="toggleSound(this)" style="max-width:320px;">🔊 Suoni: ON</button>
-    <button class="btn secondary" id="closeBattleBtn" onclick="closeBattle()" style="max-width:320px;">✖ Chiudi</button>
+    <button class="btn secondary" id="closeBattleBtn" onclick="closeBattle()" style="max-width:320px;" data-i18n="close">✖ Chiudi</button>
     <div id="vsFlash"><span>VS</span></div>
     <div id="vsIntro"></div>
   </div>
@@ -571,7 +563,7 @@
 
   <div class="modal" id="betBox" style="z-index:26;">
     <div class="panel" style="max-width:340px; margin-top:20px; max-height:90vh; overflow-y:auto;">
-      <h2>🥊 L'angolo di Zio Rocco</h2>
+      <h2 data-i18n="bet_title">🥊 L'angolo di Zio Rocco</h2>
       <div style="display:flex; gap:10px; align-items:center; margin-top:8px;">
         <img id="cornerImg" alt="Zio Rocco" style="width:60px; height:60px; border-radius:50%; object-fit:cover; border:2px solid var(--accent); display:none; flex-shrink:0;">
         <div id="cornerEmoji" style="font-size:2.4rem; flex-shrink:0;">😾</div>
@@ -579,13 +571,13 @@
       </div>
       <div id="cornerStats" style="margin-top:8px;"></div>
       <button class="btn secondary" id="betCatnip" style="margin-top:8px;"></button>
-      <h2 style="font-size:1rem; margin-top:12px;">🎲 Pronostico</h2>
+      <h2 style="font-size:1rem; margin-top:12px;" data-i18n="bet_sub">🎲 Pronostico</h2>
       <p class="count" id="betInfo" style="margin-top:4px;">Scegli la puntata e su chi scommettere. Se sbagli, perdi la puntata.</p>
       <div id="stakeRow" style="display:flex; gap:8px; margin:10px 0 2px;"></div>
       <button class="btn" id="betA"></button>
       <button class="btn" id="betB"></button>
-      <button class="btn secondary" id="betSkip">Non scommetto, via al match!</button>
-      <button class="btn secondary" id="betBack" style="border-color:#e63946; color:#e63946;">↩️ Torna indietro (annulla il match)</button>
+      <button class="btn secondary" id="betSkip" data-i18n="bet_skip">Non scommetto, via al match!</button>
+      <button class="btn secondary" id="betBack" style="border-color:#e63946; color:#e63946;" data-i18n="bet_back">↩️ Torna indietro (annulla il match)</button>
     </div>
   </div>
 
@@ -718,7 +710,8 @@ function setLang(l){
   if (LANGS.indexOf(l) < 0) return;
   LANG = l;
   try { localStorage.setItem('catcards_lang', l); } catch(e){}
-  // ridisegna ciò che parla: carte (etichette statistiche/rarità) e viste principali
+  // ridisegna ciò che parla: interfaccia, carte (etichette statistiche/rarità) e viste principali
+  try { applyI18n(); } catch(e){}
   try { renderUserBar(); } catch(e){}
   try { redrawAllCards(); } catch(e){}
   try { renderCollection(); renderStats(); } catch(e){}
@@ -756,6 +749,84 @@ const ANN_TR = {
 function annText(entry, corner){
   const t = (ANN_TR[LANG] || ANN_TR.en)[corner === 'blue' ? 'blue' : 'red'];
   return t.replace('{n}', entry.name).replace('{k}', nickOf(entry));
+}
+/* ---------- dizionario interfaccia essenziale [it,en,fr,es,de] ---------- */
+const UI = {
+  tagline: ['Fotografa il tuo gatto e trasformalo in una carta da collezione','Snap your cat and turn it into a collectible card','Photographie ton chat et transforme-le en carte à collectionner','Fotografía a tu gato y conviértelo en una carta coleccionable','Fotografiere deine Katze und mach sie zur Sammelkarte'],
+  tab_crea: ['📸 Crea','📸 Create','📸 Créer','📸 Crear','📸 Neu'],
+  tab_carte: ['📚 Carte','📚 Cards','📚 Cartes','📚 Cartas','📚 Karten'],
+  tab_dojo: ['🥋 Dojo','🥋 Dojo','🥋 Dojo','🥋 Dojo','🥋 Dojo'],
+  tab_mondo: ['🌍 Mondo','🌍 World','🌍 Monde','🌍 Mundo','🌍 Welt'],
+  tab_mercato: ['🔁 Mercato','🔁 Market','🔁 Marché','🔁 Mercado','🔁 Markt'],
+  tab_boss: ['🤖 Boss','🤖 Bosses','🤖 Boss','🤖 Jefes','🤖 Bosse'],
+  tab_pal: ['🏋️ Palestra','🏋️ Gym','🏋️ Salle','🏋️ Gimnasio','🏋️ Studio'],
+  tab_med: ['🏅 Medagliere','🏅 Medals','🏅 Médailles','🏅 Medallas','🏅 Medaillen'],
+  tab_reg: ['📖 Regole','📖 Rules','📖 Règles','📖 Reglas','📖 Regeln'],
+  drop_title: ['Tocca per scattare o caricare una foto','Tap to take or upload a photo','Touche pour prendre ou charger une photo','Toca para hacer o subir una foto','Tippe, um ein Foto zu machen oder hochzuladen'],
+  drop_sub: ['JPG o PNG — meglio se il gatto è ben visibile','JPG or PNG — best if the cat is clearly visible','JPG ou PNG — l\'idéal : un chat bien visible','JPG o PNG — mejor si el gato se ve bien','JPG oder PNG — die Katze sollte gut sichtbar sein'],
+  cat_name: ['Nome del gatto (opzionale)','Cat\'s name (optional)','Nom du chat (facultatif)','Nombre del gato (opcional)','Name der Katze (optional)'],
+  gen_btn: ['✨ Genera la carta','✨ Create the card','✨ Générer la carte','✨ Generar la carta','✨ Karte erstellen'],
+  dl_card: ['⬇️ Scarica la carta (PNG)','⬇️ Download the card (PNG)','⬇️ Télécharger la carte (PNG)','⬇️ Descargar la carta (PNG)','⬇️ Karte herunterladen (PNG)'],
+  regen_btn: ['🔁 Rigenera il disegno (30 punti)','🔁 Redraw the art (30 points)','🔁 Regénérer le dessin (30 points)','🔁 Regenerar el dibujo (30 puntos)','🔁 Bild neu zeichnen (30 Punkte)'],
+  new_card: ['🔄 Nuova carta','🔄 New card','🔄 Nouvelle carte','🔄 Nueva carta','🔄 Neue Karte'],
+  coll_title: ['📚 La tua collezione','📚 Your collection','📚 Ta collection','📚 Tu colección','📚 Deine Sammlung'],
+  dojo_title: ['🥋 Dojo','🥋 Dojo','🥋 Dojo','🥋 Dojo','🥋 Dojo'],
+  your_card: ['La tua carta','Your card','Ta carte','Tu carta','Deine Karte'],
+  opponent: ['Avversario','Opponent','Adversaire','Oponente','Gegner'],
+  fight_btn: ['⚔️ Combatti!','⚔️ Fight!','⚔️ Combat !','⚔️ ¡Pelea!','⚔️ Kämpfen!'],
+  tourn4: ['🏆 Torneo a 4','🏆 4-cat tourney','🏆 Tournoi à 4','🏆 Torneo de 4','🏆 4er-Turnier'],
+  tourn8: ['🏆 Torneo a 8','🏆 8-cat tourney','🏆 Tournoi à 8','🏆 Torneo de 8','🏆 8er-Turnier'],
+  albo: ['📊 Albo d\'oro','📊 Hall of fame','📊 Palmarès','📊 Palmarés','📊 Ehrentafel'],
+  pub_sum: ['🗂️ Scegli quali carte pubblicare nel Mondo','🗂️ Choose which cards to publish to the World','🗂️ Choisis les cartes à publier dans le Monde','🗂️ Elige qué cartas publicar en el Mundo','🗂️ Wähle Karten für die Welt'],
+  player_name: ['Il tuo nome giocatore (obbligatorio, min 3 lettere)','Your player name (required, min 3 letters)','Ton pseudo (obligatoire, 3 lettres min)','Tu nombre de jugador (obligatorio, mín 3 letras)','Dein Spielername (Pflicht, mind. 3 Buchstaben)'],
+  pub_btn: ['📤 Pubblica le carte selezionate','📤 Publish selected cards','📤 Publier les cartes choisies','📤 Publicar las cartas elegidas','📤 Ausgewählte Karten veröffentlichen'],
+  duel_title: ['⚡ Sfida un amico','⚡ Challenge a friend','⚡ Défie un ami','⚡ Reta a un amigo','⚡ Fordere einen Freund heraus'],
+  duel_champ: ['Il tuo campione per il duello','Your champion for the duel','Ton champion pour le duel','Tu campeón para el duelo','Dein Champion fürs Duell'],
+  qr_show: ['📱 Mostra il mio QR','📱 Show my QR','📱 Montrer mon QR','📱 Mostrar mi QR','📱 Meinen QR zeigen'],
+  qr_scan: ['📷 Inquadra il suo','📷 Scan theirs','📷 Scanner le sien','📷 Escanear el suyo','📷 Seinen scannen'],
+  world_title: ['🌍 Arena Mondiale','🌍 World Arena','🌍 Arène Mondiale','🌍 Arena Mundial','🌍 Welt-Arena'],
+  my_world: ['🐱 Le tue carte nel mondo','🐱 Your cards in the world','🐱 Tes cartes dans le monde','🐱 Tus cartas en el mundo','🐱 Deine Karten in der Welt'],
+  my_online: ['La tua carta per le sfide online','Your card for online matches','Ta carte pour les défis en ligne','Tu carta para los retos online','Deine Karte für Online-Kämpfe'],
+  find_btn: ['🔄 Cerca sfidanti nel mondo','🔄 Find challengers worldwide','🔄 Chercher des adversaires','🔄 Buscar rivales en el mundo','🔄 Gegner weltweit suchen'],
+  leader_title: ['🏅 Classifica mondiale','🏅 World ranking','🏅 Classement mondial','🏅 Clasificación mundial','🏅 Weltrangliste'],
+  leader_more: ['⬇️ Mostra altre posizioni','⬇️ Show more ranks','⬇️ Voir plus de positions','⬇️ Mostrar más posiciones','⬇️ Mehr Plätze anzeigen'],
+  market_title: ['🔁 Mercato','🔁 Market','🔁 Marché','🔁 Mercado','🔁 Markt'],
+  trade_title: ['🔄 Scambio (baratto)','🔄 Trade (barter)','🔄 Échange (troc)','🔄 Intercambio (trueque)','🔄 Tausch'],
+  trade_browse: ['🔍 Sfoglia carte da scambiare','🔍 Browse cards to trade','🔍 Parcourir les cartes','🔍 Ver cartas para intercambiar','🔍 Karten zum Tauschen ansehen'],
+  trader_ask: ['💰 Chiedi consiglio al Mercante','💰 Ask the Merchant for advice','💰 Demander conseil au Marchand','💰 Pedir consejo al Mercader','💰 Den Händler um Rat fragen'],
+  auc_title: ['⚖️ Aste','⚖️ Auctions','⚖️ Enchères','⚖️ Subastas','⚖️ Auktionen'],
+  auc_create: ['🔨 Metti una carta all\'asta','🔨 Put a card up for auction','🔨 Mettre une carte aux enchères','🔨 Subastar una carta','🔨 Karte versteigern'],
+  auc_refresh: ['🔄 Aggiorna aste','🔄 Refresh auctions','🔄 Actualiser les enchères','🔄 Actualizar subastas','🔄 Auktionen aktualisieren'],
+  boss_title: ['🤖 Boss dell\'Arena','🤖 Arena Bosses','🤖 Boss de l\'Arène','🤖 Jefes de la Arena','🤖 Arena-Bosse'],
+  boss_chall: ['Il tuo sfidante (carte pubblicate)','Your challenger (published cards)','Ton challenger (cartes publiées)','Tu retador (cartas publicadas)','Dein Herausforderer (veröffentlichte Karten)'],
+  gym_title: ['🏋️ Palestra','🏋️ Gym','🏋️ Salle de sport','🏋️ Gimnasio','🏋️ Trainingsstudio'],
+  gym_student: ['L\'allievo di oggi','Today\'s student','L\'élève du jour','El alumno de hoy','Der Schüler des Tages'],
+  gym_pantry: ['🍽️ Dispensa — compra, poi guadagnatelo col gioco','🍽️ Pantry — buy, then earn it in the minigame','🍽️ Garde-manger — achète, puis mérite-le en jouant','🍽️ Despensa — compra y gánatelo jugando','🍽️ Vorrat — kaufen, dann im Spiel verdienen'],
+  coach_ask: ['🎓 Chiedi un consiglio al Coach','🎓 Ask the Coach for advice','🎓 Demander conseil au Coach','🎓 Pedir consejo al Coach','🎓 Den Coach um Rat fragen'],
+  mis_title: ['📅 Missioni di oggi','📅 Today\'s missions','📅 Missions du jour','📅 Misiones de hoy','📅 Heutige Missionen'],
+  med_title: ['🏅 Medagliere','🏅 Medal collection','🏅 Médailler','🏅 Medallero','🏅 Medaillensammlung'],
+  reg_title: ['📖 Le regole di CatCards','📖 CatCards rules','📖 Les règles de CatCards','📖 Las reglas de CatCards','📖 Die CatCards-Regeln'],
+  opt_title: ['⚙️ Opzioni','⚙️ Options','⚙️ Options','⚙️ Opciones','⚙️ Einstellungen'],
+  locked_title: ['Serve l\'accesso','Sign-in required','Connexion requise','Se requiere acceso','Anmeldung erforderlich'],
+  locked_txt: ['Punti, Mercato, sfide e allenamenti vivono sul tuo account: per usare Dojo, Mondo, Mercato, Boss e Palestra devi prima accedere.','Points, Market, matches and training live on your account: sign in to use Dojo, World, Market, Bosses and Gym.','Points, Marché, défis et entraînements vivent sur ton compte : connecte-toi pour utiliser Dojo, Monde, Marché, Boss et Salle.','Puntos, Mercado, retos y entrenamientos viven en tu cuenta: inicia sesión para usar Dojo, Mundo, Mercado, Jefes y Gimnasio.','Punkte, Markt, Kämpfe und Training hängen an deinem Konto: melde dich an für Dojo, Welt, Markt, Bosse und Studio.'],
+  login_google: ['🔵 Accedi con Google','🔵 Sign in with Google','🔵 Connexion avec Google','🔵 Entrar con Google','🔵 Mit Google anmelden'],
+  login_hint: ['Accedi: punti, Mercato e sfide vivono sul tuo account','Sign in: points, Market and matches live on your account','Connecte-toi : points, Marché et défis vivent sur ton compte','Inicia sesión: puntos, Mercado y retos viven en tu cuenta','Anmelden: Punkte, Markt und Kämpfe hängen an deinem Konto'],
+  logout: ['Esci','Sign out','Déconnexion','Salir','Abmelden'],
+  close: ['✖ Chiudi','✖ Close','✖ Fermer','✖ Cerrar','✖ Schließen'],
+  skip_intro: ['⏭️ Salta la presentazione','⏭️ Skip the intro','⏭️ Passer la présentation','⏭️ Saltar la presentación','⏭️ Vorstellung überspringen'],
+  bet_title: ['🥊 L\'angolo di Zio Rocco','🥊 Uncle Rocco\'s corner','🥊 Le coin de Tonton Rocco','🥊 El rincón del Tío Rocco','🥊 Onkel Roccos Ecke'],
+  bet_sub: ['🎲 Pronostico','🎲 Betting','🎲 Pronostic','🎲 Pronóstico','🎲 Wette'],
+  bet_skip: ['Non scommetto, via al match!','No bet, on with the match!','Pas de pari, place au match !','Sin apuesta, ¡al combate!','Keine Wette, auf in den Kampf!'],
+  bet_back: ['↩️ Torna indietro (annulla il match)','↩️ Go back (cancel the match)','↩️ Retour (annuler le match)','↩️ Volver (cancelar el combate)','↩️ Zurück (Kampf abbrechen)'],
+  points_lbl: ['💰 I tuoi punti:','💰 Your points:','💰 Tes points:','💰 Tus puntos:','💰 Deine Punkte:'],
+};
+function T(k){
+  const r = UI[k];
+  if (!r) return k;
+  return r[LANGS.indexOf(LANG)] || r[0];
+}
+function applyI18n(){
+  document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = T(el.getAttribute('data-i18n')); });
 }
 /* ---------- lista fissa dei soprannomi: 80 identità nelle 5 lingue [it,en,fr,es,de] ---------- */
 const NICKS = [
@@ -1401,8 +1472,8 @@ function renderCollection(){
   document.getElementById('collCount').textContent = collection.length
     ? collection.length + (collection.length === 1 ? ' carta salvata' : ' carte salvate')
     : 'Nessuna carta ancora: creane una nella scheda 📸 Crea, o importa un backup da ⚙️ Opzioni.';
-  const ctb = document.getElementById('collTabBtn');
-  if (ctb) ctb.textContent = '📚 Carte' + (collection.length ? ' · ' + collection.length : '');
+  const cct = document.getElementById('collCountTag');
+  if (cct) cct.textContent = collection.length ? ' · ' + collection.length : '';
   renderPubList();
   try { renderGym(); } catch(e){}
   collection.forEach((c, i) => {
@@ -2096,7 +2167,7 @@ function renderWallet(){
   syncWallet();
 }
 function walletDisplay(){
-  const t = '💰 I tuoi punti: ' + points;
+  const t = T('points_lbl') + ' ' + points;
   const el = document.getElementById('wallet');
   if (el) el.textContent = t;
   document.querySelectorAll('[data-wallet]').forEach(x => { x.textContent = t; });
@@ -3531,7 +3602,7 @@ async function migrateMelodies(){
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
 /* ---------- versione e aggiornamento automatico ---------- */
-const APP_VERSION = '14.1';   // unica fonte di verità: aggiorna anche version.txt a ogni release
+const APP_VERSION = '14.3';   // unica fonte di verità: aggiorna anche version.txt a ogni release
 try { document.getElementById('appVer').textContent = 'v' + APP_VERSION; } catch(e){}
 function verNewer(a, b){   // a più recente di b? confronto numerico 11.10 > 11.9
   const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);
@@ -3860,19 +3931,7 @@ function renderAuth(){
   if (adm) adm.style.display = (session && session.email === ADMIN_EMAIL) ? 'block' : 'none';
   const admb = document.getElementById('adminBots');
   if (admb) admb.style.display = (session && session.email === ADMIN_EMAIL) ? 'block' : 'none';
-  const box = document.getElementById('authBox');
-  if (!box) return;
-  if (session && session.access_token){
-    box.innerHTML = '<p class="count">🔓 Connesso come <strong>' + (session.email || 'utente') + '</strong> ' +
-      '<button class="btn secondary" onclick="logout()" style="width:auto; display:inline-block; margin:0 0 0 8px; padding:8px 12px; font-size:.8rem;">Esci</button></p>';
-  } else {
-    box.innerHTML = '<label class="small">Accedi per pubblicare e sfidare</label>' +
-      '<button class="btn" onclick="loginGoogle()" style="margin-top:4px;">🔵 Accedi con Google</button>' +
-      '<details style="margin-top:10px;"><summary>Oppure via email (link)</summary>' +
-      '<input type="email" id="authEmail" placeholder="la-tua@email.it" style="margin-top:8px;">' +
-      '<button class="btn secondary" onclick="loginRequest()" style="margin-top:8px;">🔑 Accedi via email</button></details>' +
-      '<p class="count" id="authMsg" style="margin-top:6px;"></p>';
-  }
+  // l'accesso vive solo nella barra in alto (Google): niente più box nel Mondo né email
 }
 function loginGoogle(){
   const backTo = location.origin + location.pathname;
@@ -5164,7 +5223,7 @@ function renderBosses(){
     const row = document.createElement('div');
     row.style.cssText = 'border:1px solid ' + (b.tier >= 7 ? 'var(--accent)' : '#363057') + '; border-radius:10px; padding:10px; margin-top:8px;';
     row.innerHTML =
-      '<div style="display:flex; gap:10px; align-items:center;">' +
+      '<div style="display:flex; gap:10px; align-items:center; cursor:pointer;" onclick="showBossSheet(\'' + b.id + '\')">' +
         '<img id="bossImg_' + b.id + '" style="width:56px; height:56px; border-radius:8px; object-fit:cover; display:none; flex-shrink:0;">' +
         '<div id="bossEm_' + b.id + '" style="font-size:2.2rem; flex-shrink:0;">' + b.em + '</div>' +
         '<div style="flex:1; min-width:0;"><strong>' + b.name + '</strong> <span style="color:var(--muted); font-size:.8rem;">«' + b.nick + '»</span>' +
@@ -5357,6 +5416,8 @@ function renderBossMedals(){
     d.title = a.ds + ' · premio: ' + a.pt + ' punti';
     d.innerHTML = '<div class="mi">' + a.ic + '</div><div class="mn">' + a.nm + '</div>';
     d.onclick = () => {
+      // le medaglie boss aprono direttamente la scheda del boss
+      if (a.boss && a.id !== 'bm_all'){ showBossSheet(a.id.replace(/^bm_/, '')); return; }
       const info = document.getElementById('medalInfo');
       if (!info) return;
       const won = ach[a.id];
@@ -5992,6 +6053,7 @@ async function onQrFound(data, mine){
   renderMedals();
   try { renderMissions(); } catch(e){}
   checkAchievements();
+  try { applyI18n(); } catch(e){}
   initGym();
   initRealtime();
   setTimeout(checkUpdate, 5000);                 // primo controllo poco dopo l'avvio
