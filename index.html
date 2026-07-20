@@ -1442,7 +1442,7 @@ async function managerAdvice(){
         const bestLvl = 1 + Math.floor(((best.wins || 0) * 25 + (best.losses || 0) * 10) / 100);
         const bs = (Array.isArray(best.statsv) ? best.statsv.reduce((x, y) => x + (y || 0), 0) : 300) + (best.hp || 80) * 0.6 + (bestLvl - 1) * 12;
         const ms = estStrength(mine);
-        const p = Math.round(100 * ms / (ms + bs));
+        const p = Math.round(100 / (1 + Math.pow(10, (bs - ms) / 155)));   // stessa curva calibrata di Zio Rocco
         if (p < 45) parts.push('Ma parliamoci chiaro: Zio Rocco stima solo il ' + p + '% di vittoria. Io aspetterei — palestra, un livello in più, POI si firma il contratto.');
         else if (p < 55) parts.push('Le probabilità dicono ' + p + '%: match aperto, decidono i nervi (e magari l\'erba gatta 🌿).');
         else parts.push('Zio Rocco stima un ' + p + '% di vittoria: alla portata. Vai e chiudi il match.');
@@ -1943,7 +1943,9 @@ function renderCatnipBtn(){
 function askBet(ea, eb){
   return new Promise(resolve => {
     const sA = estStrength(ea), sB = estStrength(eb);
-    const pA = sA / (sA + sB);
+    // curva calibrata con 4000 battaglie simulate sul motore reale: un divario di 30 punti
+    // di statistiche vale ~62% di vittoria, 60 punti ~73% (il vecchio rapporto diceva 52%)
+    const pA = 1 / (1 + Math.pow(10, (sB - sA) / 155));
     const qA = Math.min(5, Math.max(1.05, Math.round(90 / pA) / 100));
     const qB = Math.min(5, Math.max(1.05, Math.round(90 / (1 - pA)) / 100));
     const favA = qA <= qB;
@@ -3221,7 +3223,7 @@ async function migrateMelodies(){
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
 /* ---------- versione e aggiornamento automatico ---------- */
-const APP_VERSION = '13.5';   // unica fonte di verità: aggiorna anche version.txt a ogni release
+const APP_VERSION = '13.6';   // unica fonte di verità: aggiorna anche version.txt a ogni release
 try { document.getElementById('appVer').textContent = 'v' + APP_VERSION; } catch(e){}
 function verNewer(a, b){   // a più recente di b? confronto numerico 11.10 > 11.9
   const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);
