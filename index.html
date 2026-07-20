@@ -587,13 +587,13 @@
     <button id="mClose" onclick="closeModal()">✕</button>
     <div id="modalHolo"><img id="modalImg" alt="carta"></div>
     <p id="modalCap" style="color:var(--text); text-align:center; max-width:360px; font-size:.92rem; margin-top:8px; line-height:1.5;"></p>
-    <button class="btn" onclick="downloadSaved()">⬇️ Scarica</button>
-    <button class="btn secondary" onclick="pickNick()">✏️ Cambia soprannome</button>
-    <button class="btn secondary" onclick="playSavedTheme()">▶️ Ascolta il tema</button>
-    <button class="btn secondary" onclick="retireCard()">🚪 Ritira dal mondo</button>
-    <button class="btn secondary" onclick="buyFrame()">🎨 Cornice d'Oro (100 punti)</button>
-    <button class="btn secondary" onclick="deleteSaved()">🗑️ Elimina</button>
-    <button class="btn secondary" onclick="closeModal()">✖ Chiudi</button>
+    <button class="btn" onclick="downloadSaved()" data-i18n="dl_short">⬇️ Scarica</button>
+    <button class="btn secondary" onclick="pickNick()" data-i18n="nick_btn">✏️ Cambia soprannome</button>
+    <button class="btn secondary" onclick="playSavedTheme()" data-i18n="theme_btn">▶️ Ascolta il tema</button>
+    <button class="btn secondary" onclick="retireCard()" data-i18n="retire_btn">🚪 Ritira dal mondo</button>
+    <button class="btn secondary" onclick="buyFrame()" data-i18n="frame_btn">🎨 Cornice d'Oro (100 punti)</button>
+    <button class="btn secondary" onclick="deleteSaved()" data-i18n="del_btn">🗑️ Elimina</button>
+    <button class="btn secondary" onclick="closeModal()" data-i18n="close">✖ Chiudi</button>
   </div>
 
 <script>
@@ -819,6 +819,12 @@ const UI = {
   bet_skip: ['Non scommetto, via al match!','No bet, on with the match!','Pas de pari, place au match !','Sin apuesta, ¡al combate!','Keine Wette, auf in den Kampf!'],
   bet_back: ['↩️ Torna indietro (annulla il match)','↩️ Go back (cancel the match)','↩️ Retour (annuler le match)','↩️ Volver (cancelar el combate)','↩️ Zurück (Kampf abbrechen)'],
   points_lbl: ['💰 I tuoi punti:','💰 Your points:','💰 Tes points:','💰 Tus puntos:','💰 Deine Punkte:'],
+  dl_short: ['⬇️ Scarica','⬇️ Download','⬇️ Télécharger','⬇️ Descargar','⬇️ Herunterladen'],
+  nick_btn: ['✏️ Cambia soprannome','✏️ Change nickname','✏️ Changer le surnom','✏️ Cambiar apodo','✏️ Spitznamen ändern'],
+  theme_btn: ['▶️ Ascolta il tema','▶️ Play theme song','▶️ Écouter le thème','▶️ Escuchar el tema','▶️ Titelmusik abspielen'],
+  retire_btn: ['🚪 Ritira dal mondo','🚪 Retire from the world','🚪 Retirer du monde','🚪 Retirar del mundo','🚪 Aus der Welt zurückziehen'],
+  frame_btn: ['🎨 Cornice d\'Oro (100 punti)','🎨 Golden Frame (100 points)','🎨 Cadre d\'Or (100 points)','🎨 Marco de Oro (100 puntos)','🎨 Goldrahmen (100 Punkte)'],
+  del_btn: ['🗑️ Elimina','🗑️ Delete','🗑️ Supprimer','🗑️ Eliminar','🗑️ Löschen'],
 };
 function T(k){
   const r = UI[k];
@@ -2262,14 +2268,14 @@ async function initCornerman(){
     if (el && img){ el.src = img; el.style.display = 'block'; const em = document.getElementById('cornerEmoji'); if (em) em.style.display = 'none'; }
   } catch(e){}
 }
-const CORNER_STATS = ['💪 Forza', '🧠 Intelligenza', '🎯 Destrezza', '⚡ Velocità', '✨ Fascino', '😼 Indifferenza'];
+function CORNER_STATS_F(){ return statIcons(); }
 function statsOf(e){
   return (Array.isArray(e.statsv) && e.statsv.length === 6) ? e.statsv
     : rollCard(parseInt(e.serial, 16) >>> 0, e.name).stats.map(s => s.value);
 }
 function cornerAnalysis(ea, eb, pA){
   const sa = statsOf(ea), sb = statsOf(eb);
-  const rows = CORNER_STATS.map((k, i) => {
+  const rows = CORNER_STATS_F().map((k, i) => {
     const a = sa[i] || 0, b = sb[i] || 0;
     const col = a > b ? '#51cf66' : (a < b ? '#e63946' : 'var(--muted)');
     const mark = a > b ? '✓' : (a < b ? '✗' : '=');
@@ -2291,7 +2297,7 @@ function cornerComment(ea, eb, pA){
   const sa = statsOf(ea), sb = statsOf(eb);
   let worst = 0, gap = 0;
   sa.forEach((v, i) => { const d = (sb[i] || 0) - v; if (d > gap){ gap = d; worst = i; } });
-  const warn = gap >= 12 ? ' Occhio alla sua ' + CORNER_STATS[worst].split(' ')[1] + ': lì ti mangia.' : '';
+  const warn = gap >= 12 ? ' Occhio alla sua ' + CORNER_STATS_F()[worst].split(' ').slice(1).join(' ') + ': lì ti mangia.' : '';
   if (pA >= 0.7) return 'Ragazzo, questo lo stendi prima del gong. Non ti montare la testa e chiudi in fretta.' + warn;
   if (pA >= 0.55) return 'Sei favorito, ma i favoriti che dormono finiscono al tappeto. Colpisci per primo.' + warn;
   if (pA >= 0.45) return 'Cinquanta e cinquanta, ragazzo: qui decide chi ha più fame. Se hai 50 punti, l\'erba gatta li vale tutti.' + warn;
@@ -3602,7 +3608,7 @@ async function migrateMelodies(){
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
 /* ---------- versione e aggiornamento automatico ---------- */
-const APP_VERSION = '14.3';   // unica fonte di verità: aggiorna anche version.txt a ogni release
+const APP_VERSION = '14.4';   // unica fonte di verità: aggiorna anche version.txt a ogni release
 try { document.getElementById('appVer').textContent = 'v' + APP_VERSION; } catch(e){}
 function verNewer(a, b){   // a più recente di b? confronto numerico 11.10 > 11.9
   const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);
@@ -4696,7 +4702,7 @@ function showCardSheet(c){
   const rk = rankOf(c.serial);
   const streakTxt = c.win_streak > 1 ? ' · 🔥 ' + c.win_streak + ' di fila' : (c.loss_streak > 1 ? ' · 🧊 ' + c.loss_streak + ' ko di fila' : '');
   const lvl = 1 + Math.floor(((c.wins || 0) * 25 + (c.losses || 0) * 10) / 100);
-  const statKeys = ['💪 Forza', '🧠 Intelligenza', '🎯 Destrezza', '⚡ Velocità', '✨ Fascino', '😼 Indifferenza'];
+  const statKeys = statIcons();
   let statsHtml = '';
   if (Array.isArray(c.statsv) && c.statsv.length === 6){
     statsHtml = statKeys.map((k, j) =>
@@ -4726,7 +4732,7 @@ function showWorldCard(i){
   const rk = rankOf(c.serial);
   const streakTxt = c.win_streak > 1 ? ' · 🔥 ' + c.win_streak + ' di fila' : (c.loss_streak > 1 ? ' · 🧊 ' + c.loss_streak + ' ko di fila' : '');
   const lvl = 1 + Math.floor(((c.wins || 0) * 25 + (c.losses || 0) * 10) / 100);   // livello stimato dal record mondiale
-  const statKeys = ['💪 Forza', '🧠 Intelligenza', '🎯 Destrezza', '⚡ Velocità', '✨ Fascino', '😼 Indifferenza'];
+  const statKeys = statIcons();
   let statsHtml = '';
   if (Array.isArray(c.statsv) && c.statsv.length === 6){
     statsHtml = statKeys.map((k, j) =>
@@ -5249,7 +5255,7 @@ function renderBosses(){
   renderBestiary();
 }
 const DIV_NAMES = {1:'Randagi di Quartiere', 2:'Domestici Ribelli', 3:'Nobili e Aristogatti', 4:'Bestie Selvatiche', 5:'Miti e Leggende', 6:'Spettri e Soprannaturale', 7:'Divinità Feline', 8:'Boss Finali'};
-const STAT_ICONS = ['💪 Forza', '🧠 Intelligenza', '🎯 Destrezza', '⚡ Velocità', '✨ Fascino', '😼 Indifferenza'];
+function statIcons(){ return STATS.map(s => s.icon + ' ' + trStat(s.key)); }   // etichette nella lingua attiva
 function renderBestiary(){
   const body = document.getElementById('bestiaryBody');
   const sum = document.getElementById('bestiarySum');
@@ -5276,7 +5282,7 @@ function showBossSheet(id){
   const beaten = (bossWins[b.id] || {}).n >= 1;
   const box = document.getElementById('bossModalBody');
   const statsHtml = beaten
-    ? STAT_ICONS.map((k, j) => '<div style="display:flex; justify-content:space-between; font-size:.85rem; padding:2px 0;"><span>' + k + '</span><strong>' + b.statsv[j] + '</strong></div>').join('')
+    ? statIcons().map((k, j) => '<div style="display:flex; justify-content:space-between; font-size:.85rem; padding:2px 0;"><span>' + k + '</span><strong>' + b.statsv[j] + '</strong></div>').join('')
     : '<p class="count">Statistiche ignote: affronta ' + (b.name) + ' per svelarle.</p>';
   box.innerHTML =
     (beaten && b._img ? '<img src="' + b._img + '" style="width:100%; border-radius:12px;">' :
