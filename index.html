@@ -596,6 +596,7 @@
     <div id="modalHolo"><img id="modalImg" alt="carta"></div>
     <p id="modalCap" style="color:var(--text); text-align:center; max-width:360px; font-size:.92rem; margin-top:8px; line-height:1.5;"></p>
     <button class="btn" onclick="downloadSaved()">⬇️ Scarica</button>
+    <button class="btn secondary" onclick="pickNick()">✏️ Cambia soprannome</button>
     <button class="btn secondary" onclick="playSavedTheme()">▶️ Ascolta il tema</button>
     <button class="btn secondary" onclick="retireCard()">🚪 Ritira dal mondo</button>
     <button class="btn secondary" onclick="buyFrame()">🎨 Cornice d'Oro (100 punti)</button>
@@ -699,6 +700,239 @@ function mulberry32(seed){
     t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
     return ((t ^ t >>> 14) >>> 0) / 4294967296;
   };
+}
+
+/* ---------- multilingua: motore (IT/EN/FR/ES/DE), default EN, rilevata dal dispositivo ---------- */
+const LANGS = ['it', 'en', 'fr', 'es', 'de'];
+const LANG_NAMES = {it: 'Italiano', en: 'English', fr: 'Français', es: 'Español', de: 'Deutsch'};
+let LANG = 'en';
+try {
+  const saved = localStorage.getItem('catcards_lang');
+  if (saved && LANGS.indexOf(saved) >= 0) LANG = saved;
+  else {
+    const dev = (navigator.language || 'en').slice(0, 2).toLowerCase();
+    LANG = LANGS.indexOf(dev) >= 0 ? dev : 'en';
+  }
+} catch(e){}
+function setLang(l){
+  if (LANGS.indexOf(l) < 0) return;
+  LANG = l;
+  try { localStorage.setItem('catcards_lang', l); } catch(e){}
+  // ridisegna ciò che parla: carte (etichette statistiche/rarità) e viste principali
+  try { renderUserBar(); } catch(e){}
+  try { redrawAllCards(); } catch(e){}
+  try { renderCollection(); renderStats(); } catch(e){}
+  try { if (modalIndex >= 0) openCardModal(modalIndex); } catch(e){}
+}
+async function redrawAllCards(){
+  for (const c of collection){ try { await redrawEntry(c); } catch(e){} }
+  persistColl(); renderCollection();
+}
+// etichette delle statistiche: chiave interna sempre italiana, traduzione solo in disegno/UI
+const STAT_TR = {
+  'Forza':        {it:'Forza', en:'Strength', fr:'Force', es:'Fuerza', de:'Stärke'},
+  'Intelligenza': {it:'Intelligenza', en:'Intelligence', fr:'Intelligence', es:'Inteligencia', de:'Intelligenz'},
+  'Destrezza':    {it:'Destrezza', en:'Agility', fr:'Agilité', es:'Destreza', de:'Geschick'},
+  'Velocità':     {it:'Velocità', en:'Speed', fr:'Vitesse', es:'Velocidad', de:'Tempo'},
+  'Fascino':      {it:'Fascino', en:'Charm', fr:'Charme', es:'Encanto', de:'Charme'},
+  'Indifferenza': {it:'Indifferenza', en:'Aloofness', fr:'Indifférence', es:'Indiferencia', de:'Gleichgültigkeit'},
+};
+const RARITY_TR = {
+  'Comune':      {it:'Comune', en:'Common', fr:'Commune', es:'Común', de:'Gewöhnlich'},
+  'Rara':        {it:'Rara', en:'Rare', fr:'Rare', es:'Rara', de:'Selten'},
+  'Epica':       {it:'Epica', en:'Epic', fr:'Épique', es:'Épica', de:'Episch'},
+  'Leggendaria': {it:'Leggendaria', en:'Legendary', fr:'Légendaire', es:'Legendaria', de:'Legendär'},
+};
+function trStat(key){ return (STAT_TR[key] && STAT_TR[key][LANG]) || key; }
+function trRarity(name){ return (RARITY_TR[name] && RARITY_TR[name][LANG]) || name; }
+// annuncio da template (scelta B: niente più testi AI)
+const ANN_TR = {
+  it: {red: 'Dall\'angolo rosso... {n}... «{k}»!', blue: 'Dall\'angolo blu... {n}... «{k}»!'},
+  en: {red: 'From the red corner... {n}... "{k}"!', blue: 'From the blue corner... {n}... "{k}"!'},
+  fr: {red: 'Dans le coin rouge... {n}... «{k}»!', blue: 'Dans le coin bleu... {n}... «{k}»!'},
+  es: {red: 'Desde la esquina roja... {n}... «{k}»!', blue: 'Desde la esquina azul... {n}... «{k}»!'},
+  de: {red: 'Aus der roten Ecke... {n}... „{k}"!', blue: 'Aus der blauen Ecke... {n}... „{k}"!'},
+};
+function annText(entry, corner){
+  const t = (ANN_TR[LANG] || ANN_TR.en)[corner === 'blue' ? 'blue' : 'red'];
+  return t.replace('{n}', entry.name).replace('{k}', nickOf(entry));
+}
+/* ---------- lista fissa dei soprannomi: 80 identità nelle 5 lingue [it,en,fr,es,de] ---------- */
+const NICKS = [
+  ['Il Socrate della Latta','The Tin-Can Socrates','Le Socrate de la Boîte','El Sócrates de la Lata','Der Dosen-Sokrates'],
+  ['Il Barone Zanna Storta','Baron Crookfang','Le Baron Croc-Tordu','El Barón Colmillo Torcido','Baron Schiefzahn'],
+  ['Il Colosso della Brace','The Ember Colossus','Le Colosse de la Braise','El Coloso de las Brasas','Der Glut-Koloss'],
+  ['Il Gladiatore dell\'Asfalto','The Asphalt Gladiator','Le Gladiateur de l\'Asphalte','El Gladiador del Asfalto','Der Asphalt-Gladiator'],
+  ['Lo Stracchino Dormiente','The Sleeping Softcheese','Le Fromage Dormant','El Quesito Durmiente','Der Schlafende Weichkäse'],
+  ['Il Monolito di Felpa','The Fleece Monolith','Le Monolithe de Peluche','El Monolito de Felpa','Der Plüsch-Monolith'],
+  ['Il Mastro Leccatore Zen','The Zen Master Licker','Le Maître Lécheur Zen','El Maestro Lamedor Zen','Der Zen-Leckermeister'],
+  ['L\'Imperturbabile Zen','The Unshakable Zen','L\'Imperturbable Zen','El Imperturbable Zen','Der Unerschütterliche Zen'],
+  ['L\'Inamovibile Fortezza Morbida','The Immovable Soft Fortress','La Forteresse Douce Inamovible','La Fortaleza Blanda Inamovible','Die Unbewegliche Weiche Festung'],
+  ['Il Radar dell\'Oltredivano','The Beyond-the-Couch Radar','Le Radar de l\'Outre-Canapé','El Radar del Más Allá del Sofá','Das Hinterm-Sofa-Radar'],
+  ['Il Radar del Malanno','The Mischief Radar','Le Radar des Ennuis','El Radar de los Males','Das Unheil-Radar'],
+  ['Sua Morbidezza Ipnotica','His Hypnotic Softness','Sa Douceur Hypnotique','Su Suavidad Hipnótica','Seine Hypnotische Weichheit'],
+  ['Il Veterano delle Fusa','The Purring Veteran','Le Vétéran du Ronron','El Veterano del Ronroneo','Der Schnurr-Veteran'],
+  ['Il Triste Ipnotista Felino','The Sad Feline Hypnotist','Le Triste Hypnotiseur Félin','El Triste Hipnotista Felino','Der Traurige Katzenhypnotiseur'],
+  ['Il Panzer di Seta','The Silk Panzer','Le Panzer de Soie','El Panzer de Seda','Der Seiden-Panzer'],
+  ['La Marmitta Infuocata','The Flaming Muffler','Le Pot d\'Échappement Enflammé','El Escape en Llamas','Der Feurige Auspuff'],
+  ['Il Batuffolo Ipnotico','The Hypnotic Puffball','La Boule Hypnotique','El Ovillo Hipnótico','Der Hypnotische Wattebausch'],
+  ['L\'Artiglio allo Zenzero','The Ginger Claw','La Griffe au Gingembre','La Garra de Jengibre','Die Ingwer-Kralle'],
+  ['Il Dirigibile Centro-Tavola','The Centerpiece Blimp','Le Dirigeable de Table','El Dirigible de Mesa','Der Tisch-Zeppelin'],
+  ['Il Bastione di Pelo','The Bastion of Fur','Le Bastion de Poils','El Bastión de Pelo','Die Fell-Bastion'],
+  ['Il Guancia d\'Acciaio','The Steel Cheek','La Joue d\'Acier','El Mejilla de Acero','Die Stahlwange'],
+  ['Lo Spettro del Divano','The Couch Phantom','Le Fantôme du Canapé','El Fantasma del Sofá','Das Sofagespenst'],
+  ['La Furia del Sottoscala','The Understairs Fury','La Furie du Sous-Escalier','La Furia del Trastero','Die Wut aus der Abstellkammer'],
+  ['Il Tornado di Pelo','The Fur Tornado','La Tornade de Poils','El Tornado de Pelo','Der Fell-Tornado'],
+  ['L\'Ombra della Dispensa','The Pantry Shadow','L\'Ombre du Garde-Manger','La Sombra de la Despensa','Der Schatten der Speisekammer'],
+  ['Il Ninja del Davanzale','The Windowsill Ninja','Le Ninja du Rebord','El Ninja del Alféizar','Der Fensterbrett-Ninja'],
+  ['La Valanga Fulva','The Tawny Avalanche','L\'Avalanche Fauve','La Avalancha Rojiza','Die Rote Lawine'],
+  ['Il Sicario delle Tende','The Curtain Assassin','Le Tueur de Rideaux','El Sicario de las Cortinas','Der Gardinen-Killer'],
+  ['Il Terrore dei Gomitoli','The Terror of Yarn Balls','La Terreur des Pelotes','El Terror de los Ovillos','Der Schrecken der Wollknäuel'],
+  ['La Locomotiva Pigra','The Lazy Locomotive','La Locomotive Paresseuse','La Locomotora Perezosa','Die Faule Lokomotive'],
+  ['Il Filosofo del Termosifone','The Radiator Philosopher','Le Philosophe du Radiateur','El Filósofo del Radiador','Der Heizkörper-Philosoph'],
+  ['L\'Uragano in Pantofole','The Hurricane in Slippers','L\'Ouragan en Pantoufles','El Huracán en Pantuflas','Der Orkan in Pantoffeln'],
+  ['Il Ghepardo da Salotto','The Living-Room Cheetah','Le Guépard de Salon','El Guepardo de Salón','Der Wohnzimmer-Gepard'],
+  ['La Sfinge del Frigorifero','The Refrigerator Sphinx','Le Sphinx du Frigo','La Esfinge del Frigorífico','Die Kühlschrank-Sphinx'],
+  ['Il Lampo Sornione','The Sly Lightning','L\'Éclair Sournois','El Relámpago Socarrón','Der Verschmitzte Blitz'],
+  ['Il Cuscino Assassino','The Killer Pillow','Le Coussin Tueur','El Cojín Asesino','Das Killer-Kissen'],
+  ['La Belva del Balcone','The Balcony Beast','La Bête du Balcon','La Bestia del Balcón','Die Balkon-Bestie'],
+  ['Il Generale Graffio','General Scratch','Le Général Griffe','El General Zarpazo','General Kratzer'],
+  ['L\'Acrobata di Mezzanotte','The Midnight Acrobat','L\'Acrobate de Minuit','El Acróbata de Medianoche','Der Mitternachts-Akrobat'],
+  ['Il Sultano del Sonnellino','The Sultan of Naps','Le Sultan de la Sieste','El Sultán de la Siesta','Der Sultan des Nickerchens'],
+  ['La Tigre della Moquette','The Carpet Tiger','Le Tigre de la Moquette','El Tigre de la Moqueta','Der Teppich-Tiger'],
+  ['Il Fantasma delle Scale','The Staircase Ghost','Le Fantôme de l\'Escalier','El Fantasma de la Escalera','Das Treppengespenst'],
+  ['Il Distruttore di Divani','The Couch Destroyer','Le Destructeur de Canapés','El Destructor de Sofás','Der Sofa-Zerstörer'],
+  ['La Pantera del Pianerottolo','The Landing Panther','La Panthère du Palier','La Pantera del Rellano','Der Treppenabsatz-Panther'],
+  ['Il Barone dei Bocconcini','The Baron of Morsels','Le Baron des Bouchées','El Barón de los Bocaditos','Der Baron der Häppchen'],
+  ['L\'Imperatore del Cestino','The Emperor of the Basket','L\'Empereur du Panier','El Emperador de la Cesta','Der Kaiser des Körbchens'],
+  ['Il Pirata del Pesce Fresco','The Fresh-Fish Pirate','Le Pirate du Poisson Frais','El Pirata del Pescado Fresco','Der Frischfisch-Pirat'],
+  ['La Saetta Peluche','The Plush Thunderbolt','L\'Éclair en Peluche','El Rayo de Peluche','Der Plüsch-Blitz'],
+  ['Il Campione dei Croccantini','The Kibble Champion','Le Champion des Croquettes','El Campeón de las Croquetas','Der Trockenfutter-Champion'],
+  ['Lo Stratega del Sottotetto','The Attic Strategist','Le Stratège du Grenier','El Estratega del Desván','Der Dachboden-Stratege'],
+  ['Il Mostro delle Ciabatte','The Slipper Monster','Le Monstre des Pantoufles','El Monstruo de las Zapatillas','Das Pantoffel-Monster'],
+  ['La Duchessa Artigliata','The Clawed Duchess','La Duchesse Griffue','La Duquesa con Garras','Die Bekrallte Herzogin'],
+  ['Il Vichingo Vellutato','The Velvet Viking','Le Viking Velouté','El Vikingo Aterciopelado','Der Samt-Wikinger'],
+  ['L\'Enigma Baffuto','The Whiskered Enigma','L\'Énigme à Moustaches','El Enigma Bigotudo','Das Schnurrbart-Rätsel'],
+  ['Il Ciclone Silenzioso','The Silent Cyclone','Le Cyclone Silencieux','El Ciclón Silencioso','Der Stille Wirbelsturm'],
+  ['La Zampa del Destino','The Paw of Destiny','La Patte du Destin','La Zarpa del Destino','Die Pfote des Schicksals'],
+  ['Il Re del Cartone','The Cardboard King','Le Roi du Carton','El Rey del Cartón','Der Karton-König'],
+  ['L\'Agguato Permanente','The Permanent Ambush','L\'Embuscade Permanente','La Emboscada Permanente','Der Dauerhinterhalt'],
+  ['Il Meteorite Morbido','The Soft Meteorite','La Météorite Moelleuse','El Meteorito Blando','Der Weiche Meteorit'],
+  ['La Leggenda del Cortile','The Courtyard Legend','La Légende de la Cour','La Leyenda del Patio','Die Hof-Legende'],
+  ['Il Guardiano della Ciotola','The Bowl Guardian','Le Gardien de la Gamelle','El Guardián del Cuenco','Der Napf-Wächter'],
+  ['L\'Occhio della Notte','The Eye of the Night','L\'Œil de la Nuit','El Ojo de la Noche','Das Auge der Nacht'],
+  ['Il Samurai Spelacchiato','The Scruffy Samurai','Le Samouraï Pelé','El Samurái Despeluchado','Der Zerzauste Samurai'],
+  ['La Furia Tricolore','The Tricolor Fury','La Furie Tricolore','La Furia Tricolor','Die Dreifarbige Furie'],
+  ['Il Professore di Agguati','The Professor of Ambushes','Le Professeur d\'Embuscades','El Profesor de Emboscadas','Der Professor der Hinterhalte'],
+  ['L\'Ammiraglio dei Tetti','The Admiral of the Rooftops','L\'Amiral des Toits','El Almirante de los Tejados','Der Admiral der Dächer'],
+  ['Il Rullo Compressore','The Steamroller','Le Rouleau Compresseur','La Apisonadora','Die Dampfwalze'],
+  ['La Peste Elegante','The Elegant Pest','La Peste Élégante','La Peste Elegante','Die Elegante Plage'],
+  ['Il Vulcano Sonnolento','The Sleepy Volcano','Le Volcan Somnolent','El Volcán Somnoliento','Der Schläfrige Vulkan'],
+  ['L\'Artiglio di Velluto','The Velvet Claw','La Griffe de Velours','La Garra de Terciopelo','Die Samtkralle'],
+  ['Il Bandito della Cucina','The Kitchen Bandit','Le Bandit de la Cuisine','El Bandido de la Cocina','Der Küchen-Bandit'],
+  ['La Sentinella del Frigo','The Fridge Sentinel','La Sentinelle du Frigo','El Centinela del Frigo','Der Kühlschrank-Wachposten'],
+  ['Il Drago del Cuscino','The Cushion Dragon','Le Dragon du Coussin','El Dragón del Cojín','Der Kissen-Drache'],
+  ['L\'Eco del Miagolio','The Echo of the Meow','L\'Écho du Miaulement','El Eco del Maullido','Das Echo des Miauens'],
+  ['Il Maestro di Fusa','The Master of Purrs','Le Maître du Ronronnement','El Maestro del Ronroneo','Der Meister des Schnurrens'],
+  ['La Tempesta Tascabile','The Pocket Tempest','La Tempête de Poche','La Tormenta de Bolsillo','Der Taschensturm'],
+  ['Il Gigante Gentile','The Gentle Giant','Le Doux Géant','El Gigante Amable','Der Sanfte Riese'],
+  ['L\'Ultimo Randagio','The Last Stray','Le Dernier Errant','El Último Callejero','Der Letzte Streuner'],
+  ['Il Cacciatore di Lucertole','The Lizard Hunter','Le Chasseur de Lézards','El Cazador de Lagartijas','Der Eidechsen-Jäger'],
+  ['La Nona Vita','The Ninth Life','La Neuvième Vie','La Novena Vida','Das Neunte Leben'],
+];
+/* ---------- lista fissa delle descrizioni buffe: 50 nelle 5 lingue [it,en,fr,es,de] ---------- */
+const DESCRS = [
+  ['Dorme 20 ore al giorno e nelle altre 4 si allena a dormire meglio.','Sleeps 20 hours a day and spends the other 4 training to sleep better.','Dort 20 heures par jour et s\'entraîne à mieux dormir les 4 autres.','Duerme 20 horas al día y las otras 4 entrena para dormir mejor.','Schläft 20 Stunden am Tag und trainiert die anderen 4, besser zu schlafen.'],
+  ['Non ha mai perso una battaglia contro un calzino.','Has never lost a battle against a sock.','N\'a jamais perdu une bataille contre une chaussette.','Nunca ha perdido una batalla contra un calcetín.','Hat noch nie einen Kampf gegen eine Socke verloren.'],
+  ['Crede che il frigorifero gli debba delle spiegazioni.','Believes the refrigerator owes him an explanation.','Pense que le frigo lui doit des explications.','Cree que el frigorífico le debe explicaciones.','Glaubt, der Kühlschrank schulde ihm eine Erklärung.'],
+  ['Maestro nell\'arte di occupare esattamente il posto dove volevi sederti.','Master of the art of occupying exactly where you wanted to sit.','Maître dans l\'art d\'occuper exactement la place où tu voulais t\'asseoir.','Maestro en el arte de ocupar justo donde querías sentarte.','Meister darin, genau den Platz zu besetzen, wo du sitzen wolltest.'],
+  ['Ha rovesciato tre vasi. Tutti colpevoli.','Knocked over three vases. All of them guilty.','A renversé trois vases. Tous coupables.','Ha tirado tres jarrones. Todos culpables.','Hat drei Vasen umgeworfen. Alle waren schuldig.'],
+  ['Parla tre lingue: fusa, miagolio e disprezzo.','Speaks three languages: purr, meow and contempt.','Parle trois langues : ronron, miaou et mépris.','Habla tres idiomas: ronroneo, maullido y desprecio.','Spricht drei Sprachen: Schnurren, Miau und Verachtung.'],
+  ['Corre alle 4 del mattino per motivi che non ci è dato sapere.','Runs at 4 a.m. for reasons beyond our understanding.','Court à 4h du matin pour des raisons qui nous dépassent.','Corre a las 4 de la mañana por razones que no nos incumben.','Rennt um 4 Uhr morgens aus Gründen, die wir nie erfahren werden.'],
+  ['Un guerriero nato, purché il divano sia a meno di due metri.','A born warrior, as long as the couch is within two meters.','Un guerrier né, tant que le canapé est à moins de deux mètres.','Un guerrero nato, siempre que el sofá esté a menos de dos metros.','Ein geborener Krieger, solange das Sofa keine zwei Meter entfernt ist.'],
+  ['La sua ciotola è mezza vuota. Sempre. Anche piena.','His bowl is half empty. Always. Even when full.','Sa gamelle est à moitié vide. Toujours. Même pleine.','Su cuenco está medio vacío. Siempre. Incluso lleno.','Sein Napf ist halb leer. Immer. Auch wenn er voll ist.'],
+  ['Fissa il muro perché il muro ha iniziato per primo.','Stares at the wall because the wall started it.','Fixe le mur parce que le mur a commencé.','Mira fijamente la pared porque la pared empezó primero.','Starrt die Wand an, weil die Wand angefangen hat.'],
+  ['Ex randagio, ora dirigente d\'azienda del pisolino.','Former stray, now a senior executive of napping.','Ancien errant, désormais cadre supérieur de la sieste.','Ex callejero, ahora alto ejecutivo de la siesta.','Ehemaliger Streuner, jetzt Führungskraft im Nickerchen-Wesen.'],
+  ['Fa le fusa come un trattore e graffia come un rasoio.','Purrs like a tractor and scratches like a razor.','Ronronne comme un tracteur et griffe comme un rasoir.','Ronronea como un tractor y araña como una navaja.','Schnurrt wie ein Traktor und kratzt wie ein Rasiermesser.'],
+  ['Il veterinario lo ricorda ancora nei suoi incubi.','The vet still remembers him in his nightmares.','Le vétérinaire le revoit encore dans ses cauchemars.','El veterinario aún lo recuerda en sus pesadillas.','Der Tierarzt sieht ihn noch in seinen Albträumen.'],
+  ['Non insegue i topi: manda avvisi di sfratto.','Doesn\'t chase mice: serves eviction notices.','Ne chasse pas les souris : envoie des avis d\'expulsion.','No persigue ratones: envía avisos de desahucio.','Jagt keine Mäuse: verschickt Räumungsbescheide.'],
+  ['Sa aprire tre tipi di porte e finge di non saperlo.','Can open three kinds of doors and pretends he can\'t.','Sait ouvrir trois types de portes et fait semblant de ne pas savoir.','Sabe abrir tres tipos de puertas y finge que no.','Kann drei Arten von Türen öffnen und tut so, als ob nicht.'],
+  ['La scatola vale più del regalo. Sempre.','The box is worth more than the gift. Always.','La boîte vaut plus que le cadeau. Toujours.','La caja vale más que el regalo. Siempre.','Der Karton ist mehr wert als das Geschenk. Immer.'],
+  ['Ha un dottorato in sguardi di giudizio.','Holds a PhD in judgmental stares.','Docteur en regards de jugement.','Doctorado en miradas de juicio.','Hat einen Doktortitel in vorwurfsvollen Blicken.'],
+  ['Combatte il crimine. Il crimine è l\'aspirapolvere.','Fights crime. The crime is the vacuum cleaner.','Combat le crime. Le crime, c\'est l\'aspirateur.','Lucha contra el crimen. El crimen es la aspiradora.','Bekämpft das Verbrechen. Das Verbrechen ist der Staubsauger.'],
+  ['Ogni sedia della casa è sua. Anche la tua.','Every chair in the house is his. Including yours.','Chaque chaise de la maison est à lui. Même la tienne.','Cada silla de la casa es suya. También la tuya.','Jeder Stuhl im Haus gehört ihm. Auch deiner.'],
+  ['Si allena sulle tende quando nessuno guarda.','Trains on the curtains when nobody\'s watching.','S\'entraîne sur les rideaux quand personne ne regarde.','Entrena en las cortinas cuando nadie mira.','Trainiert an den Gardinen, wenn niemand hinsieht.'],
+  ['Il suo passatempo preferito: buttare cose dai tavoli con eleganza.','Favorite hobby: elegantly knocking things off tables.','Passe-temps favori : faire tomber des objets avec élégance.','Pasatiempo favorito: tirar cosas de las mesas con elegancia.','Lieblingshobby: Dinge elegant vom Tisch werfen.'],
+  ['Miagola in Do minore quando la ciotola è vuota.','Meows in C minor when the bowl is empty.','Miaule en do mineur quand la gamelle est vide.','Maúlla en do menor cuando el cuenco está vacío.','Miaut in c-Moll, wenn der Napf leer ist.'],
+  ['Nessuno l\'ha mai visto arrivare. Solo partire con la cena.','No one ever sees him coming. Only leaving with dinner.','Personne ne l\'a vu arriver. Seulement repartir avec le dîner.','Nadie lo ha visto llegar. Solo irse con la cena.','Niemand sieht ihn kommen. Nur mit dem Abendessen verschwinden.'],
+  ['Pesa il giusto: esattamente quanto serve per bloccarti le gambe.','Weighs exactly enough to pin your legs down.','Pèse juste ce qu\'il faut pour bloquer tes jambes.','Pesa justo lo necesario para inmovilizarte las piernas.','Wiegt genau so viel, wie nötig ist, um deine Beine festzunageln.'],
+  ['Le lucertole del quartiere hanno organizzato una taglia su di lui.','The neighborhood lizards have put a bounty on him.','Les lézards du quartier ont mis sa tête à prix.','Las lagartijas del barrio han puesto precio a su cabeza.','Die Eidechsen der Nachbarschaft haben ein Kopfgeld auf ihn ausgesetzt.'],
+  ['Dorme in posizioni che sfidano la fisica e il buonsenso.','Sleeps in positions that defy physics and common sense.','Dort dans des positions qui défient la physique et le bon sens.','Duerme en posturas que desafían la física y el sentido común.','Schläft in Positionen, die Physik und Verstand trotzen.'],
+  ['Ha capito come funziona il laser. Finge di no per pietà.','Figured out the laser pointer. Pretends otherwise out of pity.','A compris le laser. Fait semblant par pitié.','Entendió el láser. Finge que no, por lástima.','Hat den Laserpointer durchschaut. Tut aus Mitleid so, als ob nicht.'],
+  ['Un incrocio tra un cuscino e una tagliola.','A cross between a pillow and a bear trap.','Un croisement entre un coussin et un piège à loup.','Un cruce entre un cojín y un cepo.','Eine Kreuzung aus Kissen und Bärenfalle.'],
+  ['Sorveglia il quartiere dalla finestra come un capo di stato.','Surveys the neighborhood from the window like a head of state.','Surveille le quartier depuis la fenêtre comme un chef d\'État.','Vigila el barrio desde la ventana como un jefe de estado.','Überwacht die Nachbarschaft vom Fenster aus wie ein Staatsoberhaupt.'],
+  ['Le sue fusa curano lo stress. Le sue unghie lo causano.','His purrs cure stress. His claws cause it.','Son ronron soigne le stress. Ses griffes le provoquent.','Su ronroneo cura el estrés. Sus uñas lo causan.','Sein Schnurren heilt Stress. Seine Krallen verursachen ihn.'],
+  ['Mangia come un lupo, dorme come un sasso, regna come un re.','Eats like a wolf, sleeps like a rock, reigns like a king.','Mange comme un loup, dort comme une pierre, règne comme un roi.','Come como un lobo, duerme como una piedra, reina como un rey.','Frisst wie ein Wolf, schläft wie ein Stein, herrscht wie ein König.'],
+  ['L\'unico gatto che ha vinto una discussione con un cetriolo.','The only cat who ever won an argument with a cucumber.','Le seul chat à avoir gagné un débat contre un concombre.','El único gato que ganó una discusión con un pepino.','Die einzige Katze, die je eine Diskussion mit einer Gurke gewonnen hat.'],
+  ['Si offende se lo guardi. Si offende se non lo guardi.','Gets offended if you look at him. Gets offended if you don\'t.','Se vexe si tu le regardes. Se vexe si tu ne le regardes pas.','Se ofende si lo miras. Se ofende si no lo miras.','Ist beleidigt, wenn du ihn ansiehst. Und wenn nicht, auch.'],
+  ['Ha tre nascondigli segreti. Il migliore: in mezzo al corridoio.','Has three secret hideouts. The best one: the middle of the hallway.','A trois cachettes secrètes. La meilleure : le milieu du couloir.','Tiene tres escondites secretos. El mejor: en medio del pasillo.','Hat drei Geheimverstecke. Das beste: mitten im Flur.'],
+  ['Da piccolo cadde in una ciotola di panna. Non si è più ripreso.','Fell into a bowl of cream as a kitten. Never recovered.','Tombé dans un bol de crème étant petit. Ne s\'en est jamais remis.','De pequeño cayó en un cuenco de nata. Nunca se recuperó.','Fiel als Kätzchen in eine Schüssel Sahne. Hat sich nie davon erholt.'],
+  ['Insegna yoga ai gatti del vicinato. Prima lezione: ignorare tutti.','Teaches yoga to neighborhood cats. Lesson one: ignore everyone.','Enseigne le yoga aux chats du quartier. Leçon un : ignorer tout le monde.','Enseña yoga a los gatos del barrio. Primera lección: ignorar a todos.','Lehrt Nachbarskatzen Yoga. Erste Lektion: alle ignorieren.'],
+  ['Il postino ha chiesto il trasferimento.','The mailman requested a transfer.','Le facteur a demandé sa mutation.','El cartero pidió el traslado.','Der Postbote hat um Versetzung gebeten.'],
+  ['Colleziona elastici per capelli. Nessuno sa dove li nasconda.','Collects hair ties. Nobody knows where he hides them.','Collectionne les élastiques. Personne ne sait où il les cache.','Colecciona gomas de pelo. Nadie sabe dónde las esconde.','Sammelt Haargummis. Niemand weiß, wo er sie versteckt.'],
+  ['Quando c\'è un temporale, protegge la casa. Da sotto il letto.','When a storm hits, he protects the house. From under the bed.','Quand l\'orage gronde, il protège la maison. De sous le lit.','Cuando hay tormenta, protege la casa. Desde debajo de la cama.','Bei Gewitter beschützt er das Haus. Von unterm Bett aus.'],
+  ['Il suo sguardo ha fatto scappare due cani e un idraulico.','His stare has scared off two dogs and a plumber.','Son regard a fait fuir deux chiens et un plombier.','Su mirada ha espantado a dos perros y un fontanero.','Sein Blick hat zwei Hunde und einen Klempner vertrieben.'],
+  ['Vive per tre cose: mangiare, dormire e giudicarti.','Lives for three things: eating, sleeping and judging you.','Vit pour trois choses : manger, dormir et te juger.','Vive para tres cosas: comer, dormir y juzgarte.','Lebt für drei Dinge: fressen, schlafen und dich verurteilen.'],
+  ['Una volta ha visto un topo. Ne parlano ancora entrambi.','Once saw a mouse. They both still talk about it.','A vu une souris un jour. Ils en parlent encore tous les deux.','Una vez vio un ratón. Ambos aún lo cuentan.','Sah einmal eine Maus. Beide erzählen noch heute davon.'],
+  ['Elegantissimo finché non cade dal davanzale.','Extremely elegant until he falls off the windowsill.','Très élégant jusqu\'à ce qu\'il tombe du rebord.','Elegantísimo hasta que se cae del alféizar.','Höchst elegant, bis er vom Fensterbrett fällt.'],
+  ['Ha adottato una famiglia di umani. Li sta addestrando bene.','Adopted a family of humans. Training them well.','A adopté une famille d\'humains. Il les dresse bien.','Adoptó a una familia de humanos. Los está adiestrando bien.','Hat eine Menschenfamilie adoptiert. Die Erziehung läuft gut.'],
+  ['Non sale sul tavolo. Il tavolo si abbassa al suo livello.','He doesn\'t climb on the table. The table lowers itself to him.','Il ne monte pas sur la table. La table descend à son niveau.','No se sube a la mesa. La mesa baja a su nivel.','Er springt nicht auf den Tisch. Der Tisch senkt sich zu ihm herab.'],
+  ['Sa esattamente quando apri il tonno. Anche dall\'altro isolato.','Knows exactly when you open the tuna. Even from a block away.','Sait exactement quand tu ouvres le thon. Même à un pâté de maisons.','Sabe exactamente cuándo abres el atún. Incluso a una manzana.','Weiß genau, wann du die Thunfischdose öffnest. Auch einen Block entfernt.'],
+  ['Il gomitolo era già così quando è arrivato.','The yarn ball was already like that when he got there.','La pelote était déjà comme ça à son arrivée.','El ovillo ya estaba así cuando llegó.','Das Wollknäuel war schon so, als er ankam.'],
+  ['Metà gatto, metà sirena d\'allarme delle 5 del mattino.','Half cat, half 5 a.m. alarm siren.','Moitié chat, moitié sirène d\'alarme de 5h du matin.','Mitad gato, mitad sirena de alarma de las 5 a.m.','Halb Katze, halb 5-Uhr-Alarmsirene.'],
+  ['Combatte con onore, vince con stile, dorme senza vergogna.','Fights with honor, wins with style, sleeps without shame.','Se bat avec honneur, gagne avec style, dort sans honte.','Pelea con honor, gana con estilo, duerme sin vergüenza.','Kämpft mit Ehre, siegt mit Stil, schläft ohne Scham.'],
+  ['L\'ultima cosa che i tappeti vedono prima della fine.','The last thing carpets see before the end.','La dernière chose que voient les tapis avant la fin.','Lo último que ven las alfombras antes del final.','Das Letzte, was Teppiche vor ihrem Ende sehen.'],
+];
+/* ---------- assegnazione dal seriale (deterministica) + preferenza utente (nid/did) ---------- */
+function nickIdxOf(e){
+  if (typeof e.nid === 'number' && e.nid >= 0 && e.nid < NICKS.length) return e.nid;
+  return (parseInt(e.serial, 16) >>> 0) % NICKS.length;
+}
+function nickOf(e){
+  const row = NICKS[nickIdxOf(e)] || NICKS[0];
+  return row[LANGS.indexOf(LANG)] || row[0];
+}
+function descrIdxOf(e){
+  if (typeof e.did === 'number' && e.did >= 0 && e.did < DESCRS.length) return e.did;
+  return (((parseInt(e.serial, 16) >>> 0) >>> 3) % DESCRS.length);
+}
+function descrOf(e){
+  const row = DESCRS[descrIdxOf(e)] || DESCRS[0];
+  return row[LANGS.indexOf(LANG)] || row[0];
+}
+// migrazione scelta B (idempotente, per carta): i vecchi testi AI vanno in pensione,
+// i 21 soprannomi storici mantengono la loro identità nella lista
+function migrateI18n(){
+  try {
+    let changed = false;
+    collection.forEach(e => {
+      const needs = e.voce || e.annuncio || (typeof e.nid !== 'number' && e.nick);
+      if (!needs) return;
+      if (typeof e.nid !== 'number' && e.nick){
+        let found = NICKS.findIndex(row => row[0] === e.nick);
+        if (found < 0 && /Marmitta/.test(e.nick)) found = 15;
+        if (found < 0 && /Guancia/.test(e.nick)) found = 20;
+        if (found >= 0) e.nid = found;
+      }
+      delete e.voce;       // le voci AI vanno in pensione (arrivano i mattoncini in Tappa 3)
+      delete e.annuncio;   // l'annuncio ora è un template in lingua
+      changed = true;
+    });
+    if (changed){
+      persistColl();
+      window._i18nRepub = true;   // ripubblica i soprannomi nuovi sul server al prossimo giro
+    }
+  } catch(e){}
 }
 
 /* ---------- dati di gioco ---------- */
@@ -925,7 +1159,7 @@ function drawCard(card, art){
   // etichetta rarità (+ razza se nota)
   ctx.fillStyle = col; ctx.textAlign = 'center';
   ctx.font = card.razza ? 'bold 23px "Segoe UI", sans-serif' : 'bold 26px "Segoe UI", sans-serif';
-  ctx.fillText('◆ ' + card.rarity.name.toUpperCase() + ' ◆' + (card.razza ? '  ·  ' + card.razza : ''), W/2, iy+ih+40);
+  ctx.fillText('◆ ' + trRarity(card.rarity.name).toUpperCase() + ' ◆' + (card.razza ? '  ·  ' + card.razza : ''), W/2, iy+ih+40);
   // statistiche 2 colonne
   const sy = iy+ih+66, rowH = 56, colW = (W-140)/2;
   card.stats.forEach((st, i) => {
@@ -933,7 +1167,7 @@ function drawCard(card, art){
     ctx.textAlign = 'left'; ctx.font = '26px "Segoe UI", sans-serif';
     ctx.fillStyle = '#fff'; ctx.fillText(st.icon, cx0, cy0+14);
     ctx.font = 'bold 21px "Segoe UI", sans-serif'; ctx.fillStyle = '#cfc8e8';
-    ctx.fillText(st.key, cx0+40, cy0+6);
+    ctx.fillText(trStat(st.key), cx0+40, cy0+6);
     ctx.fillStyle = 'rgba(255,255,255,.12)';
     roundRect(ctx, cx0+40, cy0+18, colW-90, 12, 6); ctx.fill();
     ctx.fillStyle = col;
@@ -1015,11 +1249,12 @@ async function doGenerate(){
     // identità musicale (DNA) per la nuova carta, in sottofondo
     if (key){
       const ent = collection.find(c2 => c2.serial === card.serial);
-      if (ent && !ent.dna) composeTheme(ent).then(() => {
-        if (ent.annuncio && !ent.voce) synthAnnuncio(ent);
-      });
+      if (ent && !ent.dna) composeTheme(ent);   // niente più voce AI: annuncio da template (Tappa 3: mattoncini)
     }
-    document.getElementById('cardDesc').textContent = card.descr ? '«' + card.descr + '»' : '';
+    {
+      const ent2 = collection.find(c2 => c2.serial === card.serial);
+      document.getElementById('cardDesc').textContent = ent2 ? '«' + descrOf(ent2) + '»' : '';
+    }
     if (apiWarn){
       document.getElementById('cardNote').style.color = '#ff6b6b';
       document.getElementById('cardNote').textContent = apiWarn;
@@ -1140,8 +1375,8 @@ function persistColl(){
 function saveCurrentCard(card){
   const entry = {
     serial: card.serial, name: card.name, rarity: card.rarity.name,
-    razza: card.razza || null, descr: card.descr || null, potere: card.potere,
-    melody: card.melody || null, strum: card.strum || null, nick: card.nick || null,
+    razza: card.razza || null, descr: null, potere: card.potere,   // descr/nick: dalla lista fissa (scelta B)
+    melody: card.melody || null, strum: card.strum || null, nick: null,
     statsv: card.stats.map(s => s.value), hp: card.hp, layout: 3,
     img: canvas.toDataURL('image/jpeg', 0.82), date: Date.now()
   };
@@ -1190,6 +1425,7 @@ function renderCollection(){
     grid.appendChild(wrap);
   });
   refreshArena();
+  try { migrateI18n(); } catch(e){}
   try { checkCatdex(); renderCatdex(); } catch(e){}
 }
 function openCardModal(i){
@@ -1200,7 +1436,7 @@ function openCardModal(i){
   document.getElementById('modalHolo').className =
     (c.rarity === 'Epica' || c.rarity === 'Leggendaria') ? 'holoWrap' : '';
   const bits = [];
-  if (c.nick) bits.push('🥊 «' + c.nick + '»');
+  bits.push('🥊 «' + nickOf(c) + '»');
   if (c.razza) bits.push('🐈 ' + c.razza);
   if (typeof c.potere === 'number') bits.push('🌟 ' + POWERS[c.potere].name);
   bits.push('🎼 ' + (c.dna ? (c.dna.stile + ' in ' + c.dna.tonalita + ', ' + instrName(c.strum)) : THEME_BANK[bankThemeIndex(c.serial)].name + (c.strum ? ' (' + instrName(c.strum) + ')' : '')));
@@ -1209,8 +1445,34 @@ function openCardModal(i){
   const mvs = rollCard(parseInt(c.serial, 16) >>> 0, c.name).moves;
   const mvLine = mvs.map(m => (m.kind === 'forte' ? '💥' : m.kind === 'rapido' ? '⚡' : '✨') + ' ' + m.name).join(' · ');
   document.getElementById('modalCap').innerHTML =
-    (c.descr ? '<em>«' + c.descr + '»</em><br>' : '') + bits.join('  ·  ') + '<br>' + mvLine;
+    '<em>«' + descrOf(c) + '»</em><br>' + bits.join('  ·  ') + '<br>' + mvLine;
   document.getElementById('modal').style.display = 'flex';
+}
+function pickNick(){
+  if (modalIndex < 0) return;
+  const c = collection[modalIndex];
+  const body = document.getElementById('worldModalBody');
+  const cur = nickIdxOf(c);
+  const li = LANGS.indexOf(LANG);
+  body.innerHTML = '<h2>✏️ Soprannome di ' + c.name + '</h2>' +
+    '<div style="max-height:55vh; overflow-y:auto; margin-top:8px;">' +
+    NICKS.map((row, i) =>
+      '<div onclick="setNick(' + i + ')" style="padding:7px 8px; border-radius:8px; cursor:pointer; font-size:.9rem;' +
+      (i === cur ? ' border:1px solid var(--accent); color:var(--accent); font-weight:700;' : ' border:1px solid transparent;') + '">' +
+      (i === cur ? '✔ ' : '') + '«' + (row[li] || row[0]) + '»</div>'
+    ).join('') + '</div>' +
+    '<button class="btn secondary" onclick="document.getElementById(\'worldModal\').style.display=\'none\'">✖ Chiudi</button>';
+  document.getElementById('worldModal').style.display = 'flex';
+}
+function setNick(i){
+  if (modalIndex < 0) return;
+  const c = collection[modalIndex];
+  c.nid = i;
+  persistColl();
+  document.getElementById('worldModal').style.display = 'none';
+  openCardModal(modalIndex);
+  if (myPublished.has(c.serial) && session && session.access_token) republishOne(c.serial);   // il mondo vede il nuovo soprannome
+  toast('🥊 ' + c.name + ' ora è «' + nickOf(c) + '»');
 }
 function closeModal(){ document.getElementById('modal').style.display = 'none'; }
 function stepCard(d){
@@ -1378,6 +1640,19 @@ async function loadMyWorldCards(){
     myPublished = new Set(rows.map(x => x.serial));
     myActive = new Set(rows.filter(x => !x.retired).map(x => x.serial));
     myFrozen = new Set(rows.filter(x => x.frozen).map(x => x.serial));   // carte impegnate in scambio/asta: non selezionabili
+    // migrazione B: una tantum, ripubblica i soprannomi/descrizioni da lista sul server
+    if (window._i18nRepub && session && session.access_token){
+      window._i18nRepub = false;
+      try {
+        const owner = playerNameEl.value.trim() || serverOwner || 'anonimo';
+        const toUp = collection.filter(c => myPublished.has(c.serial));
+        if (toUp.length){
+          const rws = [];
+          for (const e of toUp) rws.push(await makeCardRow(e, owner));
+          fetch(SUPA_URL + '/rest/v1/cards', {method: 'POST', headers: supaHeaders({Prefer: 'resolution=merge-duplicates'}), body: JSON.stringify(rws)});
+        }
+      } catch(e){}
+    }
     window._myWorldRows = rows;
     if (!worldAll.length){ try { await loadWorldCards(); } catch(e){} }   // serve la classifica per mostrare la posizione
     checkAchievements();
@@ -1754,7 +2029,7 @@ function makeFighter(e){
   const lvl = cardLevel(e.serial);
   const hpTot = card.hp + (lvl - 1) * 4;   // +4 HP per livello
   return { name: card.name, serial: e.serial, img: e.img || null, hp: hpTot, maxHp: hpTot, lvl: lvl,
-    melody: e.melody || null, strum: e.strum || null, nick: e.nick || null,
+    melody: e.melody || null, strum: e.strum || null, nick: nickOf(e), nid: e.nid,
     dna: e.dna || null, annuncio: e.annuncio || null, voce: e.voce || null,
     forza: g('Forza'), intel: g('Intelligenza'), destr: g('Destrezza'),
     vel: g('Velocità'), fas: g('Fascino'), ind: g('Indifferenza'),
@@ -2598,8 +2873,8 @@ async function runBattle(ea, eb, title){
   const recA = recordLine(a.serial), recB = recordLine(b.serial);
   if (!title && !skipIntro){ sfx('crowd'); blog('🎤 SIGNORE E SIGNORIIII… benvenuti all\'Arena CatCards!'); await introSleep(1100); if (!battleOn) return null; }
   if (!skipIntro){
-    blog('🔴 Angolo rosso: ' + a.name.toUpperCase() + ', «' + (a.nick || EPITHETS[a.potere]) + '»! ' + (recA || 'Al suo debutto in arena!'));
-    await playAnnuncio(a, a.annuncio || ('Dall\'angolo rosso... ' + a.name + '... ' + (a.nick || EPITHETS[a.potere]) + '!'));
+    blog('🔴 Angolo rosso: ' + a.name.toUpperCase() + ', «' + a.nick + '»! ' + (recA || 'Al suo debutto in arena!'));
+    await playAnnuncio(a, annText(a, 'red'));
     if (!battleOn) return null;
   }
   if (!skipIntro){
@@ -2608,8 +2883,8 @@ async function runBattle(ea, eb, title){
     await introSleep(Math.max(1500, dA + 300)); if (!battleOn) return null;
   }
   if (!skipIntro){
-    blog('🔵 Angolo blu: ' + b.name.toUpperCase() + ', «' + (b.nick || EPITHETS[b.potere]) + '»! ' + (recB || 'Al suo debutto in arena!'));
-    await playAnnuncio(b, b.annuncio || ('Dall\'angolo blu... ' + b.name + '... ' + (b.nick || EPITHETS[b.potere]) + '!'));
+    blog('🔵 Angolo blu: ' + b.name.toUpperCase() + ', «' + b.nick + '»! ' + (recB || 'Al suo debutto in arena!'));
+    await playAnnuncio(b, annText(b, 'blue'));
     if (!battleOn) return null;
   }
   if (!skipIntro){
@@ -3256,7 +3531,7 @@ async function migrateMelodies(){
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
 /* ---------- versione e aggiornamento automatico ---------- */
-const APP_VERSION = '14.0';   // unica fonte di verità: aggiorna anche version.txt a ogni release
+const APP_VERSION = '14.1';   // unica fonte di verità: aggiorna anche version.txt a ogni release
 try { document.getElementById('appVer').textContent = 'v' + APP_VERSION; } catch(e){}
 function verNewer(a, b){   // a più recente di b? confronto numerico 11.10 > 11.9
   const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);
@@ -3547,8 +3822,13 @@ async function redeemGift(){
     document.getElementById('giftCode').value = '';
   } catch(err){ msg.textContent = '❌ Errore di rete: ' + err.message; }
 }
+function langSelHtml(){
+  const flags = {it: '🇮🇹', en: '🇬🇧', fr: '🇫🇷', es: '🇪🇸', de: '🇩🇪'};
+  return '<select onchange="setLang(this.value)" style="width:auto; padding:6px; border-radius:8px; border:1px solid #363057; background:var(--panel2); color:var(--text); font-size:.8rem; flex-shrink:0;">' +
+    LANGS.map(l => '<option value="' + l + '"' + (l === LANG ? ' selected' : '') + '>' + flags[l] + ' ' + l.toUpperCase() + '</option>').join('') + '</select>';
+}
 function renderUserBar(){
-  // con i punti sul server il login è centrale: utente, saldo e uscita sempre in vista
+  // con i punti sul server il login è centrale: utente, saldo, lingua e uscita sempre in vista
   const el = document.getElementById('userBar');
   if (!el) return;
   if (session && session.access_token){
@@ -3556,11 +3836,13 @@ function renderUserBar(){
     const who = (pn && pn.value.trim()) || session.email || 'utente';
     el.innerHTML = '<span data-wallet style="font-weight:700; flex-shrink:0;"></span>' +
       '<span style="flex:1; text-align:right; color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">👤 ' + who + '</span>' +
+      langSelHtml() +
       '<button class="btn secondary" onclick="logout()" style="width:auto; margin:0; padding:6px 10px; font-size:.75rem; flex-shrink:0;">Esci</button>';
     walletDisplay();
   } else {
     el.innerHTML = '<span style="flex:1; color:var(--muted);">Accedi: punti, Mercato e sfide vivono sul tuo account</span>' +
-      '<button class="btn" onclick="loginGoogle()" style="width:auto; margin:0; padding:8px 14px; font-size:.8rem; flex-shrink:0;">🔑 Accedi</button>';
+      langSelHtml() +
+      '<button class="btn" onclick="loginGoogle()" style="width:auto; margin:0; padding:8px 14px; font-size:.8rem; flex-shrink:0;">🔵 Accedi con Google</button>';
   }
 }
 function renderAuth(){
@@ -3641,7 +3923,7 @@ async function makeCardRow(e, owner){
   try { thumb = await makeThumb(e.img, 220); } catch(err){}
   return {
     serial: e.serial, name: e.name, owner: owner, owner_id: session.user_id,
-    nick: e.nick || null, rarity: e.rarity || null, razza: e.razza || null, descr: e.descr || null,
+    nick: NICKS[nickIdxOf(e)][0], rarity: e.rarity || null, razza: e.razza || null, descr: DESCRS[descrIdxOf(e)][0],
     potere: (typeof e.potere === 'number') ? e.potere : null,
     statsv: e.statsv || null, hp: e.hp || null,
     dna: e.dna || null, strum: e.strum || null, annuncio: e.annuncio || null,
