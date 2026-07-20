@@ -3608,7 +3608,7 @@ async function migrateMelodies(){
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
 /* ---------- versione e aggiornamento automatico ---------- */
-const APP_VERSION = '14.7';   // unica fonte di verità: aggiorna anche version.txt a ogni release
+const APP_VERSION = '14.8';   // unica fonte di verità: aggiorna anche version.txt a ogni release
 try { document.getElementById('appVer').textContent = 'v' + APP_VERSION; } catch(e){}
 function verNewer(a, b){   // a più recente di b? confronto numerico 11.10 > 11.9
   const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);
@@ -5610,6 +5610,10 @@ const GAMES = {
     desc: 'Aspetta il <strong>verde</strong> e tocca il più in fretta possibile: si misura il tuo riflesso. 5 round — chi parte in anticipo perde il round.<br>🚫 Meno di 2 scatti buoni: cibo sprecato · ✅ 2-3: bonus ×1 · 🌟 4+: bonus ×2', run: runScatto},
   scalata: {ic: '🧗', nm: 'Scalata della libreria', allena: 'HP — 🥫 croccantini (HP)',
     desc: 'Il gatto salta di mensola in mensola: tocca <strong>quando la piattaforma è allineata</strong> per saltarci sopra. Un salto sbagliato e cadi. Sali più in alto che puoi.<br>🚫 Meno di 5 mensole: cibo sprecato · ✅ 5-9: bonus ×1 · 🌟 10+: bonus ×2', run: runScalata},
+  fusa: {ic: '🎵', nm: 'Ritmo delle fusa', allena: 'Fascino — 🧀 chicche (Fascino)',
+    desc: 'Il cerchio si stringe a tempo: tocca <strong>quando arriva sul bersaglio</strong>, a ritmo di fusa. Più sei preciso, più il ritmo accelera.<br>🚫 Meno di 5 colpi a tempo: cibo sprecato · ✅ 5-9: bonus ×1 · 🌟 10+: bonus ×2', run: runFusa},
+  sfilata: {ic: '🎀', nm: 'La Sfilata', allena: 'Fascino — 🧀 chicche (Fascino)',
+    desc: 'In passerella appare una freccia: <strong>scorri (swipe) nella sua direzione</strong> per fare la posa. Le frecce arrivano sempre più in fretta, hai <strong>16 secondi</strong>.<br>🚫 Meno di 6 pose: cibo sprecato · ✅ 6-11: bonus ×1 · 🌟 12+: bonus ×2', run: runSfilata},
 };
 // ogni cibo ha 2 giochi che si alternano ad ogni allenamento (i non ancora costruiti vengono ignorati)
 const FOOD_GAMES = {
@@ -5969,6 +5973,70 @@ function runScalata(done){
     }
   };
   loop();
+}
+function runFusa(done){
+  const area = document.getElementById('gameArea');
+  area.innerHTML = '<div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; border-radius:10px; background:#1e1830; cursor:pointer; user-select:none;">' +
+    '<div style="position:relative; width:150px; height:150px; display:flex; align-items:center; justify-content:center;">' +
+    '<div style="position:absolute; width:70px; height:70px; border:3px solid var(--accent); border-radius:50%;"></div>' +
+    '<div id="fusaRing" style="position:absolute; width:150px; height:150px; border:4px solid #fff; border-radius:50%;"></div>' +
+    '<div style="font-size:2.2rem;">😻</div></div></div>';
+  const ring = document.getElementById('fusaRing');
+  const box = area.firstChild;
+  const scoreEl = document.getElementById('gameScore'), timeEl = document.getElementById('gameTime');
+  let score = 0, tries = 0, over = false, sz = 150, period = 1100, t0 = Date.now();
+  timeEl.textContent = '∞';
+  const anim = () => {
+    if (over) return;
+    const ph = ((Date.now() - t0) % period) / period;   // 1 -> 0: il cerchio si stringe
+    sz = 70 + (1 - ph) * 90;
+    ring.style.width = ring.style.height = sz + 'px';
+    ring.style.opacity = 0.4 + (1 - ph) * 0.6;
+    requestAnimationFrame(anim);
+  };
+  box.onclick = () => {
+    if (over) return;
+    tries++;
+    const diff = Math.abs(sz - 70);   // 0 = perfetto (cerchio sul bersaglio)
+    if (diff < 16){
+      score++; scoreEl.textContent = String(score); sfx('crit'); flashText('🎵', '#ffd166');
+      if (period > 620) period -= 55;
+    } else { sfx('miss'); }
+    if (tries >= 15){ over = true; box.onclick = null; endGame(done, score, 5, 10); }
+  };
+  anim();
+}
+function runSfilata(done){
+  const area = document.getElementById('gameArea');
+  area.innerHTML = '<div id="runway" style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; flex-direction:column; border-radius:10px; background:linear-gradient(#3a2140,#1a1226); touch-action:none;">' +
+    '<div id="arrow" style="font-size:5rem;">⬆️</div>' +
+    '<div style="color:#e9d5ff; font-size:.85rem; margin-top:6px;">Scorri nella direzione della freccia</div></div>';
+  const runway = document.getElementById('runway'), arrow = document.getElementById('arrow');
+  const scoreEl = document.getElementById('gameScore'), timeEl = document.getElementById('gameTime');
+  const dirs = [{k: 'up', e: '⬆️', x: 0, y: -1}, {k: 'down', e: '⬇️', x: 0, y: 1}, {k: 'left', e: '⬅️', x: -1, y: 0}, {k: 'right', e: '➡️', x: 1, y: 0}];
+  let score = 0, time = 16, over = false, cur = null, sx = 0, sy = 0;
+  timeEl.textContent = '16';
+  const next = () => { if (over) return; cur = dirs[Math.floor(Math.random() * 4)]; arrow.textContent = cur.e; arrow.style.transform = 'scale(1.15)'; setTimeout(() => arrow.style.transform = 'scale(1)', 120); };
+  const judge = (dx, dy) => {
+    if (over || !cur) return;
+    if (Math.abs(dx) < 22 && Math.abs(dy) < 22) return;   // troppo corto per essere uno swipe
+    const horiz = Math.abs(dx) > Math.abs(dy);
+    const ok = horiz ? (dx < 0 ? cur.k === 'left' : cur.k === 'right') : (dy < 0 ? cur.k === 'up' : cur.k === 'down');
+    if (ok){ score++; scoreEl.textContent = String(score); sfx('hit'); flashText('💃', '#ff9de2'); }
+    else sfx('miss');
+    next();
+  };
+  const ts = e => { const t = e.touches ? e.touches[0] : e; sx = t.clientX; sy = t.clientY; };
+  const te = e => { const t = e.changedTouches ? e.changedTouches[0] : e; judge(t.clientX - sx, t.clientY - sy); };
+  runway.addEventListener('touchstart', ts, {passive: true});
+  runway.addEventListener('touchend', te, {passive: true});
+  runway.addEventListener('mousedown', ts);
+  runway.addEventListener('mouseup', te);
+  const timer = setInterval(() => {
+    time--; timeEl.textContent = String(time);
+    if (time <= 0){ over = true; clearInterval(timer); endGame(done, score, 6, 12); }
+  }, 1000);
+  next();
 }
 async function buyFood(id){
   const f = FOODS.find(x => x.id === id);
