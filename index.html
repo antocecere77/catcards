@@ -3256,7 +3256,7 @@ async function migrateMelodies(){
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
 /* ---------- versione e aggiornamento automatico ---------- */
-const APP_VERSION = '13.9';   // unica fonte di verità: aggiorna anche version.txt a ogni release
+const APP_VERSION = '14.0';   // unica fonte di verità: aggiorna anche version.txt a ogni release
 try { document.getElementById('appVer').textContent = 'v' + APP_VERSION; } catch(e){}
 function verNewer(a, b){   // a più recente di b? confronto numerico 11.10 > 11.9
   const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);
@@ -4223,9 +4223,9 @@ async function loadAuctions(){
           '<button class="btn secondary" style="width:auto; margin:0; padding:6px 10px;" onclick="placeBid(' + a.id + ',' + nextMin + ')">💰 Rilancia</button>';
       }
       return '<div style="border:1px solid #363057; border-radius:10px; padding:10px; margin-top:8px;">' +
-        '<div style="display:flex; gap:8px; align-items:center;">' +
+        '<div style="display:flex; gap:8px; align-items:center; cursor:pointer;" onclick="showCardBySerial(\'' + a.serial + '\')">' +
         (a.card_img ? '<img src="' + a.card_img + '" style="width:46px; border-radius:6px;">' : '') +
-        '<div style="flex:1; min-width:0;"><strong>' + a.card_name + '</strong> di ' + (a.seller_owner || '?') +
+        '<div style="flex:1; min-width:0;"><strong>' + a.card_name + '</strong> 🔍 di ' + (a.seller_owner || '?') +
         '<br><span class="count">Base ' + a.min_price + ' pt · ' + cur + ' · ⏳ ' + timeTxt + '</span></div></div>' +
         '<div style="margin-top:8px;">' + ctl + '</div>' +
         '<button class="btn secondary" style="width:auto; margin:6px 0 0; padding:6px 10px; font-size:.75rem;" onclick="showBidHistory(' + a.id + ')">📜 Storico offerte</button>' +
@@ -4340,6 +4340,43 @@ function renderWorldList(){
     row.appendChild(rkEl); row.appendChild(im); row.appendChild(info); row.appendChild(btn);
     list.appendChild(row);
   });
+}
+/* ---------- scheda carta generica: apribile da classifica, aste, ovunque ci sia un seriale ---------- */
+async function showCardBySerial(serial){
+  try {
+    const r = await fetch(SUPA_URL + '/rest/v1/cards?select=serial,name,owner,nick,rarity,razza,potere,statsv,hp,img,wins,losses,elo,win_streak,loss_streak,best_streak,was_champion,rest_until,retired&serial=eq.' + encodeURIComponent(serial), {headers: supaHeaders()});
+    if (!r.ok) return;
+    const rows = await r.json();
+    if (rows.length) showCardSheet(rows[0]);
+  } catch(e){}
+}
+function showCardSheet(c){
+  const body = document.getElementById('worldModalBody');
+  const rk = rankOf(c.serial);
+  const streakTxt = c.win_streak > 1 ? ' · 🔥 ' + c.win_streak + ' di fila' : (c.loss_streak > 1 ? ' · 🧊 ' + c.loss_streak + ' ko di fila' : '');
+  const lvl = 1 + Math.floor(((c.wins || 0) * 25 + (c.losses || 0) * 10) / 100);
+  const statKeys = ['💪 Forza', '🧠 Intelligenza', '🎯 Destrezza', '⚡ Velocità', '✨ Fascino', '😼 Indifferenza'];
+  let statsHtml = '';
+  if (Array.isArray(c.statsv) && c.statsv.length === 6){
+    statsHtml = statKeys.map((k, j) =>
+      '<div style="display:flex; justify-content:space-between; font-size:.85rem; padding:2px 0;"><span>' + k + '</span><strong>' + c.statsv[j] + '</strong></div>'
+    ).join('');
+  }
+  const mvs = rollCard(parseInt(c.serial, 16) >>> 0, c.name).moves;
+  const mvLine = mvs.map(m => (m.kind === 'forte' ? '💥' : m.kind === 'rapido' ? '⚡' : '✨') + ' ' + m.name + ' (' + m.power + ')').join('<br>');
+  body.innerHTML =
+    (c.img ? '<img src="' + c.img + '" style="width:100%; border-radius:12px;">' : '') +
+    '<h2 style="margin-top:10px;">' + c.name + (c.nick ? ' <span style="color:var(--muted); font-size:.85rem;">«' + c.nick + '»</span>' : '') + '</h2>' +
+    '<p class="count">' + (rk === 1 ? '👑 CAMPIONE DEL MONDO · ' : (rk ? '#' + rk + ' nel ranking · ' : '')) + (c.elo || 1000) + ' pt Elo' +
+    (c.was_champion && rk !== 1 ? ' · 🏆 ex campione' : '') + streakTxt +
+    (c.best_streak > 1 ? ' · miglior striscia 🔥' + c.best_streak : '') + (c.retired ? ' · 🚪 ritirata' : '') + '</p>' +
+    '<p class="count">di ' + (c.owner || 'anonimo') + ' · ' + (c.rarity || '') + ' · Lv.' + lvl + ' · ' + (c.wins || 0) + ' V / ' + (c.losses || 0) + ' S' +
+    (c.hp ? ' · ' + c.hp + ' HP' : '') + '</p>' +
+    (statsHtml ? '<div style="margin-top:10px;">' + statsHtml + '</div>' : '') +
+    ((typeof c.potere === 'number') ? '<p style="color:#ffd166; font-size:.9rem; margin-top:8px;">🌟 ' + POWERS[c.potere].name + ' — ' + POWERS[c.potere].desc + '</p>' : '') +
+    '<p style="font-size:.85rem; margin-top:8px; line-height:1.6;">' + mvLine + '</p>' +
+    '<button class="btn secondary" onclick="document.getElementById(\'worldModal\').style.display=\'none\'">✖ Chiudi</button>';
+  document.getElementById('worldModal').style.display = 'flex';
 }
 function showWorldCard(i){
   const c = worldCards[i];
@@ -4491,11 +4528,12 @@ async function loadLeaderboard(){
     el.innerHTML = rows.map((x, i) => {
       const streak = x.win_streak > 1 ? ' 🔥' + x.win_streak : (x.loss_streak > 1 ? ' 🧊' + x.loss_streak : '');
       const isChamp = i === 0 && (!champSerial || x.serial === champSerial);
-      return (isChamp ? '👑 <strong style="color:var(--accent)">CAMPIONE</strong> ' : '#' + (i + 1) + ' ') +
+      return '<span style="cursor:pointer;" onclick="showCardBySerial(\'' + x.serial + '\')">' +
+        (isChamp ? '👑 <strong style="color:var(--accent)">CAMPIONE</strong> ' : '#' + (i + 1) + ' ') +
         '<strong>' + x.name + '</strong>' + (x.was_champion && !isChamp ? ' 🏆<small>ex</small>' : '') +
         ' di ' + (x.owner || 'anonimo') +
         ' — ' + (x.elo || 1000) + ' pt · ' + (x.wins || 0) + 'V/' + (x.losses || 0) + 'S' + streak +
-        (x.best_streak > 1 ? ' · max 🔥' + x.best_streak : '');
+        (x.best_streak > 1 ? ' · max 🔥' + x.best_streak : '') + '</span>';
     }).join('<br>') || 'Nessuna carta in ranking: pubblicane una!';
     const more = document.getElementById('leaderMoreBtn');
     if (more) more.style.display = (rows.length >= leaderN && leaderN < 200) ? 'block' : 'none';   // finite le posizioni? niente bottone
