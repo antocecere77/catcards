@@ -2311,28 +2311,65 @@ async function synthAnnuncio(e){
     return null;
   } catch(err){ return err.message; }
 }
-function playAnnuncio(f, fallbackText){
-  return new Promise(res => {
-    if (!soundOn || skipIntro){ res(); return; }
+// voce maschile 'Orus' generata a richiesta nella lingua attiva, poi salvata (una per carta per lingua)
+const TTS_PROMPT = {
+  it: 'Parla in italiano con voce da annunciatore di wrestling, epica, esagerata e roboante: ',
+  en: 'Speak in English with an epic, over-the-top, booming wrestling announcer voice: ',
+  fr: 'Parle en français avec une voix d\'annonceur de catch, épique et retentissante: ',
+  es: 'Habla en español con una voz de presentador de lucha libre, épica y atronadora: ',
+  de: 'Sprich auf Deutsch mit einer epischen, übertriebenen, dröhnenden Wrestling-Ansager-Stimme: ',
+};
+const _voceMem = {};
+async function genVoice(text, key){
+  try {
+    const prefix = TTS_PROMPT[LANG] || TTS_PROMPT.en;
+    const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=' + encodeURIComponent(key), {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        contents: [{parts: [{text: prefix + text}]}],
+        generationConfig: {responseModalities: ['AUDIO'], speechConfig: {voiceConfig: {prebuiltVoiceConfig: {voiceName: 'Orus'}}}}
+      })
+    });
+    if (!r.ok) return null;
+    const j = await r.json();
+    const parts = (((j.candidates || [])[0] || {}).content || {}).parts || [];
+    const part = parts.find(p => p.inlineData && p.inlineData.data);
+    if (!part) return null;
+    const rm = /rate=(\d+)/.exec(part.inlineData.mimeType || '');
+    return pcmToWavDataUrl(part.inlineData.data, rm ? parseInt(rm[1], 10) : 24000);
+  } catch(e){ return null; }
+}
+async function ensureVoce(serial, text){
+  const ck = 'voce_' + serial + '_' + LANG;
+  if (_voceMem[ck]) return _voceMem[ck];
+  try { const c = await idbGet(ck); if (c){ _voceMem[ck] = c; return c; } } catch(e){}
+  const key = apiKeyEl.value.trim();
+  if (!key) return null;
+  const url = await genVoice(text, key);
+  if (url){ _voceMem[ck] = url; try { await idbSet(ck, url); } catch(e){} }
+  return url;
+}
+async function playAnnuncio(f, fallbackText){
+  if (!soundOn || skipIntro) return;
+  let url = f.voce || null;
+  if (!url && !skipIntro){ try { url = await ensureVoce(f.serial, fallbackText); } catch(e){} }
+  if (skipIntro || !battleOn) return;
+  if (!url){ await speak(fallbackText); return; }
+  await new Promise(res => {
     let done = false;
     const finish = () => { if (!done){ done = true; res(); } };
-    if (f.voce){
-      try {
-        const au = new Audio(f.voce);
-        window._curAud = au;
-        // lo skip tronca la voce all'istante
-        const iv = setInterval(() => {
-          if (done){ clearInterval(iv); return; }
-          if (skipIntro || !battleOn){ clearInterval(iv); try { au.pause(); } catch(e){} finish(); }
-        }, 100);
-        au.onended = () => { clearInterval(iv); finish(); };
-        au.onerror = () => { clearInterval(iv); speak(fallbackText).then(finish); };
-        au.play().catch(() => { clearInterval(iv); speak(fallbackText).then(finish); });
-        setTimeout(finish, 10000);
-        return;
-      } catch(e){}
-    }
-    speak(fallbackText).then(finish);
+    try {
+      const au = new Audio(url);
+      window._curAud = au;
+      const iv = setInterval(() => {
+        if (done){ clearInterval(iv); return; }
+        if (skipIntro || !battleOn){ clearInterval(iv); try { au.pause(); } catch(e){} finish(); }
+      }, 100);
+      au.onended = () => { clearInterval(iv); finish(); };
+      au.onerror = () => { clearInterval(iv); speak(fallbackText).then(finish); };
+      au.play().catch(() => { clearInterval(iv); speak(fallbackText).then(finish); });
+      setTimeout(finish, 10000);
+    } catch(e){ speak(fallbackText).then(finish); }
   });
 }
 function speak(text){
@@ -3386,7 +3423,7 @@ async function migrateMelodies(){
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
 /* ---------- versione e aggiornamento automatico ---------- */
-const APP_VERSION = '15.1';   // unica fonte di verità: aggiorna anche version.txt a ogni release
+const APP_VERSION = '15.2';   // unica fonte di verità: aggiorna anche version.txt a ogni release
 try { document.getElementById('appVer').textContent = 'v' + APP_VERSION; } catch(e){}
 function verNewer(a, b){   // a più recente di b? confronto numerico 11.10 > 11.9
   const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);
