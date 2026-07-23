@@ -381,6 +381,8 @@
     <p class="count" id="gymInfo" style="margin-top:6px; line-height:1.6;"></p>
     <label class="small" style="margin-top:12px;" data-i18n="gym_pantry">🍽️ Dispensa — compra, poi guadagnatelo col gioco</label>
     <div id="foodGrid" style="display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:8px;"></div>
+    <label class="small" style="margin-top:12px; color:var(--accent);">🌟 Combo Premium — due statistiche, un solo riposo</label>
+    <div id="foodComboGrid" style="display:grid; grid-template-columns:repeat(2,1fr); gap:8px; margin-top:8px;"></div>
   </div>
   </div>
 
@@ -3453,7 +3455,7 @@ async function migrateMelodies(){
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
 /* ---------- versione e aggiornamento automatico ---------- */
-const APP_VERSION = '15.4';   // unica fonte di verità: aggiorna anche version.txt a ogni release
+const APP_VERSION = '15.5';   // unica fonte di verità: aggiorna anche version.txt a ogni release
 try { document.getElementById('appVer').textContent = 'v' + APP_VERSION; } catch(e){}
 function verNewer(a, b){   // a più recente di b? confronto numerico 11.10 > 11.9
   const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);
@@ -5364,15 +5366,23 @@ async function buyFrame(){
 }
 
 /* ---------- Palestra: dispensa, allenamento e Coach Baffo ---------- */
+// dispensa BASE: 1 statistica, economica (griglia 3 colonne = 6 cibi)
 const FOODS = [
-  {id: 'croc',    ic: '🥫', nm: 'Croccantini', cost: 20, stat: 'hp', tgt: 'HP',           game: 'topo'},
-  {id: 'pollo',   ic: '🍗', nm: 'Pollo',       cost: 25, stat: 0,    tgt: 'Forza',        game: 'topo'},
-  {id: 'topo',    ic: '🐁', nm: 'Topolino',    cost: 25, stat: 1,    tgt: 'Intelligenza', game: 'piuma'},
-  {id: 'erba',    ic: '🌿', nm: 'Erba gatta',  cost: 25, stat: 2,    tgt: 'Destrezza',    game: 'gomitolo'},
-  {id: 'pesce',   ic: '🐟', nm: 'Pesce',       cost: 25, stat: 3,    tgt: 'Velocità',     game: 'gomitolo'},
-  {id: 'chicche', ic: '🧀', nm: 'Chicche',     cost: 25, stat: 4,    tgt: 'Fascino',      game: 'piuma'},
-  {id: 'cuscino', ic: '🛋️', nm: 'Cuscino Reale', cost: 25, stat: 5,  tgt: 'Indifferenza', game: 'zen'},
+  {id: 'croc',    ic: '🥫', nm: 'Croccantini', cost: 20, stat: 'hp', tgt: '❤️ HP',           game: 'topo'},
+  {id: 'pollo',   ic: '🍗', nm: 'Pollo',       cost: 25, stat: 0,    tgt: '💪 Forza',        game: 'topo'},
+  {id: 'topo',    ic: '🐁', nm: 'Topolino',    cost: 25, stat: 1,    tgt: '🧠 Intelligenza', game: 'piuma'},
+  {id: 'erba',    ic: '🌿', nm: 'Erba gatta',  cost: 25, stat: 2,    tgt: '🎯 Destrezza',    game: 'gomitolo'},
+  {id: 'pesce',   ic: '🐟', nm: 'Pesce',       cost: 25, stat: 3,    tgt: '⚡ Velocità',     game: 'gomitolo'},
+  {id: 'chicche', ic: '🧀', nm: 'Chicche',     cost: 25, stat: 4,    tgt: '✨ Fascino',      game: 'piuma'},
 ];
+// dispensa COMBO: 2 statistiche in un solo allenamento (un solo riposo), premium 60 punti (griglia 2 colonne = 4 cibi)
+const COMBOS = [
+  {id: 'bistecca', ic: '🥩', nm: 'Bistecca del Guerriero', cost: 60, stats: [0, 'hp'], tgt: '💪 Forza + ❤️ HP',        game: 'corda',   combo: true},
+  {id: 'scarica',  ic: '⚡', nm: 'Scarica Felina',         cost: 60, stats: [3, 2],    tgt: '⚡ Velocità + 🎯 Destrezza', game: 'scatto', combo: true},
+  {id: 'fascino',  ic: '🍸', nm: 'Fascino Fatale',         cost: 60, stats: [4, 1],    tgt: '✨ Fascino + 🧠 Intelligenza', game: 'sfilata', combo: true},
+  {id: 'trono',    ic: '🛋️', nm: 'Trono di Piume',         cost: 60, stats: [5, 'hp'], tgt: '😼 Indifferenza + ❤️ HP',  game: 'zen',     combo: true},
+];
+const ALL_FOODS = FOODS.concat(COMBOS);
 const TRAIN_COOLDOWN = 3600000;   // 1 ora di riposo dopo OGNI incontro o allenamento
 function gymCat(){
   const v = document.getElementById('gymCat');
@@ -5417,18 +5427,21 @@ function renderGym(){
         (cl > 0 ? '<br>😴 Sta riposando: torna tra ' + Math.ceil(cl / 60000) + ' minuti' : '<br>✅ Pronto ad allenarsi!');
     }
   }
+  const blocked = e && (trainAvail(e) <= 0 || coolLeft(e) > 0);
+  const foodBtn = (f, premium) => {
+    const canAfford = points >= f.cost;
+    const b = document.createElement('button');
+    b.className = 'btn secondary';
+    b.style.cssText = 'margin:0; padding:10px 4px; font-size:.78rem; line-height:1.3;' +
+      (premium ? ' border-color:var(--accent);' : '') + ((blocked || !canAfford) ? ' opacity:.4;' : '');
+    b.innerHTML = f.ic + ' ' + f.nm + '<br><span style="color:var(--muted)">' + f.tgt + ' · <strong>' + f.cost + ' pt</strong> · ' + (GAMES[f.game] || GAMES.gomitolo).ic + '</span>';
+    b.onclick = () => buyFood(f.id);
+    return b;
+  };
   const grid = document.getElementById('foodGrid');
   if (grid){
     grid.innerHTML = '';
-    const blocked = e && (trainAvail(e) <= 0 || coolLeft(e) > 0);
-    FOODS.forEach(f => {
-      const b = document.createElement('button');
-      b.className = 'btn secondary';
-      b.style.cssText = 'margin:0; padding:10px 4px; font-size:.78rem; line-height:1.3;' + (blocked ? ' opacity:.35;' : '');
-      b.innerHTML = f.ic + ' ' + f.nm + '<br><span style="color:var(--muted)">' + f.tgt + ' · ' + f.cost + ' pt · ' + (GAMES[f.game] || GAMES.gomitolo).ic + '</span>';
-      b.onclick = () => buyFood(f.id);
-      grid.appendChild(b);
-    });
+    FOODS.forEach(f => grid.appendChild(foodBtn(f, false)));
     if (e && trainAvail(e) <= 0){
       const warn = document.createElement('p');
       warn.style.cssText = 'grid-column:1/-1; color:#ffb703; font-size:.85rem; margin:4px 0 0; line-height:1.5;';
@@ -5436,6 +5449,8 @@ function renderGym(){
       grid.appendChild(warn);
     }
   }
+  const cgrid = document.getElementById('foodComboGrid');
+  if (cgrid){ cgrid.innerHTML = ''; COMBOS.forEach(f => cgrid.appendChild(foodBtn(f, true))); }
 }
 /* ---------- i tre esercizi della palestra ---------- */
 const GAMES = {
@@ -5472,7 +5487,7 @@ const GAMES = {
 const FOOD_GAMES = {
   croc: ['topo', 'scalata'], pollo: ['corda', 'porta'], topo: ['piuma', 'memory'],
   erba: ['gomitolo', 'laser'], pesce: ['pesca', 'scatto'], chicche: ['fusa', 'sfilata'],
-  cuscino: ['zen', 'sguardi'],
+  bistecca: ['corda', 'scalata'], scarica: ['scatto', 'laser'], fascino: ['sfilata', 'memory'], trono: ['zen', 'sguardi'],
 };
 const _foodGameN = {};   // contatore in memoria: garantisce l'alternanza anche se localStorage è pieno
 function foodGameList(f){ return (FOOD_GAMES[f.id] || [f.game]).filter(g => GAMES[g]); }
@@ -5965,7 +5980,7 @@ function runSguardi(done){
   scheduleTickle();
 }
 async function buyFood(id){
-  const f = FOODS.find(x => x.id === id);
+  const f = ALL_FOODS.find(x => x.id === id);
   const e = gymCat();
   if (!e){ toast('⚠️ Scegli prima un allievo.'); return; }
   const cl = coolLeft(e);
@@ -6005,12 +6020,13 @@ async function buyFood(id){
   if (!Array.isArray(e.statsv) || e.statsv.length !== 6){
     e.statsv = rollCard(parseInt(e.serial, 16) >>> 0, e.name).stats.map(s => s.value);
   }
-  const gainTxt = f.stat === 'hp' ? '+' + (gain * 2) + ' HP' : '+' + gain + ' ' + f.tgt;
-  if (f.stat === 'hp'){
-    e.hp = Math.min(150, (e.hp || 80) + gain * 2);
-  } else {
-    e.statsv[f.stat] = Math.min(99, (e.statsv[f.stat] || 50) + gain);
-  }
+  // combo: applica il guadagno a TUTTI i bersagli, ma consuma un solo punto di margine
+  const targets = f.stats || [f.stat];
+  const gainTxt = targets.map(t => t === 'hp' ? '+' + (gain * 2) + ' HP' : '+' + gain + ' ' + STATS[t].key).join(' · ');
+  targets.forEach(t => {
+    if (t === 'hp') e.hp = Math.min(150, (e.hp || 80) + gain * 2);
+    else e.statsv[t] = Math.min(99, (e.statsv[t] || 50) + gain);
+  });
   e.trainUsed = (e.trainUsed || 0) + gain;
   e.trainAt = Date.now();
   try {
@@ -6066,17 +6082,25 @@ function coachAdvice(){
     return;
   }
   const e = gymCat() || collection[0];
-  const foodByStat = {0: '🍗 pollo', 1: '🐁 topolino', 2: '🌿 erba gatta', 3: '🐟 pesce', 4: '🧀 chicche', 5: '🛋️ cuscino reale'};
+  const foodByStat = {0: '🍗 Pollo', 1: '🐁 Topolino', 2: '🌿 Erba gatta', 3: '🐟 Pesce', 4: '🧀 Chicche', 5: 'il combo 🛋️ Trono di Piume (l\'Indifferenza cresce solo lì)'};
   if (Array.isArray(e.statsv) && e.statsv.length === 6){
     let low = 0;
-    for (let i = 1; i < 6; i++) if (e.statsv[i] < e.statsv[low]) low = i;   // ora considera anche l'Indifferenza (5)
-    parts.push('Il punto debole di ' + e.name + ' è la ' + STATS[low].key + ' (' + e.statsv[low] + '): dagli ' + foodByStat[low] + ' e mettici impegno.');
+    for (let i = 1; i < 6; i++) if (e.statsv[i] < e.statsv[low]) low = i;   // considera anche l'Indifferenza (5)
+    parts.push('Il punto più debole di ' + e.name + ' è la ' + STATS[low].key + ' (' + e.statsv[low] + '): dagli ' + foodByStat[low] + '.');
+  }
+  // se le casse lo permettono, consiglia il combo più utile (due statistiche in un solo riposo)
+  if (points >= 60 && trainAvail(e) > 0 && Array.isArray(e.statsv)){
+    const roomStat = i => Math.max(0, 78 - (e.statsv[i] || 50));
+    const roomHp = () => Math.max(0, (130 - (e.hp || 80)) / 2);
+    let bestC = null, bestV = -1;
+    COMBOS.forEach(c => { let v = 0; c.stats.forEach(t => v += (t === 'hp' ? roomHp() : roomStat(t))); if (v > bestV){ bestV = v; bestC = c; } });
+    if (bestC && bestV > 10) parts.push('Hai ' + points + ' punti: il combo ' + bestC.ic + ' ' + bestC.nm + ' (' + bestC.tgt + ') cresce due cose in un solo riposo — caro ma conveniente se vai di fretta.');
   }
   const s = battleStats[e.serial];
   if (s && s.l > s.w) parts.push('Con ' + s.w + ' vittorie e ' + s.l + ' sconfitte serve grinta, non coccole.');
   else if (s && s.w >= 3 && s.l === 0) parts.push('È imbattuto: attento che non si monti la testa.');
   if (trainAvail(e) <= 0) parts.push('Margine di allenamento finito: solo le vittorie nel mondo sbloccano nuovi progressi.');
-  if (points < 25) parts.push('E le casse piangono (' + points + ' punti): vinci qualche scommessa mondiale.');
+  else if (points < 25) parts.push('E le casse piangono (' + points + ' punti): vinci qualche scommessa mondiale.');
   if (!parts.length) parts.push(e.name + ' è in forma smagliante. Fallo combattere, che la panchina infiacchisce i muscoli.');
   coachSayMsg(open[Math.floor(Math.random() * open.length)] + parts.join(' '));
   sfx('charm');
