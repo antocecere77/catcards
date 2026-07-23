@@ -3453,7 +3453,7 @@ async function migrateMelodies(){
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
 /* ---------- versione e aggiornamento automatico ---------- */
-const APP_VERSION = '15.3';   // unica fonte di verità: aggiorna anche version.txt a ogni release
+const APP_VERSION = '15.4';   // unica fonte di verità: aggiorna anche version.txt a ogni release
 try { document.getElementById('appVer').textContent = 'v' + APP_VERSION; } catch(e){}
 function verNewer(a, b){   // a più recente di b? confronto numerico 11.10 > 11.9
   const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);
@@ -5371,6 +5371,7 @@ const FOODS = [
   {id: 'erba',    ic: '🌿', nm: 'Erba gatta',  cost: 25, stat: 2,    tgt: 'Destrezza',    game: 'gomitolo'},
   {id: 'pesce',   ic: '🐟', nm: 'Pesce',       cost: 25, stat: 3,    tgt: 'Velocità',     game: 'gomitolo'},
   {id: 'chicche', ic: '🧀', nm: 'Chicche',     cost: 25, stat: 4,    tgt: 'Fascino',      game: 'piuma'},
+  {id: 'cuscino', ic: '🛋️', nm: 'Cuscino Reale', cost: 25, stat: 5,  tgt: 'Indifferenza', game: 'zen'},
 ];
 const TRAIN_COOLDOWN = 3600000;   // 1 ora di riposo dopo OGNI incontro o allenamento
 function gymCat(){
@@ -5461,12 +5462,17 @@ const GAMES = {
   fusa: {ic: '🎵', nm: 'Ritmo delle fusa', allena: 'Fascino — 🧀 chicche (Fascino)',
     desc: 'Il cerchio si stringe a tempo: tocca <strong>quando arriva sul bersaglio</strong>, a ritmo di fusa. Più sei preciso, più il ritmo accelera.<br>🚫 Meno di 5 colpi a tempo: cibo sprecato · ✅ 5-9: bonus ×1 · 🌟 10+: bonus ×2', run: runFusa},
   sfilata: {ic: '🎀', nm: 'La Sfilata', allena: 'Fascino — 🧀 chicche (Fascino)',
-    desc: 'In passerella appare una freccia: <strong>scorri (swipe) nella sua direzione</strong> per fare la posa. Le frecce arrivano sempre più in fretta, hai <strong>16 secondi</strong>.<br>🚫 Meno di 6 pose: cibo sprecato · ✅ 6-11: bonus ×1 · 🌟 12+: bonus ×2', run: runSfilata},
+    desc: 'In passerella appare una freccia: <strong>scorri (swipe) nella sua direzione</strong> per fare la posa. Le frecce arrivano sempre più in fretta, hai <strong>16 secondi</strong>.<br>🚫 Meno di 6 pose: cibo sprecato · 🌟 12+: bonus ×2', run: runSfilata},
+  zen: {ic: '🧘', nm: 'Zen del gatto', allena: 'Indifferenza — 🛋️ cuscino reale (Indifferenza)',
+    desc: 'La disciplina dell\'indifferenza: <strong>ignora ogni distrazione</strong> (🐭 topo, 🪶 piuma, 🔴 laser) e tocca <strong>solo il cuscino 🛋️</strong> quando appare. Toccare una distrazione ti fa perdere il round. Hai <strong>14 secondi</strong>.<br>🚫 Meno di 5 cuscini: cibo sprecato · ✅ 5-9: bonus ×1 · 🌟 10+: bonus ×2', run: runZen},
+  sguardi: {ic: '🥶', nm: 'Gara di sguardi', allena: 'Indifferenza — 🛋️ cuscino reale (Indifferenza)',
+    desc: '<strong>Tieni premuto</strong> e non muoverti: chi resta impassibile vince. Ma se appare un 😹 solletico devi <strong>lasciare subito</strong>, poi ripremere. Resisti più a lungo che puoi.<br>🚫 Meno di 8 secondi di impassibilità: cibo sprecato · ✅ 8-13: bonus ×1 · 🌟 14+: bonus ×2', run: runSguardi},
 };
 // ogni cibo ha 2 giochi che si alternano ad ogni allenamento (i non ancora costruiti vengono ignorati)
 const FOOD_GAMES = {
   croc: ['topo', 'scalata'], pollo: ['corda', 'porta'], topo: ['piuma', 'memory'],
   erba: ['gomitolo', 'laser'], pesce: ['pesca', 'scatto'], chicche: ['fusa', 'sfilata'],
+  cuscino: ['zen', 'sguardi'],
 };
 const _foodGameN = {};   // contatore in memoria: garantisce l'alternanza anche se localStorage è pieno
 function foodGameList(f){ return (FOOD_GAMES[f.id] || [f.game]).filter(g => GAMES[g]); }
@@ -5890,6 +5896,74 @@ function runSfilata(done){
   }, 1000);
   next();
 }
+function runZen(done){
+  const area = document.getElementById('gameArea');
+  area.innerHTML = '<div id="zenArea" style="position:absolute; inset:0; border-radius:10px; background:#141026; overflow:hidden;">' +
+    '<div id="zenObj" style="position:absolute; font-size:2.6rem; cursor:pointer; user-select:none; left:42%; top:42%; display:none;"></div>' +
+    '<div style="position:absolute; bottom:6px; width:100%; text-align:center; color:#cbb9ff; font-size:.8rem;">Tocca SOLO il cuscino 🛋️</div></div>';
+  const obj = document.getElementById('zenObj');
+  const scoreEl = document.getElementById('gameScore'), timeEl = document.getElementById('gameTime');
+  const distr = ['🐭', '🪶', '🔴', '🐕', '🦋'];
+  let score = 0, time = 14, over = false, isCushion = false, cycleT = null, hideT = null;
+  timeEl.textContent = '14';
+  const show = () => {
+    if (over) return;
+    isCushion = Math.random() < 0.42;
+    obj.textContent = isCushion ? '🛋️' : distr[Math.floor(Math.random() * distr.length)];
+    obj.style.left = (8 + Math.random() * 74) + '%';
+    obj.style.top = (8 + Math.random() * 62) + '%';
+    obj.style.display = 'block';
+    const life = 620 + Math.random() * 500;
+    hideT = setTimeout(() => { obj.style.display = 'none'; cycleT = setTimeout(show, 200 + Math.random() * 350); }, life);
+  };
+  obj.onclick = () => {
+    if (over || obj.style.display === 'none') return;
+    if (isCushion){ score++; scoreEl.textContent = String(score); sfx('crit'); flashText('🛋️', '#ffd166'); }
+    else { sfx('miss'); flashText('🙀 distratto!', '#e63946'); score = Math.max(0, score - 1); scoreEl.textContent = String(score); }
+    obj.style.display = 'none'; clearTimeout(hideT); cycleT = setTimeout(show, 250);
+  };
+  const timer = setInterval(() => {
+    time--; timeEl.textContent = String(time);
+    if (time <= 0){ over = true; clearInterval(timer); clearTimeout(hideT); clearTimeout(cycleT); obj.onclick = null; endGame(done, score, 5, 10); }
+  }, 1000);
+  cycleT = setTimeout(show, 500);
+}
+function runSguardi(done){
+  const area = document.getElementById('gameArea');
+  area.innerHTML = '<div id="stareBtn" style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; flex-direction:column; border-radius:10px; background:#10202a; cursor:pointer; user-select:none;">' +
+    '<div id="stareFace" style="font-size:3.4rem;">😼</div>' +
+    '<div id="stareTxt" style="color:#cfe8ff; font-size:1rem; margin-top:8px;">Tieni premuto e resta impassibile…</div></div>';
+  const btn = document.getElementById('stareBtn'), face = document.getElementById('stareFace'), txt = document.getElementById('stareTxt');
+  const scoreEl = document.getElementById('gameScore'), timeEl = document.getElementById('gameTime');
+  timeEl.textContent = '∞';
+  let held = false, tickle = false, calm = 0, over = false, tickT = null, tickWin = null;
+  const scheduleTickle = () => {
+    tickT = setTimeout(() => {
+      if (over) return;
+      tickle = true; face.textContent = '😹'; txt.textContent = '😹 SOLLETICO! Lascia subito!'; sfx('charm');
+      tickWin = setTimeout(() => {   // se non lasci in tempo, perdi impassibilità
+        if (over) return;
+        if (held && tickle){ txt.textContent = '😂 Hai riso! Fine.'; sfx('miss'); finish(); }
+      }, 700);
+    }, 1400 + Math.random() * 2600);
+  };
+  const startHold = () => { if (over) return; held = true; if (!tickle) txt.textContent = '🥶 Impassibile…'; };
+  const endHold = () => {
+    if (over) return; held = false;
+    if (tickle){ tickle = false; face.textContent = '😼'; txt.textContent = '🥶 Impassibile…'; clearTimeout(tickWin); scheduleTickle(); }
+  };
+  const finish = () => { if (over) return; over = true; clearInterval(sec); clearTimeout(tickT); clearTimeout(tickWin); btn.onmousedown = btn.onmouseup = btn.ontouchstart = btn.ontouchend = null; endGame(done, Math.floor(calm), 8, 14); };
+  btn.ontouchstart = e => { e.preventDefault(); startHold(); };
+  btn.ontouchend = e => { e.preventDefault(); endHold(); };
+  btn.onmousedown = startHold;
+  btn.onmouseup = endHold;
+  const sec = setInterval(() => {
+    if (over) return;
+    if (held && !tickle){ calm += 0.1; scoreEl.textContent = Math.floor(calm); }
+    if (calm >= 20){ txt.textContent = '🧘 Zen assoluto raggiunto!'; finish(); }
+  }, 100);
+  scheduleTickle();
+}
 async function buyFood(id){
   const f = FOODS.find(x => x.id === id);
   const e = gymCat();
@@ -5992,11 +6066,11 @@ function coachAdvice(){
     return;
   }
   const e = gymCat() || collection[0];
-  const foodByStat = {0: '🍗 pollo', 1: '🐁 topolino', 2: '🌿 erba gatta', 3: '🐟 pesce', 4: '🧀 chicche'};
+  const foodByStat = {0: '🍗 pollo', 1: '🐁 topolino', 2: '🌿 erba gatta', 3: '🐟 pesce', 4: '🧀 chicche', 5: '🛋️ cuscino reale'};
   if (Array.isArray(e.statsv) && e.statsv.length === 6){
     let low = 0;
-    for (let i = 1; i < 5; i++) if (e.statsv[i] < e.statsv[low]) low = i;
-    parts.push('Il punto debole di ' + e.name + ' è la ' + STATS[low].key + ' (' + e.statsv[low] + '): ' + foodByStat[low] + ' e giù di gomitolo.');
+    for (let i = 1; i < 6; i++) if (e.statsv[i] < e.statsv[low]) low = i;   // ora considera anche l'Indifferenza (5)
+    parts.push('Il punto debole di ' + e.name + ' è la ' + STATS[low].key + ' (' + e.statsv[low] + '): dagli ' + foodByStat[low] + ' e mettici impegno.');
   }
   const s = battleStats[e.serial];
   if (s && s.l > s.w) parts.push('Con ' + s.w + ' vittorie e ' + s.l + ' sconfitte serve grinta, non coccole.');
