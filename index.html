@@ -298,9 +298,8 @@
           <p class="count" id="mgrSay" style="margin-top:2px; line-height:1.5;">Il ring è una scacchiera, ragazzo. Scegli il campione e ti dico la prossima mossa.</p>
         </div>
       </div>
-      <button class="btn secondary" onclick="managerAdvice()" style="margin-top:8px;">🎩 Consiglio del Manager</button>
       <label class="small" data-i18n="my_online">La tua carta per le sfide online</label>
-      <select id="selMine" onchange="renderWorldList()"></select>
+      <select id="selMine" onchange="renderWorldList(); managerAdvice();"></select>
       <button class="btn secondary" onclick="loadWorldCards()" style="margin-top:10px;" data-i18n="find_btn">🔄 Cerca sfidanti nel mondo</button>
       <div id="worldList" style="margin-top:10px;"></div>
     </div>
@@ -377,13 +376,11 @@
         <p class="count" id="coachSay" style="margin-top:2px; line-height:1.5;">Miao, recluta. Scegli un allievo e mettiamoci al lavoro.</p>
       </div>
     </div>
-    <button class="btn secondary" onclick="coachAdvice()" style="margin-top:10px;" data-i18n="coach_ask">🎓 Chiedi un consiglio al Coach</button>
     <label class="small" style="margin-top:14px;" data-i18n="gym_student">L'allievo di oggi</label>
-    <select id="gymCat" onchange="renderGym()"></select>
+    <select id="gymCat" onchange="renderGym(); coachAdvice();"></select>
     <p class="count" id="gymInfo" style="margin-top:6px; line-height:1.6;"></p>
     <label class="small" style="margin-top:12px;" data-i18n="gym_pantry">🍽️ Dispensa — compra, poi guadagnatelo col gioco</label>
     <div id="foodGrid" style="display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:8px;"></div>
-    <p class="count" data-wallet style="margin-top:10px;"></p>
   </div>
   </div>
 
@@ -1300,7 +1297,8 @@ function openCardModal(i){
   const mvs = rollCard(parseInt(c.serial, 16) >>> 0, c.name).moves;
   const mvLine = mvs.map(m => (m.kind === 'forte' ? '💥' : m.kind === 'rapido' ? '⚡' : '✨') + ' ' + m.name).join(' · ');
   document.getElementById('modalCap').innerHTML =
-    '<em>«' + descrOf(c) + '»</em><br>' + bits.join('  ·  ') + '<br>' + mvLine;
+    '<em>«' + descrOf(c) + '»</em><br>' + bits.join('  ·  ') + '<br>' + mvLine +
+    '<div style="max-width:300px; margin:8px auto 0;">' + xpBarHtml(c.serial) + '</div>';
   document.getElementById('modal').style.display = 'flex';
 }
 function pickNick(){
@@ -1552,6 +1550,8 @@ async function managerAdvice(){
   const selV = document.getElementById('selMine').value;
   const mine = collection[parseInt(selV, 10)];
   if (!mine){ say('Non hai un campione pubblicato. Pubblica una carta e parliamo d\'affari.'); return; }
+  // se il gatto scelto è a riposo, il Manager tace finché non si sblocca
+  if (coolLeft(mine) > 0){ say('😴 ' + mine.name + ' sta recuperando: torna quando è di nuovo pronto e parliamo di strategia.'); return; }
   const meRow = worldAll.find(c => c.serial === mine.serial);
   const rk = rankOf(mine.serial);
   if (!meRow || rk == null){ say('Il tuo campione non risulta nel ranking: ripubblicalo e torna da me.'); return; }
@@ -1807,9 +1807,10 @@ function refreshArena(){
   if (selMine){
     const keepM = selMine.value;
     selMine.innerHTML = '';
-    let eligible = 0;
+    let eligible = 0, published = 0;
     collection.forEach((c, i) => {
       if (myActive.has(c.serial)){
+        published++;
         const resting = coolLeft(c) > 0;
         const frozen = myFrozen.has(c.serial);
         const o = new Option('🐱 ' + c.name + ' (' + c.rarity + ')' + (frozen ? ' 🔒 al mercato' : (resting ? ' 😴 riposa' : '')), String(i));
@@ -1818,7 +1819,10 @@ function refreshArena(){
         if (!resting && !frozen) eligible++;
       }
     });
-    if (!eligible) selMine.add(new Option('— pubblica prima una carta —', ''));
+    if (!eligible){
+      const o = new Option(published ? '😴 tutti i gatti sono a riposo — torna più tardi' : '— pubblica prima una carta —', '');
+      o.disabled = true; selMine.add(o);   // combo non selezionabile: niente incontri finché non si sblocca
+    }
     if (Array.prototype.some.call(selMine.options, o => o.value === keepM)) selMine.value = keepM;
     document.getElementById('onlinePanel').style.display = 'block';
   }
@@ -1846,6 +1850,16 @@ function recordResult(winSerial, loseSerial){
 function cardLevel(serial){
   const s = battleStats[serial];
   return 1 + Math.floor(((s && s.xp) || 0) / 100);
+}
+function xpInfo(serial){
+  const xp = ((battleStats[serial] || {}).xp) || 0;
+  const inLvl = xp % 100;
+  return {xp: xp, lvl: 1 + Math.floor(xp / 100), inLvl: inLvl, toNext: 100 - inLvl, wWorld: Math.ceil((100 - inLvl) / 25)};
+}
+function xpBarHtml(serial){
+  const x = xpInfo(serial);
+  return '<div style="font-size:.78rem; color:var(--muted); margin-top:2px;">📈 Livello ' + x.lvl + ' — ' + x.inLvl + '/100 XP (≈ ' + x.wWorld + ' vittorie mondiali al Lv.' + (x.lvl + 1) + ')</div>' +
+    '<div style="height:7px; background:#2e2950; border-radius:4px; margin-top:3px;"><div style="height:7px; width:' + x.inLvl + '%; background:var(--accent); border-radius:4px;"></div></div>';
 }
 function recordLine(serial){
   const s = battleStats[serial];
@@ -2001,6 +2015,16 @@ async function syncWallet(){
 }
 // bonus stimato dei poteri speciali (in punti-statistica equivalenti, taratura empirica)
 const POWER_EST = [20, 10, 30, 35, 30, 20, 30, 15];
+function rewardPreview(title){
+  const seria = (title === 'SFIDA MONDIALE' || title === 'SFIDA DAL VIVO');
+  const boss = (title === 'BOSS DELL\'ARENA');
+  return {
+    winPt: seria ? 10 : (boss ? 10 : 0),
+    winXp: (seria || boss) ? 25 : 5,
+    loseXp: seria ? 10 : 2,
+    bossNote: boss ? 'punti solo alla prima vittoria del giorno' : null
+  };
+}
 function estStrength(e){
   const seed = parseInt(e.serial, 16) >>> 0;
   const card = rollCard(seed, e.name);
@@ -2118,7 +2142,9 @@ function askBet(ea, eb){
     const row = document.getElementById('stakeRow');
     // l'angolo di Zio Rocco: confronto, probabilità e consiglio
     initCornerman();
-    document.getElementById('cornerStats').innerHTML = cornerAnalysis(ea, eb, pA);
+    document.getElementById('cornerStats').innerHTML = cornerAnalysis(ea, eb, pA) +
+      '<div style="margin-top:8px; font-size:.82rem;">🎁 <strong>In palio:</strong> vittoria +10 punti e +25 XP · sconfitta +10 XP</div>' +
+      xpBarHtml(ea.serial);
     document.getElementById('cornerSay').textContent = cornerComment(ea, eb, pA);
     renderCatnipBtn();
     const canBet = points >= 10;
@@ -2746,6 +2772,10 @@ async function runBattle(ea, eb, title){
   document.getElementById('blog').innerHTML = '';
   document.getElementById('battleScreen').scrollTop = 0;
   if (title) blog('🏟️ — ' + title + ' —', 'winner');
+  // anteprima chiara della posta in gioco: punti e XP per vittoria/sconfitta
+  { const rp = rewardPreview(title);
+    blog('🎁 In palio: vittoria ' + (rp.winPt ? '+' + rp.winPt + ' punti e ' : '') + '+' + rp.winXp + ' XP' +
+      (rp.bossNote ? ' (' + rp.bossNote + ')' : '') + ' · sconfitta +' + rp.loseXp + ' XP' + (rp.winPt ? '' : ' · nessun punto in locale')); }
   // incontri seri (mondiale, dal vivo, boss): niente ritirata a metà, il risultato conta
   const noQuit = (title === 'SFIDA MONDIALE' || title === 'SFIDA DAL VIVO' || title === 'BOSS DELL\'ARENA');
   const closeBtn = document.getElementById('closeBattleBtn');
@@ -3423,7 +3453,7 @@ async function migrateMelodies(){
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
 /* ---------- versione e aggiornamento automatico ---------- */
-const APP_VERSION = '15.2';   // unica fonte di verità: aggiorna anche version.txt a ogni release
+const APP_VERSION = '15.3';   // unica fonte di verità: aggiorna anche version.txt a ogni release
 try { document.getElementById('appVer').textContent = 'v' + APP_VERSION; } catch(e){}
 function verNewer(a, b){   // a più recente di b? confronto numerico 11.10 > 11.9
   const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);
