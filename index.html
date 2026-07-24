@@ -2468,14 +2468,24 @@ async function genGlobalAudio(){
   const jobs = [['phrases/red_' + lang + '.wav', redIntro], ['phrases/blue_' + lang + '.wav', blueIntro]];
   const nk = ((window.LANG_DB || {})[lang] || {}).nicks || {};
   NICK_IDS.forEach(id => jobs.push(['nicks/' + id + '_' + lang + '.wav', nk[id] || '']));
+  _clipExists = {};   // controllo fresco su Storage
+  let skip = 0;
   for (let i = 0; i < jobs.length; i++){
-    if (out) out.textContent = '🎙️ Genero ' + lang.toUpperCase() + ': ' + (i + 1) + '/' + jobs.length + '…';
-    const url = await genVoice(jobs[i][1], key, lang);
-    if (url && (await uploadClip(jobs[i][0], url))) ok++; else fail++;
-    await new Promise(r => setTimeout(r, 350));
+    const path = jobs[i][0], text = jobs[i][1];
+    if (out) out.textContent = '🎙️ ' + lang.toUpperCase() + ': ' + (i + 1) + '/' + jobs.length + ' (✅' + ok + ' ⏭️' + skip + ' ❌' + fail + ')…';
+    // ripartibile: salta le clip già presenti su Storage (i rilanci completano solo le mancanti)
+    if (await clipExists(audioUrl(path))){ skip++; continue; }
+    let done = false;
+    for (let attempt = 0; attempt < 2 && !done; attempt++){
+      const url = await genVoice(text, key, lang);
+      if (url && (await uploadClip(path, url))){ ok++; done = true; }
+      else { await new Promise(r => setTimeout(r, 1500)); }   // pausa lunga prima del secondo tentativo (limiti API)
+    }
+    if (!done) fail++;
+    await new Promise(r => setTimeout(r, 550));   // ritmo più gentile per non sforare i limiti
   }
   _clipExists = {};
-  if (out) out.textContent = '✅ ' + lang.toUpperCase() + ': ' + ok + ' clip caricate' + (fail ? ' (' + fail + ' fallite)' : '') + '. Cambia lingua e rifai per le altre.';
+  if (out) out.textContent = '✅ ' + lang.toUpperCase() + ': ' + ok + ' nuove · ' + skip + ' già c\'erano' + (fail ? ' · ❌ ' + fail + ' fallite (rilancia per completarle)' : ' — completo!');
   if (btn) btn.disabled = false;
 }
 function speak(text){
@@ -3533,7 +3543,7 @@ async function migrateMelodies(){
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
 /* ---------- versione e aggiornamento automatico ---------- */
-const APP_VERSION = '15.9';   // unica fonte di verità: aggiorna anche version.txt a ogni release
+const APP_VERSION = '16.0';   // unica fonte di verità: aggiorna anche version.txt a ogni release
 try { document.getElementById('appVer').textContent = 'v' + APP_VERSION; } catch(e){}
 function verNewer(a, b){   // a più recente di b? confronto numerico 11.10 > 11.9
   const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);
