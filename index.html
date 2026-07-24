@@ -1567,23 +1567,24 @@ async function loadMyWorldCards(){
 /* ---------- Mister Felini, il Manager: consigli di carriera a regole (zero costi) ---------- */
 async function managerAdvice(){
   const say = t => { const el = document.getElementById('mgrSay'); if (el) el.textContent = t; };
-  if (!session || !session.access_token){ say('Prima accedi, ragazzo: gli affari si fanno con un nome sul contratto.'); return; }
-  if (!worldAll.length){ say('Un attimo, consulto i registri…'); await loadWorldCards(); }
+  if (!session || !session.access_token){ say(TC('felini_noauth')); return; }
+  if (!worldAll.length){ say(TC('felini_checking')); await loadWorldCards(); }
   const selV = document.getElementById('selMine').value;
   const mine = collection[parseInt(selV, 10)];
-  if (!mine){ say('Non hai un campione pubblicato. Pubblica una carta e parliamo d\'affari.'); return; }
+  if (!mine){ say(TC('felini_nocard')); return; }
   // se il gatto scelto è a riposo, il Manager tace finché non si sblocca
-  if (coolLeft(mine) > 0){ say('😴 ' + mine.name + ' sta recuperando: torna quando è di nuovo pronto e parliamo di strategia.'); return; }
+  if (coolLeft(mine) > 0){ say(TC('felini_resting', {name: mine.name})); return; }
   const meRow = worldAll.find(c => c.serial === mine.serial);
   const rk = rankOf(mine.serial);
-  if (!meRow || rk == null){ say('Il tuo campione non risulta nel ranking: ripubblicalo e torna da me.'); return; }
-  const open = ['Ascolta il Manager: ', 'Ho fiutato l\'affare: ', 'Il ring è una scacchiera: ', 'Parlano i numeri, ragazzo: '];
+  if (!meRow || rk == null){ say(TC('felini_norank')); return; }
+  const open = TC('felini_open');
   const parts = [];
   if ((meRow.loss_streak || 0) >= 2){
-    parts.push(mine.name + ' ha perso ' + meRow.loss_streak + ' di fila (🧊): toglilo dal giro per un po\', portalo da Coach Baffo, e fallo tornare affamato.');
+    parts.push(TC('felini_loss_streak', {name: mine.name, n: meRow.loss_streak}));
   } else if (rk === 1){
     const chaser = worldAll[1];
-    parts.push(mine.name + ' è il CAMPIONE 👑: difendi la corona' + (chaser ? ', e occhio a ' + chaser.name + ' (#2, ' + (chaser.elo || 1000) + ' pt) che scalpita' : '') + '.');
+    const chaserFrag = chaser ? TC('felini_chaser', {name: chaser.name, elo: chaser.elo || 1000}) : '';
+    parts.push(TC('felini_champ', {name: mine.name, chaser: chaserFrag}));
   } else {
     const mySerials = {};
     collection.forEach(x => { mySerials[x.serial] = true; });
@@ -1601,39 +1602,36 @@ async function managerAdvice(){
     });
     if (best){
       const gap = (best.elo || 1000) - (meRow.elo || 1000);
-      parts.push('il prossimo incontro giusto per ' + mine.name + ' (#' + rk + ') è ' + best.name + ' di ' + (best.owner || '?') +
-        ' (#' + rankOf(best.serial) + ', ' + (best.elo || 1000) + ' pt): ' +
-        (gap > 60 ? 'rischioso, ma se lo batti fai il botto in classifica.' : gap < -60 ? 'sulla carta è battibile: vittoria di gestione.' : 'incontro alla pari, di quelli che piacciono al pubblico.'));
+      const verdict = gap > 60 ? TC('felini_v_risky') : gap < -60 ? TC('felini_v_beatable') : TC('felini_v_even');
+      parts.push(TC('felini_target', {name: mine.name, rk: rk, tname: best.name, owner: best.owner || '?', trk: rankOf(best.serial), elo: best.elo || 1000, verdict: verdict}));
       // parere tecnico: probabilità stimata di vittoria (stesse regole di Zio Rocco)
       try {
         const bs = estStrengthRow(best);
         const ms = estStrength(mine);
         const p = Math.round(100 / (1 + Math.pow(10, (bs - ms) / 155)));   // stessa curva calibrata di Zio Rocco
-        if (p < 45) parts.push('Ma parliamoci chiaro: Zio Rocco stima solo il ' + p + '% di vittoria. Io aspetterei — palestra, un livello in più, POI si firma il contratto.');
-        else if (p < 55) parts.push('Le probabilità dicono ' + p + '%: match aperto, decidono i nervi (e magari l\'erba gatta 🌿).');
-        else parts.push('Zio Rocco stima un ' + p + '% di vittoria: alla portata. Vai e chiudi il match.');
+        if (p < 45) parts.push(TC('felini_prob_low', {p: p}));
+        else if (p < 55) parts.push(TC('felini_prob_mid', {p: p}));
+        else parts.push(TC('felini_prob_high', {p: p}));
       } catch(e){}
       if (rankOf(best.serial) === 1){
-        parts.push('E ricordatelo: quello ha la CINTURA 👑 — la classifica non conta niente, lo batti e sei TU il campione.');
+        parts.push(TC('felini_belt'));
       }
       if ((best.win_streak || 0) >= 2){
-        parts.push('Occhio però: è un avversario tosto, arriva da una striscia di ' + best.win_streak + ' vittorie 🔥.');
+        parts.push(TC('felini_hot', {n: best.win_streak}));
       } else if ((best.loss_streak || 0) >= 2){
-        parts.push('E ti dirò: è in crisi nera (🧊 ' + best.loss_streak + ' sconfitte di fila) — il momento perfetto per colpirlo.');
+        parts.push(TC('felini_cold', {n: best.loss_streak}));
       }
       if (gap > 40 || (best.win_streak || 0) >= 3){
-        parts.push(points >= 50
-          ? 'Il mio consiglio da bordo ring: investi 50 punti nell\'erba gatta 🌿 prima del match — contro uno così serve il turbo.'
-          : 'Servirebbe l\'erba gatta 🌿, ma le casse piangono (' + points + ' punti): o trovi punti, o scegli un bersaglio più morbido.');
+        parts.push(points >= 50 ? TC('felini_catnip_need') : TC('felini_catnip_broke', {pts: points}));
       } else if (gap > -40){
-        parts.push('Erba gatta 🌿? Facoltativa: incontro alla pari, decideranno i nervi.');
+        parts.push(TC('felini_catnip_opt'));
       } else {
-        parts.push('Niente erba gatta: ce la fa con le sue zampe, risparmia i punti.');
+        parts.push(TC('felini_catnip_no'));
       }
     } else {
-      parts.push('nessun bersaglio di altri proprietari sopra di te ora (o riposano tutti): difendi la posizione, o ripassa più tardi.');
+      parts.push(TC('felini_notarget'));
     }
-    if (trainAvail(mine) > 0 && coolLeft(mine) === 0) parts.push('E ha ancora ' + trainAvail(mine) + ' punti di margine in palestra: un buon pasto prima del match non ha mai ucciso nessuno.');
+    if (trainAvail(mine) > 0 && coolLeft(mine) === 0) parts.push(TC('felini_margin', {n: trainAvail(mine)}));
   }
   say(open[Math.floor(Math.random() * open.length)] + parts.join(' '));
   sfx('charm');
@@ -3575,7 +3573,7 @@ async function migrateMelodies(){
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
 /* ---------- versione e aggiornamento automatico ---------- */
-const APP_VERSION = '16.6';   // unica fonte di verità: aggiorna anche version.txt a ogni release
+const APP_VERSION = '16.7';   // unica fonte di verità: aggiorna anche version.txt a ogni release
 try { document.getElementById('appVer').textContent = 'v' + APP_VERSION; } catch(e){}
 function verNewer(a, b){   // a più recente di b? confronto numerico 11.10 > 11.9
   const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);
@@ -4156,20 +4154,20 @@ async function initTrader(){
 }
 function traderAdvice(){
   const say = t => { const el = document.getElementById('trdSay'); if (el) el.textContent = t; };
-  const open = ['Psst, amico: ', 'Affari, affari! ', 'Il Mercante sa tutto: ', 'Tra noi che ce ne intendiamo: '];
+  const open = TC('trader_open');
   if (!collection.length){ say(TC('baratto_empty')); return; }
   const parts = [];
   const sorted = collection.slice().sort((a, b) => estStrength(b) - estStrength(a));
   const best = sorted[0], worst = sorted[sorted.length - 1];
-  if (best) parts.push('tieniti stretto ' + best.name + ', quello vale oro: non cederlo per due spiccioli.');
-  if (worst && worst !== best) parts.push('se proprio devi dare qualcosa, parti da ' + worst.name + ' — ne hai di meglio in mano.');
+  if (best) parts.push(TC('trader_best', {name: best.name}));
+  if (worst && worst !== best) parts.push(TC('trader_worst', {name: worst.name}));
   const byRar = {}; collection.forEach(c => { byRar[c.rarity] = (byRar[c.rarity] || 0) + 1; });
-  if ((byRar['Comune'] || 0) >= 3) parts.push('Hai un mucchio di Comuni (' + byRar['Comune'] + '): scambiane un paio per qualcosa di più raro, fidati.');
+  if ((byRar['Comune'] || 0) >= 3) parts.push(TC('trader_commons', {rar: trRarity('Comune'), n: byRar['Comune']}));
   // occhio alle carte pregiate degli altri già caricate nella vetrina
   try {
     const gem = (_tradeBrowseRows || []).find(c => c.rarity === 'Leggendaria') || (_tradeBrowseRows || []).find(c => c.rarity === 'Epica');
-    if (gem) parts.push('E occhio: c\'è una ' + gem.rarity + ' di ' + (gem.owner || 'qualcuno') + ' in vetrina — se hai un buon doppione, tenta lo scambio prima che la prenda un altro.');
-    else parts.push('Premi «Sfoglia carte da scambiare» e fammi vedere cosa gira: ti dico io se c\'è un affare.');
+    if (gem) parts.push(TC('trader_gem', {rar: trRarity(gem.rarity), owner: gem.owner || '?'}));
+    else parts.push(TC('trader_browse'));
   } catch(e){}
   say(open[Math.floor(Math.random() * open.length)] + parts.join(' '));
   try { sfx('charm'); } catch(e){}
