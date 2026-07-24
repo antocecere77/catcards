@@ -263,5 +263,27 @@
   "stake_nopts": "+{xp} XP (nessun punto in locale)",
   "boss_stake_note": " — punti solo alla prima vittoria del giorno",
   "entry_catnip": "🌿 {name} entra in arena già carico di erba gatta!"
+ },
+ "chars": {
+  "rocco_warn": "Occhio alla sua {stat}: lì ti mangia.",
+  "rocco_70": "Ragazzo, questo lo stendi prima del gong. Non ti montare la testa e chiudi in fretta.",
+  "rocco_55": "Sei favorito, ma i favoriti che dormono finiscono al tappeto. Colpisci per primo.",
+  "rocco_50": "Cinquanta e cinquanta, ragazzo: qui decide chi ha più fame. Se hai 50 punti, l'erba gatta li vale tutti.",
+  "rocco_35": "Non ti mento: è più grosso di te. Senza erba gatta io questo match non lo farei.",
+  "rocco_lose": "Ascolta il vecchio Rocco: questo ti spezza. Torna in palestra, cresci un livello, POI ne riparliamo. Se proprio vuoi farlo, almeno l'erba gatta.",
+  "baratto_great": "🤑 Affarone! Ricevi molto più di quel che dai — chiudi in fretta.",
+  "baratto_good": "👍 Buon affare: ci guadagni. Il Mercante approva.",
+  "baratto_even": "⚖️ Scambio alla pari: decidi col cuore, non col portafoglio.",
+  "baratto_bad": "😾 Ci rimetti un po'... sicuro? Il Mercante storce i baffi.",
+  "baratto_terrible": "🙀 Pessimo affare! Dai molto più di quel che prendi. Lascia perdere.",
+  "baratto_empty": "Non hai carte da barattare! Creane qualcuna e torna: al bazar si fanno affari, non beneficenza.",
+  "inc_100a": "CENTO PUNTI! Che follia magnifica! 😼",
+  "inc_100b": "Offerta da re! E chi osa rilanciare ora?",
+  "inc_50a": "Cinquanta! Il pubblico freme, signori!",
+  "inc_50b": "Bella cifra! L'asta si scalda!",
+  "inc_bata": "E rilancia ancora! Non si fermano più!",
+  "inc_batb": "Battaglia all'ultimo punto, che spettacolo!",
+  "inc_starta": "Prima offerta sul banco! Chi dà di più?",
+  "inc_startb": "Si parte! Aggiudicato a chi non molla!"
  }
 };

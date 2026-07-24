@@ -263,5 +263,27 @@
   "stake_nopts": "+{xp} XP (keine Punkte lokal)",
   "boss_stake_note": " — Punkte nur beim ersten Sieg des Tages",
   "entry_catnip": "🌿 {name} betritt die Arena schon voll Katzenminze!"
+ },
+ "chars": {
+  "rocco_warn": "Pass auf seine {stat} auf: da frisst er dich.",
+  "rocco_70": "Junge, den legst du vor dem Gong um. Werd nicht übermütig — mach's schnell.",
+  "rocco_55": "Du bist Favorit, aber Favoriten, die pennen, landen auf der Matte. Schlag zuerst zu.",
+  "rocco_50": "Fifty-fifty, Junge: hier gewinnt der Hungrigere. Wenn du 50 Punkte hast, ist die Katzenminze jeden wert.",
+  "rocco_35": "Ich lüg nicht: er ist größer als du. Ohne Katzenminze würde ich den Kampf lassen.",
+  "rocco_lose": "Hör auf den alten Rocco: der bricht dich. Zurück ins Studio, ein Level hoch, DANN reden wir. Wenn's sein muss, wenigstens die Katzenminze.",
+  "baratto_great": "🤑 Ein Schnäppchen! Du kriegst viel mehr, als du gibst — mach schnell.",
+  "baratto_good": "👍 Guter Deal: du machst Plus. Der Händler nickt.",
+  "baratto_even": "⚖️ Fairer Tausch: entscheide mit dem Herzen, nicht dem Geldbeutel.",
+  "baratto_bad": "😾 Du verlierst etwas... sicher? Dem Händler zucken die Schnurrhaare.",
+  "baratto_terrible": "🙀 Mieser Deal! Du gibst viel mehr, als du bekommst. Vergiss es.",
+  "baratto_empty": "Keine Karten zum Tauschen! Mach welche und komm wieder: der Basar ist für Geschäfte, nicht für Almosen.",
+  "inc_100a": "HUNDERT PUNKTE! Herrlicher Wahnsinn! 😼",
+  "inc_100b": "Ein königliches Gebot! Und wer wagt jetzt mehr?",
+  "inc_50a": "Fünfzig! Das Publikum zittert, meine Herrschaften!",
+  "inc_50b": "Schöne Summe! Die Auktion wird heiß!",
+  "inc_bata": "Und noch ein Gebot! Die hören nicht mehr auf!",
+  "inc_batb": "Ein Kampf bis zum letzten Punkt — was für ein Spektakel!",
+  "inc_starta": "Erstes Gebot am Pult! Wer bietet mehr?",
+  "inc_startb": "Los geht's! Zugeschlagen, wer nicht aufgibt!"
  }
 };

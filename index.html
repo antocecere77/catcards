@@ -757,6 +757,13 @@ function TB(key, vars){
   if (vars) for (const k in vars) s = s.split('{' + k + '}').join(vars[k]);
   return s;
 }
+// frasi dei personaggi (Rocco, Felini, Baffo, Baratto, Incanto) dalla sezione chars
+function TC(key, vars){
+  const b = (LDB().chars) || {}, e = (LDBen().chars) || {};
+  let s = (b[key] != null ? b[key] : (e[key] != null ? e[key] : key));
+  if (vars) for (const k in vars) s = s.split('{' + k + '}').join(vars[k]);
+  return s;
+}
 /* ---------- assegnazione dal seriale (deterministica) + preferenza utente (nid/did). I testi vivono in LANG_DB ---------- */
 function nickIdxOf(e){
   if (typeof e.nid === 'number' && e.nid >= 0 && e.nid < NICK_IDS.length) return e.nid;
@@ -2119,12 +2126,12 @@ function cornerComment(ea, eb, pA){
   const sa = statsOf(ea), sb = statsOf(eb);
   let worst = 0, gap = 0;
   sa.forEach((v, i) => { const d = (sb[i] || 0) - v; if (d > gap){ gap = d; worst = i; } });
-  const warn = gap >= 12 ? ' Occhio alla sua ' + CORNER_STATS_F()[worst].split(' ').slice(1).join(' ') + ': lì ti mangia.' : '';
-  if (pA >= 0.7) return 'Ragazzo, questo lo stendi prima del gong. Non ti montare la testa e chiudi in fretta.' + warn;
-  if (pA >= 0.55) return 'Sei favorito, ma i favoriti che dormono finiscono al tappeto. Colpisci per primo.' + warn;
-  if (pA >= 0.45) return 'Cinquanta e cinquanta, ragazzo: qui decide chi ha più fame. Se hai 50 punti, l\'erba gatta li vale tutti.' + warn;
-  if (pA >= 0.35) return 'Non ti mento: è più grosso di te. Senza erba gatta io questo match non lo farei.' + warn;
-  return 'Ascolta il vecchio Rocco: questo ti spezza. Torna in palestra, cresci un livello, POI ne riparliamo. Se proprio vuoi farlo, almeno l\'erba gatta.' + warn;
+  const warn = gap >= 12 ? ' ' + TC('rocco_warn', {stat: CORNER_STATS_F()[worst].split(' ').slice(1).join(' ')}) : '';
+  if (pA >= 0.7) return TC('rocco_70') + warn;
+  if (pA >= 0.55) return TC('rocco_55') + warn;
+  if (pA >= 0.45) return TC('rocco_50') + warn;
+  if (pA >= 0.35) return TC('rocco_35') + warn;
+  return TC('rocco_lose') + warn;
 }
 function renderCatnipBtn(){
   const b = document.getElementById('betCatnip');
@@ -3568,7 +3575,7 @@ async function migrateMelodies(){
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
 /* ---------- versione e aggiornamento automatico ---------- */
-const APP_VERSION = '16.4';   // unica fonte di verità: aggiorna anche version.txt a ogni release
+const APP_VERSION = '16.5';   // unica fonte di verità: aggiorna anche version.txt a ogni release
 try { document.getElementById('appVer').textContent = 'v' + APP_VERSION; } catch(e){}
 function verNewer(a, b){   // a più recente di b? confronto numerico 11.10 > 11.9
   const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);
@@ -4150,7 +4157,7 @@ async function initTrader(){
 function traderAdvice(){
   const say = t => { const el = document.getElementById('trdSay'); if (el) el.textContent = t; };
   const open = ['Psst, amico: ', 'Affari, affari! ', 'Il Mercante sa tutto: ', 'Tra noi che ce ne intendiamo: '];
-  if (!collection.length){ say('Non hai carte da barattare! Creane qualcuna e torna: al bazar si fanno affari, non beneficenza.'); return; }
+  if (!collection.length){ say(TC('baratto_empty')); return; }
   const parts = [];
   const sorted = collection.slice().sort((a, b) => estStrength(b) - estStrength(a));
   const best = sorted[0], worst = sorted[sorted.length - 1];
@@ -4250,11 +4257,11 @@ function tradeStrength(statsv, hp, lvl){
 }
 function bazarVerdict(giveStr, getStr){
   const d = getStr - giveStr;
-  if (d > 25) return '🤑 Affarone! Ricevi molto più di quel che dai — chiudi in fretta.';
-  if (d > 8) return '👍 Buon affare: ci guadagni. Il Mercante approva.';
-  if (d > -8) return '⚖️ Scambio alla pari: decidi col cuore, non col portafoglio.';
-  if (d > -25) return '😾 Ci rimetti un po\'... sicuro? Il Mercante storce i baffi.';
-  return '🙀 Pessimo affare! Dai molto più di quel che prendi. Lascia perdere.';
+  if (d > 25) return TC('baratto_great');
+  if (d > 8) return TC('baratto_good');
+  if (d > -8) return TC('baratto_even');
+  if (d > -25) return TC('baratto_bad');
+  return TC('baratto_terrible');
 }
 function normLocal(entry){
   const sv = Array.isArray(entry.statsv) ? entry.statsv : rollCard(parseInt(entry.serial, 16) >>> 0, entry.name).stats.map(s => s.value);
@@ -4430,10 +4437,10 @@ async function pullWallet(){
 }
 function incantoSay(t){ const el = document.getElementById('incSay'); if (el) el.textContent = t; }
 function incantoComment(amount, bids){
-  const pool = amount >= 100 ? ['CENTO PUNTI! Che follia magnifica! 😼', 'Offerta da re! E chi osa rilanciare ora?']
-    : amount >= 50 ? ['Cinquanta! Il pubblico freme, signori!', 'Bella cifra! L\'asta si scalda!']
-    : bids >= 3 ? ['E rilancia ancora! Non si fermano più!', 'Battaglia all\'ultimo punto, che spettacolo!']
-    : ['Prima offerta sul banco! Chi dà di più?', 'Si parte! Aggiudicato a chi non molla!'];
+  const pool = amount >= 100 ? [TC('inc_100a'), TC('inc_100b')]
+    : amount >= 50 ? [TC('inc_50a'), TC('inc_50b')]
+    : bids >= 3 ? [TC('inc_bata'), TC('inc_batb')]
+    : [TC('inc_starta'), TC('inc_startb')];
   incantoSay(pool[Math.floor(Math.random() * pool.length)]);
   try { sfx('charm'); } catch(e){}
 }

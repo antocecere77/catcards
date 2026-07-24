@@ -263,5 +263,27 @@
   "stake_nopts": "+{xp} XP (no points locally)",
   "boss_stake_note": " — points only on the first win of the day",
   "entry_catnip": "🌿 {name} enters the arena already loaded with catnip!"
+ },
+ "chars": {
+  "rocco_warn": "Watch his {stat}: that's where he eats you alive.",
+  "rocco_70": "Kid, you'll drop this one before the bell. Don't get cocky — finish it fast.",
+  "rocco_55": "You're the favorite, but favorites who sleep hit the canvas. Strike first.",
+  "rocco_50": "Fifty-fifty, kid: this goes to whoever's hungrier. If you've got 50 points, the catnip's worth every one.",
+  "rocco_35": "I won't lie: he's bigger than you. Without catnip I wouldn't take this fight.",
+  "rocco_lose": "Listen to old Rocco: this one breaks you. Back to the gym, gain a level, THEN we talk. If you must fight, at least take the catnip.",
+  "baratto_great": "🤑 Steal of a deal! You get way more than you give — close it fast.",
+  "baratto_good": "👍 Good deal: you come out ahead. The Merchant approves.",
+  "baratto_even": "⚖️ Even trade: decide with your heart, not your wallet.",
+  "baratto_bad": "😾 You lose a little... sure about this? The Merchant twitches his whiskers.",
+  "baratto_terrible": "🙀 Terrible deal! You give far more than you get. Forget it.",
+  "baratto_empty": "No cards to barter! Make some and come back: the bazaar's for deals, not charity.",
+  "inc_100a": "A HUNDRED POINTS! Magnificent madness! 😼",
+  "inc_100b": "A kingly bid! And who dares raise it now?",
+  "inc_50a": "Fifty! The crowd is trembling, ladies and gentlemen!",
+  "inc_50b": "Fine sum! The auction's heating up!",
+  "inc_bata": "And another raise! They just won't stop!",
+  "inc_batb": "A battle to the last point — what a show!",
+  "inc_starta": "First bid on the block! Who gives more?",
+  "inc_startb": "Here we go! Sold to whoever won't quit!"
  }
 };

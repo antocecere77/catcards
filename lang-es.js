@@ -263,5 +263,27 @@
   "stake_nopts": "+{xp} XP (sin puntos en local)",
   "boss_stake_note": " — puntos solo en la 1ª victoria del día",
   "entry_catnip": "🌿 ¡{name} entra en la arena ya cargado de hierba gatera!"
+ },
+ "chars": {
+  "rocco_warn": "Ojo con su {stat}: ahí te come.",
+  "rocco_70": "Chaval, a este lo tumbas antes del gong. No te confíes y ciérralo rápido.",
+  "rocco_55": "Eres el favorito, pero los favoritos que se duermen acaban en la lona. Pega primero.",
+  "rocco_50": "Cincuenta-cincuenta, chaval: gana el que tenga más hambre. Si tienes 50 puntos, la hierba gatera los vale.",
+  "rocco_35": "No te miento: es más grande que tú. Sin hierba gatera yo no haría este combate.",
+  "rocco_lose": "Hazle caso al viejo Rocco: este te rompe. Vuelve al gimnasio, sube un nivel y LUEGO hablamos. Si insistes, al menos la hierba gatera.",
+  "baratto_great": "🤑 ¡Un chollo! Recibes mucho más de lo que das — ciérralo rápido.",
+  "baratto_good": "👍 Buen trato: sales ganando. El Mercader aprueba.",
+  "baratto_even": "⚖️ Intercambio parejo: decide con el corazón, no con la cartera.",
+  "baratto_bad": "😾 Pierdes algo... ¿seguro? El Mercader tuerce los bigotes.",
+  "baratto_terrible": "🙀 ¡Pésimo trato! Das mucho más de lo que recibes. Olvídalo.",
+  "baratto_empty": "¡No tienes cartas para trocar! Crea algunas y vuelve: el bazar es para negocios, no caridad.",
+  "inc_100a": "¡CIEN PUNTOS! ¡Qué locura magnífica! 😼",
+  "inc_100b": "¡Una oferta de reyes! ¿Y quién se atreve a subir?",
+  "inc_50a": "¡Cincuenta! ¡El público tiembla, señores!",
+  "inc_50b": "¡Buena cifra! ¡La subasta se calienta!",
+  "inc_bata": "¡Y sube otra vez! ¡No paran!",
+  "inc_batb": "¡Batalla hasta el último punto, qué espectáculo!",
+  "inc_starta": "¡Primera puja en la mesa! ¿Quién da más?",
+  "inc_startb": "¡Empezamos! ¡Adjudicado al que no se rinda!"
  }
 };

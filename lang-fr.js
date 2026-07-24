@@ -263,5 +263,27 @@
   "stake_nopts": "+{xp} XP (aucun point en local)",
   "boss_stake_note": " — points seulement à la 1re victoire du jour",
   "entry_catnip": "🌿 {name} entre dans l arène déjà gonflé à l herbe à chat !"
+ },
+ "chars": {
+  "rocco_warn": "Méfie-toi de sa {stat} : c'est là qu'il te bouffe.",
+  "rocco_70": "Petit, tu le mets K.O. avant le gong. Fais pas le malin, termine vite.",
+  "rocco_55": "Tu es favori, mais les favoris qui dorment finissent au tapis. Frappe le premier.",
+  "rocco_50": "Cinquante-cinquante, petit : ça se joue à qui a le plus faim. Si t'as 50 points, l'herbe à chat les vaut tous.",
+  "rocco_35": "Je te mens pas : il est plus costaud. Sans herbe à chat, je ferais pas ce combat.",
+  "rocco_lose": "Écoute le vieux Rocco : celui-là te brise. Retourne à la salle, prends un niveau, on en reparle APRÈS. Si tu y tiens, au moins l'herbe à chat.",
+  "baratto_great": "🤑 Une affaire en or ! Tu reçois bien plus que tu ne donnes — conclus vite.",
+  "baratto_good": "👍 Bonne affaire : tu y gagnes. Le Marchand approuve.",
+  "baratto_even": "⚖️ Échange équitable : décide avec le cœur, pas le portefeuille.",
+  "baratto_bad": "😾 Tu y perds un peu... t'es sûr ? Le Marchand fronce les moustaches.",
+  "baratto_terrible": "🙀 Affaire catastrophique ! Tu donnes bien plus que tu ne reçois. Laisse tomber.",
+  "baratto_empty": "Aucune carte à troquer ! Fabriques-en et reviens : au bazar on fait des affaires, pas la charité.",
+  "inc_100a": "CENT POINTS ! Quelle folie magnifique ! 😼",
+  "inc_100b": "Une offre royale ! Et qui ose surenchérir ?",
+  "inc_50a": "Cinquante ! Le public frémit, mesdames et messieurs !",
+  "inc_50b": "Belle somme ! L'enchère s'échauffe !",
+  "inc_bata": "Et ça surenchérit encore ! Ils ne s'arrêtent plus !",
+  "inc_batb": "Un combat au dernier point, quel spectacle !",
+  "inc_starta": "Première offre sur le billot ! Qui dit mieux ?",
+  "inc_startb": "C'est parti ! Adjugé à celui qui ne lâche rien !"
  }
 };
