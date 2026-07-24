@@ -284,6 +284,24 @@
   "inc_bata": "Und noch ein Gebot! Die hören nicht mehr auf!",
   "inc_batb": "Ein Kampf bis zum letzten Punkt — was für ein Spektakel!",
   "inc_starta": "Erstes Gebot am Pult! Wer bietet mehr?",
-  "inc_startb": "Los geht's! Zugeschlagen, wer nicht aufgibt!"
+  "inc_startb": "Los geht's! Zugeschlagen, wer nicht aufgibt!",
+  "baffo_open": [
+   "Miau, Rekrut! ",
+   "Hör auf den alten Baffo: ",
+   "Spuck das Trockenfutter aus und hör zu: ",
+   "Zu meiner Zeit gab es keine weichen Kissen. ",
+   "Schnurrhaare gerade, Ohren gespitzt: "
+  ],
+  "baffo_empty": "Das Studio ist leer! Bring mir einen Schüler aus dem Tab 📸 Neu.",
+  "baffo_indiff_afford": "{name}s Schwäche ist {stat} ({val}): trainiere sie mit dem Combo {combo} (60 Punkte) — kannst du dir leisten.",
+  "baffo_indiff_save": "{name}s Schwäche ist {stat} ({val}), aber die trainiert nur mit dem Combo {combo} (60 Punkte): dir fehlen {miss} — spar sie an.",
+  "baffo_indiff_alt": " Oder stärke inzwischen {stat2} ({val2}) mit {food} (25 Punkte).",
+  "baffo_weak": "{name}s schwächster Wert ist {stat} ({val}): gib ihm {food}.",
+  "baffo_combo": "Du hast {pts} Punkte: der Combo {combo} ({tgt}) steigert zwei Werte in einer Pause — teuer, aber praktisch, wenn's eilt.",
+  "baffo_record_bad": "Mit {w} Siegen und {l} Niederlagen braucht er Biss, keine Streicheleinheiten.",
+  "baffo_unbeaten": "Er ist ungeschlagen: pass auf, dass er nicht abhebt.",
+  "baffo_margin": "Trainingsspielraum aufgebraucht: nur Siege in der Welt schalten mehr frei.",
+  "baffo_broke": "Und die Kasse ist leer ({pts} Punkte): gewinn ein paar Welt-Wetten.",
+  "baffo_fit": "{name} ist topfit. Lass ihn kämpfen — die Bank macht die Muskeln weich."
  }
 };

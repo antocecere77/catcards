@@ -284,6 +284,24 @@
   "inc_bata": "E rilancia ancora! Non si fermano più!",
   "inc_batb": "Battaglia all'ultimo punto, che spettacolo!",
   "inc_starta": "Prima offerta sul banco! Chi dà di più?",
-  "inc_startb": "Si parte! Aggiudicato a chi non molla!"
+  "inc_startb": "Si parte! Aggiudicato a chi non molla!",
+  "baffo_open": [
+   "Miao, recluta! ",
+   "Ascolta il vecchio Baffo: ",
+   "Sputa il croccantino e ascolta: ",
+   "Ai miei tempi niente cuscini morbidi. ",
+   "Baffi dritti e orecchie tese: "
+  ],
+  "baffo_empty": "La palestra è vuota! Portami un allievo dalla scheda 📸 Crea.",
+  "baffo_indiff_afford": "Il punto debole di {name} è {stat} ({val}): allenala col combo {combo} (60 punti), puoi permettertelo.",
+  "baffo_indiff_save": "Il punto debole di {name} è {stat} ({val}), ma si allena solo col combo {combo} (60 punti): ti mancano {miss} punti, mettili da parte.",
+  "baffo_indiff_alt": " Oppure intanto rinforza {stat2} ({val2}) con {food} (25 punti).",
+  "baffo_weak": "Il punto più debole di {name} è {stat} ({val}): dagli {food}.",
+  "baffo_combo": "Hai {pts} punti: il combo {combo} ({tgt}) cresce due cose in un solo riposo — caro ma conveniente se vai di fretta.",
+  "baffo_record_bad": "Con {w} vittorie e {l} sconfitte serve grinta, non coccole.",
+  "baffo_unbeaten": "È imbattuto: attento che non si monti la testa.",
+  "baffo_margin": "Margine di allenamento finito: solo le vittorie nel mondo sbloccano nuovi progressi.",
+  "baffo_broke": "E le casse piangono ({pts} punti): vinci qualche scommessa mondiale.",
+  "baffo_fit": "{name} è in forma smagliante. Fallo combattere, che la panchina infiacchisce i muscoli."
  }
 };

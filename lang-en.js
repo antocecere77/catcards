@@ -284,6 +284,24 @@
   "inc_bata": "And another raise! They just won't stop!",
   "inc_batb": "A battle to the last point — what a show!",
   "inc_starta": "First bid on the block! Who gives more?",
-  "inc_startb": "Here we go! Sold to whoever won't quit!"
+  "inc_startb": "Here we go! Sold to whoever won't quit!",
+  "baffo_open": [
+   "Meow, recruit! ",
+   "Listen to old Baffo: ",
+   "Spit out that kibble and listen: ",
+   "In my day, no soft cushions. ",
+   "Whiskers straight, ears up: "
+  ],
+  "baffo_empty": "The gym is empty! Bring me a student from the 📸 Create tab.",
+  "baffo_indiff_afford": "{name}'s weak spot is {stat} ({val}): train it with the {combo} combo (60 points) — you can afford it.",
+  "baffo_indiff_save": "{name}'s weak spot is {stat} ({val}), but it only trains with the {combo} combo (60 points): you're {miss} short — save up.",
+  "baffo_indiff_alt": " Or meanwhile boost {stat2} ({val2}) with {food} (25 points).",
+  "baffo_weak": "{name}'s weakest stat is {stat} ({val}): give it {food}.",
+  "baffo_combo": "You have {pts} points: the {combo} combo ({tgt}) grows two things in a single rest — pricey but handy if you're in a hurry.",
+  "baffo_record_bad": "With {w} wins and {l} losses, he needs grit, not cuddles.",
+  "baffo_unbeaten": "He's unbeaten: just don't let him get a big head.",
+  "baffo_margin": "Training margin used up: only World wins unlock more progress.",
+  "baffo_broke": "And the coffers are dry ({pts} points): win a few World bets.",
+  "baffo_fit": "{name} is in top shape. Send him to fight — the bench softens the muscles."
  }
 };

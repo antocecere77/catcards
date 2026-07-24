@@ -284,6 +284,24 @@
   "inc_bata": "¡Y sube otra vez! ¡No paran!",
   "inc_batb": "¡Batalla hasta el último punto, qué espectáculo!",
   "inc_starta": "¡Primera puja en la mesa! ¿Quién da más?",
-  "inc_startb": "¡Empezamos! ¡Adjudicado al que no se rinda!"
+  "inc_startb": "¡Empezamos! ¡Adjudicado al que no se rinda!",
+  "baffo_open": [
+   "¡Miau, recluta! ",
+   "Escucha al viejo Baffo: ",
+   "Suelta la croqueta y escucha: ",
+   "En mis tiempos no había cojines blandos. ",
+   "Bigotes tiesos y orejas alerta: "
+  ],
+  "baffo_empty": "¡El gimnasio está vacío! Tráeme un alumno desde la pestaña 📸 Crear.",
+  "baffo_indiff_afford": "El punto débil de {name} es {stat} ({val}): entrénala con el combo {combo} (60 puntos), puedes permitírtelo.",
+  "baffo_indiff_save": "El punto débil de {name} es {stat} ({val}), pero solo se entrena con el combo {combo} (60 puntos): te faltan {miss}, ve ahorrando.",
+  "baffo_indiff_alt": " O mientras tanto refuerza {stat2} ({val2}) con {food} (25 puntos).",
+  "baffo_weak": "El punto más débil de {name} es {stat} ({val}): dale {food}.",
+  "baffo_combo": "Tienes {pts} puntos: el combo {combo} ({tgt}) sube dos cosas en un solo descanso — caro pero útil si tienes prisa.",
+  "baffo_record_bad": "Con {w} victorias y {l} derrotas hace falta garra, no mimos.",
+  "baffo_unbeaten": "Está invicto: cuidado no se le suba a la cabeza.",
+  "baffo_margin": "Margen de entrenamiento agotado: solo las victorias en el Mundo desbloquean más progreso.",
+  "baffo_broke": "Y las arcas lloran ({pts} puntos): gana alguna apuesta mundial.",
+  "baffo_fit": "{name} está en plena forma. Que pelee, que el banquillo ablanda los músculos."
  }
 };

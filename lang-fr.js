@@ -284,6 +284,24 @@
   "inc_bata": "Et ça surenchérit encore ! Ils ne s'arrêtent plus !",
   "inc_batb": "Un combat au dernier point, quel spectacle !",
   "inc_starta": "Première offre sur le billot ! Qui dit mieux ?",
-  "inc_startb": "C'est parti ! Adjugé à celui qui ne lâche rien !"
+  "inc_startb": "C'est parti ! Adjugé à celui qui ne lâche rien !",
+  "baffo_open": [
+   "Miaou, recrue ! ",
+   "Écoute le vieux Baffo : ",
+   "Recrache la croquette et écoute : ",
+   "De mon temps, pas de coussins moelleux. ",
+   "Moustaches droites, oreilles dressées : "
+  ],
+  "baffo_empty": "La salle est vide ! Amène-moi un élève depuis l'onglet 📸 Créer.",
+  "baffo_indiff_afford": "Le point faible de {name}, c'est {stat} ({val}) : entraîne-la avec le combo {combo} (60 points), tu peux te le permettre.",
+  "baffo_indiff_save": "Le point faible de {name}, c'est {stat} ({val}), mais ça ne s'entraîne qu'avec le combo {combo} (60 points) : il te manque {miss} points, mets-les de côté.",
+  "baffo_indiff_alt": " Ou en attendant, renforce {stat2} ({val2}) avec {food} (25 points).",
+  "baffo_weak": "Le point le plus faible de {name}, c'est {stat} ({val}) : donne-lui {food}.",
+  "baffo_combo": "Tu as {pts} points : le combo {combo} ({tgt}) fait grimper deux choses en un seul repos — cher mais pratique si tu es pressé.",
+  "baffo_record_bad": "Avec {w} victoires et {l} défaites, il lui faut du cran, pas des câlins.",
+  "baffo_unbeaten": "Il est invaincu : gare à ce qu'il ne prenne pas la grosse tête.",
+  "baffo_margin": "Marge d'entraînement épuisée : seules les victoires dans le Monde débloquent des progrès.",
+  "baffo_broke": "Et les caisses sont vides ({pts} points) : gagne quelques paris mondiaux.",
+  "baffo_fit": "{name} est en pleine forme. Fais-le combattre, le banc ramollit les muscles."
  }
 };

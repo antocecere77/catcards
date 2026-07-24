@@ -3575,7 +3575,7 @@ async function migrateMelodies(){
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
 /* ---------- versione e aggiornamento automatico ---------- */
-const APP_VERSION = '16.5';   // unica fonte di verità: aggiorna anche version.txt a ogni release
+const APP_VERSION = '16.6';   // unica fonte di verità: aggiorna anche version.txt a ogni release
 try { document.getElementById('appVer').textContent = 'v' + APP_VERSION; } catch(e){}
 function verNewer(a, b){   // a più recente di b? confronto numerico 11.10 > 11.9
   const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);
@@ -6197,44 +6197,40 @@ function coachSayMsg(t){
   if (el) el.textContent = t;
 }
 function coachAdvice(){
-  const open = ['Miao, recluta! ', 'Ascolta il vecchio Baffo: ', 'Sputa il croccantino e ascolta: ', 'Ai miei tempi niente cuscini morbidi. ', 'Baffi dritti e orecchie tese: '];
+  const open = TC('baffo_open');
   const parts = [];
-  if (!collection.length){
-    coachSayMsg('La palestra è vuota! Portami un allievo dalla scheda 📸 Crea.');
-    return;
-  }
+  if (!collection.length){ coachSayMsg(TC('baffo_empty')); return; }
   const e = gymCat() || collection[0];
   const foodByStat = {0: '🍗 Pollo', 1: '🐁 Topolino', 2: '🌿 Erba gatta', 3: '🐟 Pesce', 4: '🧀 Chicche'};
+  const tronoNm = '🛋️ ' + (COMBOS.find(c => c.id === 'trono') || {}).nm;
   if (Array.isArray(e.statsv) && e.statsv.length === 6){
     let low = 0;
     for (let i = 1; i < 6; i++) if (e.statsv[i] < e.statsv[low]) low = i;   // considera anche l'Indifferenza (5)
     if (low === 5){
-      // l'Indifferenza si allena SOLO col combo premium (60 punti): occhio al portafoglio
       if (points >= 60){
-        parts.push('Il punto debole di ' + e.name + ' è l\'Indifferenza (' + e.statsv[5] + '): allenala col combo 🛋️ Trono di Piume (60 punti), puoi permettertelo.');
+        parts.push(TC('baffo_indiff_afford', {name: e.name, stat: trStat('Indifferenza'), val: e.statsv[5], combo: tronoNm}));
       } else {
-        let s2 = 0; for (let i = 1; i < 5; i++) if (e.statsv[i] < e.statsv[s2]) s2 = i;   // seconda più debole, allenabile a 25
-        const alt = points >= 25 ? ' Oppure intanto rinforza la ' + STATS[s2].key + ' (' + e.statsv[s2] + ') con ' + foodByStat[s2] + ' (25 punti).' : '';
-        parts.push('Il punto debole di ' + e.name + ' è l\'Indifferenza (' + e.statsv[5] + '), ma si allena solo col combo 🛋️ Trono di Piume (60 punti): ti mancano ' + (60 - points) + ' punti, mettili da parte.' + alt);
+        let s2 = 0; for (let i = 1; i < 5; i++) if (e.statsv[i] < e.statsv[s2]) s2 = i;
+        const alt = points >= 25 ? TC('baffo_indiff_alt', {stat2: trStat(STATS[s2].key), val2: e.statsv[s2], food: foodByStat[s2]}) : '';
+        parts.push(TC('baffo_indiff_save', {name: e.name, stat: trStat('Indifferenza'), val: e.statsv[5], combo: tronoNm, miss: 60 - points}) + alt);
       }
     } else {
-      parts.push('Il punto più debole di ' + e.name + ' è la ' + STATS[low].key + ' (' + e.statsv[low] + '): dagli ' + foodByStat[low] + '.');
+      parts.push(TC('baffo_weak', {name: e.name, stat: trStat(STATS[low].key), val: e.statsv[low], food: foodByStat[low]}));
     }
   }
-  // se le casse lo permettono, consiglia il combo più utile (due statistiche in un solo riposo)
   if (points >= 60 && trainAvail(e) > 0 && Array.isArray(e.statsv)){
     const roomStat = i => Math.max(0, 78 - (e.statsv[i] || 50));
     const roomHp = () => Math.max(0, (130 - (e.hp || 80)) / 2);
     let bestC = null, bestV = -1;
     COMBOS.forEach(c => { let v = 0; c.stats.forEach(t => v += (t === 'hp' ? roomHp() : roomStat(t))); if (v > bestV){ bestV = v; bestC = c; } });
-    if (bestC && bestV > 10) parts.push('Hai ' + points + ' punti: il combo ' + bestC.ic + ' ' + bestC.nm + ' (' + bestC.tgt + ') cresce due cose in un solo riposo — caro ma conveniente se vai di fretta.');
+    if (bestC && bestV > 10) parts.push(TC('baffo_combo', {pts: points, combo: bestC.ic + ' ' + bestC.nm, tgt: bestC.tgt}));
   }
   const s = battleStats[e.serial];
-  if (s && s.l > s.w) parts.push('Con ' + s.w + ' vittorie e ' + s.l + ' sconfitte serve grinta, non coccole.');
-  else if (s && s.w >= 3 && s.l === 0) parts.push('È imbattuto: attento che non si monti la testa.');
-  if (trainAvail(e) <= 0) parts.push('Margine di allenamento finito: solo le vittorie nel mondo sbloccano nuovi progressi.');
-  else if (points < 25) parts.push('E le casse piangono (' + points + ' punti): vinci qualche scommessa mondiale.');
-  if (!parts.length) parts.push(e.name + ' è in forma smagliante. Fallo combattere, che la panchina infiacchisce i muscoli.');
+  if (s && s.l > s.w) parts.push(TC('baffo_record_bad', {w: s.w, l: s.l}));
+  else if (s && s.w >= 3 && s.l === 0) parts.push(TC('baffo_unbeaten'));
+  if (trainAvail(e) <= 0) parts.push(TC('baffo_margin'));
+  else if (points < 25) parts.push(TC('baffo_broke', {pts: points}));
+  if (!parts.length) parts.push(TC('baffo_fit', {name: e.name}));
   coachSayMsg(open[Math.floor(Math.random() * open.length)] + parts.join(' '));
   sfx('charm');
 }
