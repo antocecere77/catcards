@@ -500,6 +500,12 @@
       <button class="btn secondary" onclick="simBotAuctions()" style="margin-top:8px;">🔨 Metti carte bot all'asta</button>
       <p class="count" id="botOut" style="margin-top:6px;"></p>
     </div>
+    <div id="adminAudio" style="display:none; margin-top:10px; padding:10px; background:var(--panel2); border-radius:10px;">
+      <label class="small">🎙️ Admin: audio annunci (mattoncini)</label>
+      <p class="count" style="margin-top:4px;">Genera una volta le frasi d'angolo + gli 80 soprannomi nella <strong>lingua attualmente attiva</strong> e li carica su Storage (bucket <code>audio</code>). Cambia lingua in alto e rifai per ogni lingua che vuoi doppiare.</p>
+      <button class="btn secondary" onclick="genGlobalAudio()" id="audioGenBtn" style="margin-top:8px;">🎙️ Genera audio globali (lingua attuale)</button>
+      <p class="count" id="audioOut" style="margin-top:6px;"></p>
+    </div>
     <label class="small" style="margin-top:18px;">Audio e presentazioni</label>
     <button class="btn secondary" data-snd onclick="toggleSound(this)" style="margin-top:4px;">🔊 Suoni: ON</button>
     <button class="btn secondary" id="autoSkipBtn" onclick="toggleAutoSkip(this)" style="margin-top:8px;">🎬 Presentazioni: ON</button>
@@ -2353,9 +2359,9 @@ const TTS_PROMPT = {
   de: 'Sprich auf Deutsch mit einer epischen, übertriebenen, dröhnenden Wrestling-Ansager-Stimme: ',
 };
 const _voceMem = {};
-async function genVoice(text, key){
+async function genVoice(text, key, lang){
   try {
-    const prefix = TTS_PROMPT[LANG] || TTS_PROMPT.en;
+    const prefix = TTS_PROMPT[lang || LANG] || TTS_PROMPT.en;
     const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=' + encodeURIComponent(key), {
       method: 'POST', headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({
@@ -2382,28 +2388,95 @@ async function ensureVoce(serial, text){
   if (url){ _voceMem[ck] = url; try { await idbSet(ck, url); } catch(e){} }
   return url;
 }
-async function playAnnuncio(f, fallbackText){
+/* ---------- Tappa 3: audio a mattoncini (clip condivise su Supabase Storage) ---------- */
+function audioUrl(path){ return SUPA_URL + '/storage/v1/object/public/audio/' + path; }
+let _clipExists = {};
+async function clipExists(url){
+  if (url in _clipExists) return _clipExists[url];
+  try { const r = await fetch(url, {method: 'HEAD'}); _clipExists[url] = r.ok; return r.ok; }
+  catch(e){ _clipExists[url] = false; return false; }
+}
+async function ensureName(serial, name){
+  const ck = 'name_' + serial;   // il nome non si traduce: una sola clip riusata in tutte le lingue
+  if (_voceMem[ck]) return _voceMem[ck];
+  try { const c = await idbGet(ck); if (c){ _voceMem[ck] = c; return c; } } catch(e){}
+  const key = apiKeyEl.value.trim();
+  if (!key) return null;
+  const url = await genVoice(name, key, 'it');
+  if (url){ _voceMem[ck] = url; try { await idbSet(ck, url); } catch(e){} }
+  return url;
+}
+async function uploadClip(path, dataUrl){
+  try {
+    const blob = await (await fetch(dataUrl)).blob();
+    const r = await fetch(SUPA_URL + '/storage/v1/object/audio/' + path, {
+      method: 'POST',
+      headers: {apikey: SUPA_KEY, Authorization: 'Bearer ' + session.access_token, 'Content-Type': 'audio/wav', 'x-upsert': 'true'},
+      body: blob
+    });
+    return r.ok;
+  } catch(e){ return false; }
+}
+function playClip(url){
+  return new Promise(res => {
+    let done = false; const finish = () => { if (!done){ done = true; res(); } };
+    try {
+      const au = new Audio(url); window._curAud = au;
+      const iv = setInterval(() => { if (done){ clearInterval(iv); return; } if (skipIntro || !battleOn){ clearInterval(iv); try { au.pause(); } catch(e){} finish(); } }, 80);
+      au.onended = () => { clearInterval(iv); finish(); };
+      au.onerror = () => { clearInterval(iv); finish(); };
+      au.play().catch(() => { clearInterval(iv); finish(); });
+      setTimeout(finish, 8000);
+    } catch(e){ finish(); }
+  });
+}
+async function playAnnuncio(f, corner, fallbackText){
   if (!soundOn || skipIntro) return;
+  // 1) montaggio a mattoncini: frase d'angolo (Storage) + nome (locale, 1 clip riusata) + soprannome (Storage)
+  try {
+    const nid = NICK_IDS[nickIdxOf(f)];
+    const cornerUrl = audioUrl('phrases/' + (corner === 'blue' ? 'blue' : 'red') + '_' + LANG + '.wav');
+    const nickUrl = audioUrl('nicks/' + nid + '_' + LANG + '.wav');
+    if ((await clipExists(cornerUrl)) && (await clipExists(nickUrl))){
+      const nameUrl = await ensureName(f.serial, f.name);
+      if (skipIntro || !battleOn) return;
+      await playClip(cornerUrl);
+      if (nameUrl && !skipIntro && battleOn) await playClip(nameUrl);
+      if (!skipIntro && battleOn) await playClip(nickUrl);
+      return;
+    }
+  } catch(e){}
+  // 2) fallback: frase intera pigra (v15.2) o voce del browser
   let url = f.voce || null;
   if (!url && !skipIntro){ try { url = await ensureVoce(f.serial, fallbackText); } catch(e){} }
   if (skipIntro || !battleOn) return;
   if (!url){ await speak(fallbackText); return; }
-  await new Promise(res => {
-    let done = false;
-    const finish = () => { if (!done){ done = true; res(); } };
-    try {
-      const au = new Audio(url);
-      window._curAud = au;
-      const iv = setInterval(() => {
-        if (done){ clearInterval(iv); return; }
-        if (skipIntro || !battleOn){ clearInterval(iv); try { au.pause(); } catch(e){} finish(); }
-      }, 100);
-      au.onended = () => { clearInterval(iv); finish(); };
-      au.onerror = () => { clearInterval(iv); speak(fallbackText).then(finish); };
-      au.play().catch(() => { clearInterval(iv); speak(fallbackText).then(finish); });
-      setTimeout(finish, 10000);
-    } catch(e){ speak(fallbackText).then(finish); }
-  });
+  await playClip(url);
+}
+async function genGlobalAudio(){
+  const out = document.getElementById('audioOut');
+  if (!session || session.email !== ADMIN_EMAIL){ if (out) out.textContent = '⚠️ Solo admin.'; return; }
+  const key = apiKeyEl.value.trim();
+  if (!key){ if (out) out.textContent = '⚠️ Serve la chiave Gemini (scheda 📸 Crea).'; return; }
+  await refreshSessionIfNeeded();
+  const lang = LANG;
+  const btn = document.getElementById('audioGenBtn'); if (btn) btn.disabled = true;
+  let ok = 0, fail = 0;
+  const a = (LDB().ann) || (LDBen().ann) || {};
+  const redIntro = ((a.red || 'From the red corner...').split('{n}')[0]).trim();
+  const blueIntro = ((a.blue || 'From the blue corner...').split('{n}')[0]).trim();
+  const jobs = [['phrases/red_' + lang + '.wav', redIntro], ['phrases/blue_' + lang + '.wav', blueIntro]];
+  const nk = ((window.LANG_DB || {})[lang] || {}).nicks || {};
+  NICK_IDS.forEach(id => jobs.push(['nicks/' + id + '_' + lang + '.wav', nk[id] || '']));
+  for (let i = 0; i < jobs.length; i++){
+    if (out) out.textContent = '🎙️ Genero ' + lang.toUpperCase() + ': ' + (i + 1) + '/' + jobs.length + '…';
+    const url = await genVoice(jobs[i][1], key, lang);
+    if (url && (await uploadClip(jobs[i][0], url))) ok++; else fail++;
+    await new Promise(r => setTimeout(r, 350));
+  }
+  _clipExists = {};
+  if (out) out.textContent = '✅ ' + lang.toUpperCase() + ': ' + ok + ' clip caricate' + (fail ? ' (' + fail + ' fallite)' : '') + '. Cambia lingua e rifai per le altre.';
+  if (btn) btn.disabled = false;
 }
 function speak(text){
   return new Promise(res => {
@@ -2803,7 +2876,7 @@ async function runBattle(ea, eb, title){
   if (!title && !skipIntro){ sfx('crowd'); blog('🎤 SIGNORE E SIGNORIIII… benvenuti all\'Arena CatCards!'); await introSleep(1100); if (!battleOn) return null; }
   if (!skipIntro){
     blog('🔴 Angolo rosso: ' + a.name.toUpperCase() + ', «' + a.nick + '»! ' + (recA || 'Al suo debutto in arena!'));
-    await playAnnuncio(a, annText(a, 'red'));
+    await playAnnuncio(a, 'red', annText(a, 'red'));
     if (!battleOn) return null;
   }
   if (!skipIntro){
@@ -2813,7 +2886,7 @@ async function runBattle(ea, eb, title){
   }
   if (!skipIntro){
     blog('🔵 Angolo blu: ' + b.name.toUpperCase() + ', «' + b.nick + '»! ' + (recB || 'Al suo debutto in arena!'));
-    await playAnnuncio(b, annText(b, 'blue'));
+    await playAnnuncio(b, 'blue', annText(b, 'blue'));
     if (!battleOn) return null;
   }
   if (!skipIntro){
@@ -3460,7 +3533,7 @@ async function migrateMelodies(){
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
 /* ---------- versione e aggiornamento automatico ---------- */
-const APP_VERSION = '15.8';   // unica fonte di verità: aggiorna anche version.txt a ogni release
+const APP_VERSION = '15.9';   // unica fonte di verità: aggiorna anche version.txt a ogni release
 try { document.getElementById('appVer').textContent = 'v' + APP_VERSION; } catch(e){}
 function verNewer(a, b){   // a più recente di b? confronto numerico 11.10 > 11.9
   const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);
@@ -3789,6 +3862,8 @@ function renderAuth(){
   if (adm) adm.style.display = (session && session.email === ADMIN_EMAIL) ? 'block' : 'none';
   const admb = document.getElementById('adminBots');
   if (admb) admb.style.display = (session && session.email === ADMIN_EMAIL) ? 'block' : 'none';
+  const adma = document.getElementById('adminAudio');
+  if (adma) adma.style.display = (session && session.email === ADMIN_EMAIL) ? 'block' : 'none';
   // l'accesso vive solo nella barra in alto (Google): niente più box nel Mondo né email
 }
 function loginGoogle(){
