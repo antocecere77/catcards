@@ -3460,7 +3460,7 @@ async function migrateMelodies(){
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
 /* ---------- versione e aggiornamento automatico ---------- */
-const APP_VERSION = '15.6';   // unica fonte di verità: aggiorna anche version.txt a ogni release
+const APP_VERSION = '15.7';   // unica fonte di verità: aggiorna anche version.txt a ogni release
 try { document.getElementById('appVer').textContent = 'v' + APP_VERSION; } catch(e){}
 function verNewer(a, b){   // a più recente di b? confronto numerico 11.10 > 11.9
   const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);
@@ -6087,11 +6087,17 @@ function coachAdvice(){
     return;
   }
   const e = gymCat() || collection[0];
-  const foodByStat = {0: '🍗 Pollo', 1: '🐁 Topolino', 2: '🌿 Erba gatta', 3: '🐟 Pesce', 4: '🧀 Chicche', 5: 'il combo 🛋️ Trono di Piume (l\'Indifferenza cresce solo lì)'};
+  const foodByStat = {0: '🍗 Pollo', 1: '🐁 Topolino', 2: '🌿 Erba gatta', 3: '🐟 Pesce', 4: '🧀 Chicche'};
   if (Array.isArray(e.statsv) && e.statsv.length === 6){
     let low = 0;
     for (let i = 1; i < 6; i++) if (e.statsv[i] < e.statsv[low]) low = i;   // considera anche l'Indifferenza (5)
-    parts.push('Il punto più debole di ' + e.name + ' è la ' + STATS[low].key + ' (' + e.statsv[low] + '): dagli ' + foodByStat[low] + '.');
+    if (low === 5){
+      // l'Indifferenza si allena SOLO col combo premium (60 punti): occhio al portafoglio
+      parts.push('Il punto debole di ' + e.name + ' è l\'Indifferenza (' + e.statsv[5] + '), e si allena solo col combo 🛋️ Trono di Piume (60 punti)' +
+        (points >= 60 ? ': puoi permettertelo, vai.' : ': ti mancano ' + (60 - points) + ' punti, mettili da parte.'));
+    } else {
+      parts.push('Il punto più debole di ' + e.name + ' è la ' + STATS[low].key + ' (' + e.statsv[low] + '): dagli ' + foodByStat[low] + '.');
+    }
   }
   // se le casse lo permettono, consiglia il combo più utile (due statistiche in un solo riposo)
   if (points >= 60 && trainAvail(e) > 0 && Array.isArray(e.statsv)){
