@@ -2369,14 +2369,19 @@ async function genVoice(text, key, lang){
         generationConfig: {responseModalities: ['AUDIO'], speechConfig: {voiceConfig: {prebuiltVoiceConfig: {voiceName: 'Orus'}}}}
       })
     });
-    if (!r.ok) return null;
+    if (!r.ok){
+      let msg = 'HTTP ' + r.status;
+      try { const ej = await r.json(); if (ej.error && ej.error.message) msg = ej.error.message.slice(0, 160); } catch(e2){}
+      window._ttsErr = msg;
+      return null;
+    }
     const j = await r.json();
     const parts = (((j.candidates || [])[0] || {}).content || {}).parts || [];
     const part = parts.find(p => p.inlineData && p.inlineData.data);
-    if (!part) return null;
+    if (!part){ window._ttsErr = 'nessun audio nella risposta'; return null; }
     const rm = /rate=(\d+)/.exec(part.inlineData.mimeType || '');
     return pcmToWavDataUrl(part.inlineData.data, rm ? parseInt(rm[1], 10) : 24000);
-  } catch(e){ return null; }
+  } catch(e){ window._ttsErr = e.message; return null; }
 }
 async function ensureVoce(serial, text){
   const ck = 'voce_' + serial + '_' + LANG;
@@ -2414,8 +2419,9 @@ async function uploadClip(path, dataUrl){
       headers: {apikey: SUPA_KEY, Authorization: 'Bearer ' + session.access_token, 'Content-Type': 'audio/wav', 'x-upsert': 'true'},
       body: blob
     });
+    if (!r.ok){ let m = 'HTTP ' + r.status; try { const j = await r.json(); if (j.message) m = j.message.slice(0, 120); } catch(e2){} window._upErr = m; }
     return r.ok;
-  } catch(e){ return false; }
+  } catch(e){ window._upErr = e.message; return false; }
 }
 function playClip(url){
   return new Promise(res => {
@@ -2475,17 +2481,21 @@ async function genGlobalAudio(){
     if (out) out.textContent = '🎙️ ' + lang.toUpperCase() + ': ' + (i + 1) + '/' + jobs.length + ' (✅' + ok + ' ⏭️' + skip + ' ❌' + fail + ')…';
     // ripartibile: salta le clip già presenti su Storage (i rilanci completano solo le mancanti)
     if (await clipExists(audioUrl(path))){ skip++; continue; }
-    let done = false;
+    let done = false, lastErr = '';
     for (let attempt = 0; attempt < 2 && !done; attempt++){
+      window._ttsErr = ''; window._upErr = '';
       const url = await genVoice(text, key, lang);
-      if (url && (await uploadClip(path, url))){ ok++; done = true; }
-      else { await new Promise(r => setTimeout(r, 1500)); }   // pausa lunga prima del secondo tentativo (limiti API)
+      if (!url){ lastErr = 'voce: ' + (window._ttsErr || '?'); }
+      else if (!(await uploadClip(path, url))){ lastErr = 'upload: ' + (window._upErr || '?'); }
+      else { ok++; done = true; }
+      if (!done) await new Promise(r => setTimeout(r, 1500));   // pausa lunga prima del secondo tentativo (limiti API)
     }
-    if (!done) fail++;
+    if (!done){ fail++; window._lastAudioErr = lastErr; }
     await new Promise(r => setTimeout(r, 550));   // ritmo più gentile per non sforare i limiti
   }
   _clipExists = {};
-  if (out) out.textContent = '✅ ' + lang.toUpperCase() + ': ' + ok + ' nuove · ' + skip + ' già c\'erano' + (fail ? ' · ❌ ' + fail + ' fallite (rilancia per completarle)' : ' — completo!');
+  if (out) out.textContent = '✅ ' + lang.toUpperCase() + ': ' + ok + ' nuove · ' + skip + ' già c\'erano' +
+    (fail ? ' · ❌ ' + fail + ' fallite — motivo: ' + (window._lastAudioErr || '?') : ' — completo!');
   if (btn) btn.disabled = false;
 }
 function speak(text){
@@ -3543,7 +3553,7 @@ async function migrateMelodies(){
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
 /* ---------- versione e aggiornamento automatico ---------- */
-const APP_VERSION = '16.0';   // unica fonte di verità: aggiorna anche version.txt a ogni release
+const APP_VERSION = '16.1';   // unica fonte di verità: aggiorna anche version.txt a ogni release
 try { document.getElementById('appVer').textContent = 'v' + APP_VERSION; } catch(e){}
 function verNewer(a, b){   // a più recente di b? confronto numerico 11.10 > 11.9
   const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);
