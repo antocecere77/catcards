@@ -1777,6 +1777,11 @@ function importRival(){
 }
 
 /* ---------- arena ---------- */
+// carte in ordine alfabetico ma con l'indice originale nella collezione (per i selettori)
+function collByName(){
+  return collection.map((c, i) => ({c: c, i: i}))
+    .sort((a, b) => (a.c.name || '').localeCompare(b.c.name || '', undefined, {sensitivity: 'base'}));
+}
 function refreshArena(){
   const panel = document.getElementById('arenaPanel');
   if (!panel) return;
@@ -1784,7 +1789,7 @@ function refreshArena(){
   const selA = document.getElementById('selA'), selB = document.getElementById('selB');
   const keep = [selA.value, selB.value];
   selA.innerHTML = ''; selB.innerHTML = '';
-  collection.forEach((c, i) => {
+  collByName().forEach(({c, i}) => {
     const resting = coolLeft(c) > 0;
     const frozen = myFrozen.has(c.serial);
     const label = '🐱 ' + c.name + ' (' + c.rarity + ')' + (frozen ? ' 🔒 al mercato' : (resting ? ' 😴 riposa' : ''));
@@ -1796,7 +1801,7 @@ function refreshArena(){
   if (qrSel){
     const keepQ = qrSel.value;
     qrSel.innerHTML = '';
-    collection.forEach((c, i) => {
+    collByName().forEach(({c, i}) => {
       const resting = coolLeft(c) > 0;
       const frozen = myFrozen.has(c.serial);
       const o = new Option('🐱 ' + c.name + ' (' + c.rarity + ')' + (frozen ? ' 🔒 al mercato' : (resting ? ' 😴 riposa' : '')), 'c' + i);
@@ -1810,7 +1815,7 @@ function refreshArena(){
     const keepM = selMine.value;
     selMine.innerHTML = '';
     let eligible = 0, published = 0;
-    collection.forEach((c, i) => {
+    collByName().forEach(({c, i}) => {
       if (myActive.has(c.serial)){
         published++;
         const resting = coolLeft(c) > 0;
@@ -3455,7 +3460,7 @@ async function migrateMelodies(){
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
 /* ---------- versione e aggiornamento automatico ---------- */
-const APP_VERSION = '15.5';   // unica fonte di verità: aggiorna anche version.txt a ogni release
+const APP_VERSION = '15.6';   // unica fonte di verità: aggiorna anche version.txt a ogni release
 try { document.getElementById('appVer').textContent = 'v' + APP_VERSION; } catch(e){}
 function verNewer(a, b){   // a più recente di b? confronto numerico 11.10 > 11.9
   const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);
@@ -4190,7 +4195,7 @@ async function showIncomingCompare(fromSerial, toSerial, tradeId){
   } catch(e){ body.innerHTML = '<p class="count">Errore nel caricare il confronto.</p><button class="btn secondary" onclick="document.getElementById(\'tradeModal\').style.display=\'none\'">Chiudi</button>'; }
 }
 function proposeTradeUI(theirSerial, theirName, theirOwner, theirImg){
-  const mine = collection.filter(c => myActive.has(c.serial));   // anche le carte a riposo sono scambiabili (il riposo vale solo per i combattimenti)
+  const mine = collection.filter(c => myActive.has(c.serial)).sort((a, b) => (a.name || '').localeCompare(b.name || '', undefined, {sensitivity: 'base'}));   // anche le carte a riposo sono scambiabili
   const body = document.getElementById('tradeModalBody');
   if (!mine.length){
     body.innerHTML = '<h2>🔄 Scambio</h2><p class="count" style="margin-top:8px;">Per scambiare ti serve almeno una TUA carta pubblicata e attiva nel Mondo (e non a riposo).</p>' +
@@ -4350,7 +4355,7 @@ async function initAuctioneer(){
 let _aucSelSerial = null;
 function openCreateAuction(){
   if (!session || !session.access_token){ alert('Accedi prima (scheda 🌍 Mondo).'); return; }
-  const mine = collection.filter(c => myActive.has(c.serial) && !myFrozen.has(c.serial));
+  const mine = collection.filter(c => myActive.has(c.serial) && !myFrozen.has(c.serial)).sort((a, b) => (a.name || '').localeCompare(b.name || '', undefined, {sensitivity: 'base'}));
   const body = document.getElementById('auctionModalBody');
   if (!mine.length){ body.innerHTML = '<h2>🔨 Asta</h2><p class="count">Ti serve una carta pubblicata e libera (non già al mercato) da mettere all\'asta.</p><button class="btn secondary" onclick="document.getElementById(\'auctionModal\').style.display=\'none\'">Chiudi</button>'; document.getElementById('auctionModal').style.display = 'flex'; return; }
   _aucSelSerial = null;
@@ -5055,7 +5060,7 @@ function renderBosses(){
   const keep = sel.value;
   sel.innerHTML = '';
   let eligible = 0;
-  collection.forEach((c, i) => {
+  collByName().forEach(({c, i}) => {
     if (!myActive.has(c.serial)) return;   // contro i Boss scendono solo le carte pubblicate nel Mondo
     const rest = coolLeft(c) > 0;
     const frozen = myFrozen.has(c.serial);
@@ -5408,7 +5413,7 @@ function renderGym(){
   if (!sel) return;
   const keep = sel.value;
   sel.innerHTML = '';
-  collection.forEach((c, i) => {
+  collByName().forEach(({c, i}) => {
     const frozen = myFrozen.has(c.serial);
     const rest = frozen ? ' 🔒 al mercato' : (coolLeft(c) > 0 ? ' 😴 riposa' : '');
     const o = new Option('🐱 ' + c.name + ' (Lv.' + cardLevel(c.serial) + ')' + rest, String(i));
