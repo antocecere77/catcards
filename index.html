@@ -2492,7 +2492,14 @@ async function genGlobalAudio(){
     }
     if (!done){
       fail++; window._lastAudioErr = lastErr;
-      if (fail === 1){ if (btn) btn.disabled = false; alert('🎙️ Primo errore audio (' + lang.toUpperCase() + '):\n\n' + lastErr + '\n\nSe dice "quota"/"RESOURCE_EXHAUSTED" è il limite giornaliero: riprendi domani. Le riuscite restano salvate.'); }
+      // quota giornaliera finita: inutile insistere, fermo tutto (le riuscite restano salvate)
+      if (/quota|RESOURCE_EXHAUSTED|exhausted|429/i.test(lastErr)){
+        if (out) out.textContent = '⛔ ' + lang.toUpperCase() + ': quota giornaliera Gemini esaurita. ✅ ' + ok + ' fatte finora. Riprendi domani: continua da dove eri.';
+        if (btn) btn.disabled = false;
+        alert('⛔ Quota giornaliera di Gemini esaurita.\n\nLe clip già fatte sono salvate. Riprendi domani (la quota si azzera) e completerà solo le mancanti.');
+        return;
+      }
+      if (fail === 1) alert('🎙️ Errore audio (' + lang.toUpperCase() + '): ' + lastErr);
     }
     await new Promise(r => setTimeout(r, 550));   // ritmo più gentile per non sforare i limiti
   }
@@ -3556,7 +3563,7 @@ async function migrateMelodies(){
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
 /* ---------- versione e aggiornamento automatico ---------- */
-const APP_VERSION = '16.2';   // unica fonte di verità: aggiorna anche version.txt a ogni release
+const APP_VERSION = '16.3';   // unica fonte di verità: aggiorna anche version.txt a ogni release
 try { document.getElementById('appVer').textContent = 'v' + APP_VERSION; } catch(e){}
 function verNewer(a, b){   // a più recente di b? confronto numerico 11.10 > 11.9
   const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);
