@@ -750,6 +750,13 @@ function T(k){
 function applyI18n(){
   document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = T(el.getAttribute('data-i18n')); });
 }
+// telecronaca: frase tradotta dalla sezione battle + riempimento segnaposto {name} ecc.
+function TB(key, vars){
+  const b = (LDB().battle) || {}, e = (LDBen().battle) || {};
+  let s = (b[key] != null ? b[key] : (e[key] != null ? e[key] : key));
+  if (vars) for (const k in vars) s = s.split('{' + k + '}').join(vars[k]);
+  return s;
+}
 /* ---------- assegnazione dal seriale (deterministica) + preferenza utente (nid/did). I testi vivono in LANG_DB ---------- */
 function nickIdxOf(e){
   if (typeof e.nid === 'number' && e.nid >= 0 && e.nid < NICK_IDS.length) return e.nid;
@@ -2201,10 +2208,10 @@ function settleBet(winnerSerial){
     points += gain;
     counters.betWins++; saveCounters();
     try { missionEvent('bet_win'); } catch(e){}
-    blog('🎲 Pronostico azzeccato! Avevi puntato ' + st + ' su ' + currentBet.name + ': +' + gain + ' punti (totale: ' + points + ')', 'winner');
+    blog(TB('bet_win', {stake: st, name: currentBet.name, gain: gain, total: points}), 'winner');
   } else {
     points -= st;
-    blog('🎲 Pronostico sbagliato: −' + st + ' punti (totale: ' + points + '). Andrà meglio la prossima!');
+    blog(TB('bet_lose', {stake: st, total: points}));
   }
   try { localStorage.setItem('catcards_points', String(points)); } catch(e){}
   currentBet = null;
@@ -2838,7 +2845,7 @@ function skipIntroNow(){
   try { if (musicBus && AC) musicBus.gain.setValueAtTime(0, AC.currentTime); } catch(e){}
   hideVsIntro();
   document.getElementById('skipBtn').style.display = 'none';
-  blog('⏭️ Presentazione saltata: dritti al sodo!');
+  blog(TB('skip'));
 }
 function closeBattle(){
   battleOn = false;
@@ -2884,8 +2891,8 @@ async function runBattle(ea, eb, title){
   if (title) blog('🏟️ — ' + title + ' —', 'winner');
   // anteprima chiara della posta in gioco: punti e XP per vittoria/sconfitta
   { const rp = rewardPreview(title);
-    blog('🎁 In palio: vittoria ' + (rp.winPt ? '+' + rp.winPt + ' punti e ' : '') + '+' + rp.winXp + ' XP' +
-      (rp.bossNote ? ' (' + rp.bossNote + ')' : '') + ' · sconfitta +' + rp.loseXp + ' XP' + (rp.winPt ? '' : ' · nessun punto in locale')); }
+    const win = (rp.winPt ? TB('stake_pts', {pt: rp.winPt, xp: rp.winXp}) : TB('stake_nopts', {xp: rp.winXp})) + (rp.bossNote ? TB('boss_stake_note') : '');
+    blog(TB('stake', {win: win, lose: rp.loseXp})); }
   // incontri seri (mondiale, dal vivo, boss): niente ritirata a metà, il risultato conta
   const noQuit = (title === 'SFIDA MONDIALE' || title === 'SFIDA DAL VIVO' || title === 'BOSS DELL\'ARENA');
   const closeBtn = document.getElementById('closeBattleBtn');
@@ -2900,27 +2907,27 @@ async function runBattle(ea, eb, title){
   if (window._buyCatnip && window._mineSerial === a.serial && (title === 'SFIDA MONDIALE' || title === 'BOSS DELL\'ARENA')){
     window._buyCatnip = false;
     a.catnip = true;
-    blog('🌿 ' + a.name + ' entra in arena già carico di erba gatta!');
+    blog(TB('entry_catnip', {name: a.name}));
   }
   const recA = recordLine(a.serial), recB = recordLine(b.serial);
-  if (!title && !skipIntro){ sfx('crowd'); blog('🎤 SIGNORE E SIGNORIIII… benvenuti all\'Arena CatCards!'); await introSleep(1100); if (!battleOn) return null; }
+  if (!title && !skipIntro){ sfx('crowd'); blog(TB('open')); await introSleep(1100); if (!battleOn) return null; }
   if (!skipIntro){
-    blog('🔴 Angolo rosso: ' + a.name.toUpperCase() + ', «' + a.nick + '»! ' + (recA || 'Al suo debutto in arena!'));
+    blog(TB('red', {NAME: a.name.toUpperCase(), nick: a.nick, rec: recA || TB('debut')}));
     await playAnnuncio(a, 'red', annText(a, 'red'));
     if (!battleOn) return null;
   }
   if (!skipIntro){
-    blog('🎵 Risuona il tema d\'ingresso di ' + a.name + '…');
+    blog(TB('theme', {name: a.name}));
     const dA = entryJingle(a);
     await introSleep(Math.max(1500, dA + 300)); if (!battleOn) return null;
   }
   if (!skipIntro){
-    blog('🔵 Angolo blu: ' + b.name.toUpperCase() + ', «' + b.nick + '»! ' + (recB || 'Al suo debutto in arena!'));
+    blog(TB('blue', {NAME: b.name.toUpperCase(), nick: b.nick, rec: recB || TB('debut')}));
     await playAnnuncio(b, 'blue', annText(b, 'blue'));
     if (!battleOn) return null;
   }
   if (!skipIntro){
-    blog('🎵 Risuona il tema d\'ingresso di ' + b.name + '…');
+    blog(TB('theme', {name: b.name}));
     const dB = entryJingle(b);
     await introSleep(Math.max(1500, dB + 300)); if (!battleOn) return null;
   }
@@ -2934,15 +2941,13 @@ async function runBattle(ea, eb, title){
   document.getElementById('skipBtn').style.display = 'none';
   if (musicBus && AC){ try { musicBus.gain.setValueAtTime(1, AC.currentTime); } catch(e){} }
   sfx('bell');
-  blog('🔔 DING DING DING!');
+  blog(TB('ding'));
   await sleep(900); if (!battleOn) return null;
   // iniziativa probabilistica: il più veloce parte più spesso, ma mai sempre
   const first = rng() < a.vel / (a.vel + b.vel) ? a : b;
   const second = first === a ? b : a;
   await sleep(800);
-  blog(first.vel >= second.vel
-    ? '⚡ ' + first.name + ' è più veloce e attacca per primo!'
-    : '😼 ' + first.name + ' sorprende tutti e parte per primo!');
+  blog(first.vel >= second.vel ? TB('first_fast', {name: first.name}) : TB('first_surprise', {name: first.name}));
   let turn = 0;
   let finalBlow = null;
   while (a.hp > 0 && b.hp > 0 && turn < 60 && battleOn){
@@ -2952,15 +2957,15 @@ async function runBattle(ea, eb, title){
     // fine round ogni 8 turni: campanella e respiro agli angoli
     if (turn > 1 && (turn - 1) % 8 === 0){
       sfx('bell');
-      blog('🔔 Fine del round ' + ((turn - 1) / 8) + '! I gatti tornano agli angoli a leccarsi il pelo…');
+      blog(TB('round_end', {round: (turn - 1) / 8}));
       await sleep(1300);
       if (!battleOn) return;
     }
     await sleep(950);
     if (!battleOn) return;
-    if (att.charmed){ att.charmed = false; blog('😍 ' + att.name + ' è ammaliato e perde il turno!'); continue; }
+    if (att.charmed){ att.charmed = false; blog(TB('charmed_skip', {name: att.name})); continue; }
     // coro del pubblico ogni tanto
-    if (rng() < 0.06) blog('🎺 Dagli spalti: «' + att.name.toUpperCase() + '! ' + att.name.toUpperCase() + '!»');
+    if (rng() < 0.06) blog(TB('chant', {NAME: att.name.toUpperCase()}));
     if (att.fish > 0) att.fish--;
     // power-up dall'arena
     if (rng() < 0.10){
@@ -2968,19 +2973,19 @@ async function runBattle(ea, eb, title){
       if (it === 0 && att.hp < att.maxHp){
         const h = Math.min(15, att.maxHp - att.hp);
         att.hp += h; dmgFloat(side(att), '+' + h, 'heal'); sfx('heal');
-        blog('🧶 Un gomitolo rotola nell\'arena! ' + att.name + ' ci gioca e recupera ' + h + ' HP');
+        blog(TB('pu_yarn', {name: att.name, hp: h}));
         updateBars(a, b);
       } else if (it === 1){
         att.catnip = true;
-        blog('🌿 Erba gatta nell\'arena! ' + att.name + ' è su di giri: prossimo colpo RADDOPPIATO (ma è un po\' sballato…)');
+        blog(TB('pu_catnip', {name: att.name}));
       } else if (it === 2){
         att.boxed = true;
-        blog('📦 Una scatola di cartone! ' + att.name + ' non resiste e ci si infila: salta il turno ma è IMPRENDIBILE!');
+        blog(TB('pu_box', {name: att.name}));
         await sleep(600);
         continue;
       } else if (it === 3){
         att.fish = 3;
-        blog('🐟 Un pesce fresco vola nell\'arena! ' + att.name + ' guizza di energia: +agilità per 3 turni');
+        blog(TB('pu_fish', {name: att.name}));
       }
     }
     if (att.potere === 2 && att.hp < att.maxHp){
@@ -2988,12 +2993,12 @@ async function runBattle(ea, eb, title){
       att.hp = Math.min(att.maxHp, att.hp + h);
       dmgFloat(side(att), '+' + h, 'heal');
       sfx('heal');
-      blog('💗 ' + att.name + ' fa le fusa e recupera ' + h + ' HP');
+      blog(TB('purr_heal', {name: att.name, hp: h}));
       updateBars(a, b);
     }
     const hits = (att.potere === 3 && rng() < 0.25) ? 2 : 1;
     for (let h = 0; h < hits && def.hp > 0; h++){
-      if (h === 1) blog('🐾 Doppia Zampata! ' + att.name + ' attacca ancora!');
+      if (h === 1) blog(TB('double_paw', {name: att.name}));
       // scelta della mossa: quando è alle corde, osa quella potente
       let mv = att.moves[Math.floor(rng() * att.moves.length)];
       if (att.hp < att.maxHp * 0.3 && rng() < 0.5)
@@ -3003,7 +3008,7 @@ async function runBattle(ea, eb, title){
       if (def.boxed){
         def.boxed = false;
         dmgFloat(side(def), 'MISS', 'miss'); sfx('miss');
-        blog('📦 ' + def.name + ' è rintanato nella scatola: il colpo di ' + att.name + ' va a vuoto!');
+        blog(TB('box_dodge', {opp: def.name, name: att.name}));
         continue;
       }
       fx(side(att), side(att) === 'A' ? 'atkL' : 'atkR');
@@ -3015,7 +3020,7 @@ async function runBattle(ea, eb, title){
         dmgFloat(side(def), 'MISS', 'miss');
         sfx('miss');
         att.streak = 0;
-        blog('💨 ' + att.name + ' tenta ' + mv.name + ' ma ' + def.name + ' schiva!');
+        blog(TB('dodge', {name: att.name, move: mv.name, opp: def.name}));
         continue;
       }
       let crit = rng() < att.intel / 280 + (mv.kind === 'rapido' ? 0.10 : 0);
@@ -3032,7 +3037,7 @@ async function runBattle(ea, eb, title){
       dmg = Math.min(dmg, Math.round(def.maxHp * 0.38));   // nessun colpo può togliere più del 38% degli HP
       // colpo finale al rallentatore
       if (def.hp - dmg <= 0 && !(def.potere === 0 && def.nineLives)){
-        blog('⏱️ Il tempo rallenta… COLPO FINALE!');
+        blog(TB('final_blow'));
         await sleep(1000); if (!battleOn) return;
         finalBlow = {att: att, def: def, dmg: dmg, crit: crit};
       }
@@ -3040,28 +3045,28 @@ async function runBattle(ea, eb, title){
       fx(side(def), 'hit');
       sfx(crit ? 'crit' : 'hit');
       dmgFloat(side(def), '−' + dmg, crit ? 'crit' : null);
-      blog(mvIcon + ' ' + att.name + ' usa ' + mv.name + '!' + (crit ? ' 💥 CRITICO!' : '') + (catnipHit ? ' 🌿 POTENZIATO!' : '') + '  −' + dmg + ' HP');
+      blog(TB('hit', {icon: mvIcon, name: att.name, move: mv.name, crit: crit ? TB('crit_tag') : '', catnip: catnipHit ? TB('catnip_tag') : '', dmg: dmg}));
       if (dmg >= def.maxHp * 0.3 && def.hp > 0)
-        blog(['😱 Colpo devastante!', '🎙️ Il pubblico è in delirio!', '💢 Che potenza impressionante!'][Math.floor(rng() * 3)]);
+        blog(TB(['dev1', 'dev2', 'dev3'][Math.floor(rng() * 3)]));
       att.streak++;
-      if (att.streak === 3) blog('🔥 ' + att.name + ' è ON FIRE! Tre colpi a segno di fila!');
+      if (att.streak === 3) blog(TB('on_fire', {name: att.name}));
       if (def.hp > 0 && def.hp < def.maxHp * 0.25 && !def.cornered){
         def.cornered = true;
-        blog('🎙️ ' + def.name + ' è alle corde! Il pubblico trattiene il fiato…');
+        blog(TB('on_ropes', {opp: def.name}));
       }
       if (mv.kind === 'astuto' && def.hp > 0 && rng() < 0.25 && !def.charmed){
         def.charmed = true;
-        blog('✨ Mossa astuta! ' + def.name + ' resta confuso e perderà il turno!');
+        blog(TB('clever', {opp: def.name}));
       }
       if (def.hp <= 0 && def.potere === 0 && def.nineLives){
         def.nineLives = false; def.hp = 1;
-        blog('🐈 ' + def.name + ' sfrutta una delle sue Nove Vite e resta in piedi con 1 HP!');
+        blog(TB('nine_lives', {opp: def.name}));
       }
       updateBars(a, b);
     }
     if (def.hp <= 0) break;
     const charm = att.fas / 450 * (att.potere === 5 ? 2 : 1);
-    if (rng() < charm){ def.charmed = true; sfx('charm'); blog('✨ ' + def.name + ' resta ammaliato dal fascino di ' + att.name + '!'); }
+    if (rng() < charm){ def.charmed = true; sfx('charm'); blog(TB('charm_hit', {opp: def.name, name: att.name})); }
   }
   if (!battleOn) return;
   await sleep(700);
@@ -3071,7 +3076,7 @@ async function runBattle(ea, eb, title){
   if (loser.hp <= 0){ flashText('K.O.!', '#e63946'); sfx('crowd'); await sleep(1100); }
   // replay al rallentatore del colpo finale
   if (loser.hp <= 0 && finalBlow){
-    blog('📹 REPLAY del colpo finale…');
+    blog(TB('replay'));
     const fs = document.querySelector('.fighters');
     fs.classList.add('replay');
     await sleep(400);
@@ -3082,7 +3087,7 @@ async function runBattle(ea, eb, title){
     await sleep(1400);
     fs.classList.remove('replay');
   }
-  blog('🏆 ' + w.name + ' vince il combattimento!', 'winner');
+  blog(TB('winner', {name: w.name}), 'winner');
   sfx('win');
   if (closeBtn) closeBtn.style.display = 'block';   // verdetto emesso: ora si può chiudere
   // esperienza: piena per mondiali, dal vivo e boss (25), ridotta per locale e tornei (5/2)
@@ -3098,7 +3103,7 @@ async function runBattle(ea, eb, title){
       points += 10;   // la vittoria vera paga bene: è la fonte principale di punti
       try { localStorage.setItem('catcards_points', String(points)); } catch(e){}
       renderWallet();
-      blog('💰 +10 punti per la vittoria!');
+      blog(TB('win_points'));
       missionEvent('world_win');
       if (w.catnip) missionEvent('catnip_win');
     } else if (loser.serial === window._mineSerial){
@@ -3119,16 +3124,16 @@ async function runBattle(ea, eb, title){
         points += 10;
         try { localStorage.setItem('catcards_points', String(points)); } catch(e){}
         renderWallet();
-        blog('💰 +10 punti: hai domato un Boss dell\'Arena!', 'winner');
+        blog(TB('boss_points'), 'winner');
       } else {
-        blog('🎖️ Boss già battuto oggi: gloria sì, premio domani.');
+        blog(TB('boss_noprize'));
       }
       try { localStorage.setItem('catcards_boss', JSON.stringify(bossWins)); } catch(e){}
       checkAchievements();
       missionEvent('boss_win');
       if (w.catnip) missionEvent('catnip_win');
     } else {
-      blog('🤖 Il Boss resta in piedi... il tentativo di oggi è andato: appuntamento a domani (magari con l\'erba gatta 🌿).');
+      blog(TB('boss_survives'));
     }
   }
   // dopo un incontro vero (locale 1v1, mondiale, dal vivo o boss) i gatti coinvolti riposano un'ora
@@ -3399,7 +3404,7 @@ async function startTournament(n){
     players = next; ri++;
   }
   showBracket();
-  blog('👑 ' + players[0].name + ' è il CAMPIONE del torneo!', 'winner');
+  blog(TB('tourn_champ', {name: players[0].name}), 'winner');
   sfx('win');
   if (collection.some(c => c.serial === players[0].serial)){
     if (n === 4) counters.tourn4++; else counters.tourn8++;
@@ -3563,7 +3568,7 @@ async function migrateMelodies(){
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
 /* ---------- versione e aggiornamento automatico ---------- */
-const APP_VERSION = '16.3';   // unica fonte di verità: aggiorna anche version.txt a ogni release
+const APP_VERSION = '16.4';   // unica fonte di verità: aggiorna anche version.txt a ogni release
 try { document.getElementById('appVer').textContent = 'v' + APP_VERSION; } catch(e){}
 function verNewer(a, b){   // a più recente di b? confronto numerico 11.10 > 11.9
   const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);
@@ -4788,7 +4793,7 @@ async function fightWorld(i){
       method: 'POST', headers: supaHeaders(),
       body: JSON.stringify({winner: winSerial, loser: loseSerial})
     });
-    blog('🌍 Risultato registrato nell\'Arena Mondiale!');
+    blog(TB('world_ok'));
     syncWorldBase();
     loadLeaderboard();
     loadMyWorldCards();
@@ -6389,7 +6394,7 @@ async function onQrFound(data, mine){
         winner_serial: winSerial, winner_name: won ? mine.name : entry.name, winner_owner: won ? me : (ownerNm || 'dal vivo'),
         loser_serial: loseSerial, loser_name: won ? entry.name : mine.name, loser_owner: won ? (ownerNm || 'dal vivo') : me
       })});
-      blog('🌍 Risultato registrato nell\'Arena Mondiale!');
+      blog(TB('world_ok'));
       syncWorldBase();
     } catch(e){}
   }
