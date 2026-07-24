@@ -2490,7 +2490,10 @@ async function genGlobalAudio(){
       else { ok++; done = true; }
       if (!done) await new Promise(r => setTimeout(r, 1500));   // pausa lunga prima del secondo tentativo (limiti API)
     }
-    if (!done){ fail++; window._lastAudioErr = lastErr; }
+    if (!done){
+      fail++; window._lastAudioErr = lastErr;
+      if (fail === 1){ if (btn) btn.disabled = false; alert('🎙️ Primo errore audio (' + lang.toUpperCase() + '):\n\n' + lastErr + '\n\nSe dice "quota"/"RESOURCE_EXHAUSTED" è il limite giornaliero: riprendi domani. Le riuscite restano salvate.'); }
+    }
     await new Promise(r => setTimeout(r, 550));   // ritmo più gentile per non sforare i limiti
   }
   _clipExists = {};
@@ -3553,7 +3556,7 @@ async function migrateMelodies(){
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
 /* ---------- versione e aggiornamento automatico ---------- */
-const APP_VERSION = '16.1';   // unica fonte di verità: aggiorna anche version.txt a ogni release
+const APP_VERSION = '16.2';   // unica fonte di verità: aggiorna anche version.txt a ogni release
 try { document.getElementById('appVer').textContent = 'v' + APP_VERSION; } catch(e){}
 function verNewer(a, b){   // a più recente di b? confronto numerico 11.10 > 11.9
   const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);
