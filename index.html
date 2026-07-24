@@ -3460,7 +3460,7 @@ async function migrateMelodies(){
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
 /* ---------- versione e aggiornamento automatico ---------- */
-const APP_VERSION = '15.7';   // unica fonte di verità: aggiorna anche version.txt a ogni release
+const APP_VERSION = '15.8';   // unica fonte di verità: aggiorna anche version.txt a ogni release
 try { document.getElementById('appVer').textContent = 'v' + APP_VERSION; } catch(e){}
 function verNewer(a, b){   // a più recente di b? confronto numerico 11.10 > 11.9
   const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);
@@ -6093,8 +6093,13 @@ function coachAdvice(){
     for (let i = 1; i < 6; i++) if (e.statsv[i] < e.statsv[low]) low = i;   // considera anche l'Indifferenza (5)
     if (low === 5){
       // l'Indifferenza si allena SOLO col combo premium (60 punti): occhio al portafoglio
-      parts.push('Il punto debole di ' + e.name + ' è l\'Indifferenza (' + e.statsv[5] + '), e si allena solo col combo 🛋️ Trono di Piume (60 punti)' +
-        (points >= 60 ? ': puoi permettertelo, vai.' : ': ti mancano ' + (60 - points) + ' punti, mettili da parte.'));
+      if (points >= 60){
+        parts.push('Il punto debole di ' + e.name + ' è l\'Indifferenza (' + e.statsv[5] + '): allenala col combo 🛋️ Trono di Piume (60 punti), puoi permettertelo.');
+      } else {
+        let s2 = 0; for (let i = 1; i < 5; i++) if (e.statsv[i] < e.statsv[s2]) s2 = i;   // seconda più debole, allenabile a 25
+        const alt = points >= 25 ? ' Oppure intanto rinforza la ' + STATS[s2].key + ' (' + e.statsv[s2] + ') con ' + foodByStat[s2] + ' (25 punti).' : '';
+        parts.push('Il punto debole di ' + e.name + ' è l\'Indifferenza (' + e.statsv[5] + '), ma si allena solo col combo 🛋️ Trono di Piume (60 punti): ti mancano ' + (60 - points) + ' punti, mettili da parte.' + alt);
+      }
     } else {
       parts.push('Il punto più debole di ' + e.name + ' è la ' + STATS[low].key + ' (' + e.statsv[low] + '): dagli ' + foodByStat[low] + '.');
     }
