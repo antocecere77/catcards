@@ -72,7 +72,11 @@
     "theme_btn": "▶️ Titelmusik abspielen",
     "retire_btn": "🚪 Aus der Welt zurückziehen",
     "frame_btn": "🎨 Goldrahmen (100 Punkte)",
-    "del_btn": "🗑️ Löschen"
+    "del_btn": "🗑️ Löschen",
+    "coach_greet": "Miau, Rekrut. Wähle einen Schützling und legen wir los.",
+    "gym_combo": "🌟 Premium-Combo — zwei Werte, eine einzige Ruhe",
+    "bet_choose": "Wähle den Einsatz und auf wen du setzt. Liegst du falsch, verlierst du den Einsatz.",
+    "bet_insufficient": "Nicht genug Punkte zum Wetten (mindestens 10)."
   },
   "stat": {
     "Forza": "Stärke",
@@ -354,7 +358,9 @@
     "trader_worst": "wenn du wirklich etwas hergeben musst, fang mit {name} an — du hast Besseres in der Hand.",
     "trader_commons": "Du hast einen Haufen {rar} ({n}): tausch ein paar gegen etwas Selteneres, glaub mir.",
     "trader_gem": "Und pass auf: da ist eine {rar} von {owner} in der Auslage — wenn du ein gutes Duplikat hast, versuch den Tausch, bevor ein anderer sie schnappt.",
-    "trader_browse": "Drück auf «Karten zum Tauschen durchstöbern» und zeig mir, was so umgeht: ich sag dir, ob ein Geschäft dabei ist."
+    "trader_browse": "Drück auf «Karten zum Tauschen durchstöbern» und zeig mir, was so umgeht: ich sag dir, ob ein Geschäft dabei ist.",
+    "rocco_catnip": "🌿 Braver Junge. Jetzt geh da rein und zeig es ihnen: der erste Treffer wird ein Güterzug.",
+    "baffo_all_rest": "😴 Alle deine Schützlinge ruhen sich aus: komm zurück, wenn einer bereit ist, dann legen wir los."
   },
   "titles": {
     "world": "WELT-DUELL",
@@ -574,7 +580,8 @@
     "r_p_fight": "Automatisch und rundenbasiert: Geschwindigkeit entscheidet, wer beginnt (meist), Stärke den Schaden, Geschick die Ausweichmanöver, Intelligenz die Kritischen (×1.6), Charme bezaubert, Gleichgültigkeit senkt den Schaden. Kein Treffer nimmt mehr als 38% der HP. Spezialkräfte, zufällige Power-ups (🧶🌿📦🐟), ein Schlussschlag in Zeitlupe und Replay. Die Präsentation lässt sich überspringen (⏭️ oder in den Optionen).",
     "mgr_greet": "Der Ring ist ein Schachbrett, Junge. Wähle deinen Champion und ich sage dir den nächsten Zug.",
     "mis_desc": "Drei neue Aufgaben jede Mitternacht, für die ganze Welt gleich: je <strong>5 Punkte</strong>, <strong>+10 Bonus</strong>, wenn du das Trio schaffst.",
-    "med_desc": "Medaillen belohnen mit Punkten: gib sie für Wetten, den Weltvorteil, den Goldrahmen, Neuzeichnungen und in der Trainings-Speisekammer aus."
+    "med_desc": "Medaillen belohnen mit Punkten: gib sie für Wetten, den Weltvorteil, den Goldrahmen, Neuzeichnungen und in der Trainings-Speisekammer aus.",
+    "boss_intro": "64 Legenden in 8 Divisionen: täglich erscheinen 2, für die ganze Welt gleich. Sie zu besiegen zahlt <strong>+10 Punkte</strong>, volle XP und eine eigene Medaille. <strong>Ein Versuch pro Boss und Tag</strong>, gewonnen oder verloren; Bosse berühren die Elo-Rangliste nicht. Nur in der Welt <strong>veröffentlichte Karten</strong> kämpfen."
   },
   "boss": {
     "div_1": "Streuner des Viertels",
@@ -834,6 +841,16 @@
     "w_ex": "ex",
     "w_maxstreak": "max 🔥{n}",
     "w_none_rank": "Keine Karten in der Rangliste: veröffentliche eine!",
-    "w_record_c": "{w}S/{l}N"
+    "w_record_c": "{w}S/{l}N",
+    "w_selrest": "😴 ruht",
+    "w_selmarket": "🔒 im Markt",
+    "w_fav": "⭐ Favorit",
+    "w_underdog": "🐾 Außenseiter",
+    "w_quota": "Quote",
+    "w_ifwin": "bei Sieg: +{n} Punkte",
+    "prize_line": "🎁 <strong>Im Spiel:</strong> Sieg +10 Punkte und +25 XP · Niederlage +10 XP",
+    "w_catnip_ready": "🌿 Katzenminze BEREIT für diesen Kampf ✔",
+    "w_catnip_btn": "🌿 Gib ihm Katzenminze — erster Treffer verdoppelt (50 Punkte)",
+    "w_catnip_need": "Du brauchst 50 Punkte (du hast {pts})."
   }
 };

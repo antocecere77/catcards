@@ -72,7 +72,11 @@
     "theme_btn": "▶️ Ascolta il tema",
     "retire_btn": "🚪 Ritira dal mondo",
     "frame_btn": "🎨 Cornice d'Oro (100 punti)",
-    "del_btn": "🗑️ Elimina"
+    "del_btn": "🗑️ Elimina",
+    "coach_greet": "Miao, recluta. Scegli un allievo e mettiamoci al lavoro.",
+    "gym_combo": "🌟 Combo Premium — due statistiche, un solo riposo",
+    "bet_choose": "Scegli la puntata e su chi scommettere. Se sbagli, perdi la puntata.",
+    "bet_insufficient": "Punti insufficienti per scommettere (minimo 10)."
   },
   "stat": {
     "Forza": "Forza",
@@ -354,7 +358,9 @@
     "trader_worst": "se proprio devi dare qualcosa, parti da {name} — ne hai di meglio in mano.",
     "trader_commons": "Hai un mucchio di {rar} ({n}): scambiane un paio per qualcosa di più raro, fidati.",
     "trader_gem": "E occhio: c’è una {rar} di {owner} in vetrina — se hai un buon doppione, tenta lo scambio prima che la prenda un altro.",
-    "trader_browse": "Premi «Sfoglia carte da scambiare» e fammi vedere cosa gira: ti dico io se c’è un affare."
+    "trader_browse": "Premi «Sfoglia carte da scambiare» e fammi vedere cosa gira: ti dico io se c’è un affare.",
+    "rocco_catnip": "🌿 Bravo ragazzo. Ora entra lì e fatti valere: il primo colpo sarà un treno.",
+    "baffo_all_rest": "😴 Tutti i tuoi allievi stanno riposando: torna quando qualcuno è pronto e ci mettiamo al lavoro."
   },
   "titles": {
     "world": "SFIDA MONDIALE",
@@ -574,7 +580,8 @@
     "r_p_fight": "Automatico a turni: Velocità decide chi parte (di solito), Forza il danno, Destrezza le schivate, Intelligenza i critici (×1.6), Fascino ammalia, Indifferenza riduce i danni. Nessun colpo toglie più del 38% degli HP. Poteri speciali, power-up casuali (🧶🌿📦🐟), colpo finale al rallentatore e replay. La presentazione si può saltare (⏭️ o da Opzioni).",
     "mgr_greet": "Il ring è una scacchiera, ragazzo. Scegli il campione e ti dico la prossima mossa.",
     "mis_desc": "Tre incarichi nuovi ogni mezzanotte, uguali per tutto il mondo: <strong>5 punti</strong> l'uno, <strong>+10 di bonus</strong> se completi il tris.",
-    "med_desc": "Le medaglie premiano con punti: spendili in scommesse, vantaggio mondiale, Cornice d'Oro, rigenerazioni e nella dispensa della Palestra."
+    "med_desc": "Le medaglie premiano con punti: spendili in scommesse, vantaggio mondiale, Cornice d'Oro, rigenerazioni e nella dispensa della Palestra.",
+    "boss_intro": "64 leggende in 8 divisioni: ogni giorno ne compaiono 2, uguali per tutto il mondo. Batterle paga <strong>+10 punti</strong>, XP pieni e una medaglia dedicata. <strong>Un solo tentativo al giorno per boss</strong>, vinto o perso; i boss non toccano il ranking Elo. Combattono solo le carte <strong>pubblicate nel Mondo</strong>."
   },
   "boss": {
     "div_1": "Randagi di Quartiere",
@@ -834,6 +841,16 @@
     "w_ex": "ex",
     "w_maxstreak": "max 🔥{n}",
     "w_none_rank": "Nessuna carta in ranking: pubblicane una!",
-    "w_record_c": "{w}V/{l}S"
+    "w_record_c": "{w}V/{l}S",
+    "w_selrest": "😴 riposa",
+    "w_selmarket": "🔒 al mercato",
+    "w_fav": "⭐ favorito",
+    "w_underdog": "🐾 underdog",
+    "w_quota": "quota",
+    "w_ifwin": "se vince: +{n} punti",
+    "prize_line": "🎁 <strong>In palio:</strong> vittoria +10 punti e +25 XP · sconfitta +10 XP",
+    "w_catnip_ready": "🌿 Erba gatta PRONTA per questo match ✔",
+    "w_catnip_btn": "🌿 Dagli l'erba gatta — primo colpo raddoppiato (50 punti)",
+    "w_catnip_need": "Servono 50 punti (ne hai {pts})."
   }
 };

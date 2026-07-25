@@ -72,7 +72,11 @@
     "theme_btn": "▶️ Escuchar el tema",
     "retire_btn": "🚪 Retirar del mundo",
     "frame_btn": "🎨 Marco de Oro (100 puntos)",
-    "del_btn": "🗑️ Eliminar"
+    "del_btn": "🗑️ Eliminar",
+    "coach_greet": "Miau, recluta. Elige un alumno y pongámonos a trabajar.",
+    "gym_combo": "🌟 Combo Premium — dos estadísticas, un solo descanso",
+    "bet_choose": "Elige la apuesta y a quién apostar. Si te equivocas, pierdes la apuesta.",
+    "bet_insufficient": "Puntos insuficientes para apostar (mínimo 10)."
   },
   "stat": {
     "Forza": "Fuerza",
@@ -354,7 +358,9 @@
     "trader_worst": "si de verdad tienes que dar algo, empieza por {name} — tienes cosas mejores en mano.",
     "trader_commons": "Tienes un montón de {rar} ({n}): cambia un par por algo más raro, fíate.",
     "trader_gem": "Y ojo: hay una {rar} de {owner} en el escaparate — si tienes un buen repetido, intenta el cambio antes de que la pille otro.",
-    "trader_browse": "Pulsa «Explorar cartas para intercambiar» y enséñame qué hay: yo te digo si hay negocio."
+    "trader_browse": "Pulsa «Explorar cartas para intercambiar» y enséñame qué hay: yo te digo si hay negocio.",
+    "rocco_catnip": "🌿 Bravo chaval. Ahora entra ahí y hazte valer: el primer golpe será un tren.",
+    "baffo_all_rest": "😴 Todos tus alumnos están descansando: vuelve cuando uno esté listo y nos ponemos a trabajar."
   },
   "titles": {
     "world": "DESAFÍO MUNDIAL",
@@ -574,7 +580,8 @@
     "r_p_fight": "Automático por turnos: la Velocidad decide quién empieza (normalmente), la Fuerza el daño, la Destreza las esquivas, la Inteligencia los críticos (×1.6), el Encanto hechiza, la Indiferencia reduce el daño. Ningún golpe quita más del 38% de los HP. Poderes especiales, potenciadores aleatorios (🧶🌿📦🐟), golpe final a cámara lenta y repetición. La presentación se puede saltar (⏭️ o desde Opciones).",
     "mgr_greet": "El ring es un tablero de ajedrez, chaval. Elige tu campeón y te digo la próxima jugada.",
     "mis_desc": "Tres encargos nuevos cada medianoche, iguales para todo el mundo: <strong>5 puntos</strong> cada uno, <strong>+10 de bono</strong> si completas el trío.",
-    "med_desc": "Las medallas premian con puntos: gástalos en apuestas, ventaja mundial, Marco de Oro, regeneraciones y en la despensa del Gimnasio."
+    "med_desc": "Las medallas premian con puntos: gástalos en apuestas, ventaja mundial, Marco de Oro, regeneraciones y en la despensa del Gimnasio.",
+    "boss_intro": "64 leyendas en 8 divisiones: cada día aparecen 2, iguales para todo el mundo. Vencerlas paga <strong>+10 puntos</strong>, XP completos y una medalla dedicada. <strong>Un intento al día por boss</strong>, ganado o perdido; los boss no tocan la clasificación Elo. Solo combaten las cartas <strong>publicadas en el Mundo</strong>."
   },
   "boss": {
     "div_1": "Callejeros del Barrio",
@@ -834,6 +841,16 @@
     "w_ex": "ex",
     "w_maxstreak": "máx 🔥{n}",
     "w_none_rank": "Ninguna carta en la clasificación: ¡publica una!",
-    "w_record_c": "{w}V/{l}D"
+    "w_record_c": "{w}V/{l}D",
+    "w_selrest": "😴 descansa",
+    "w_selmarket": "🔒 en el mercado",
+    "w_fav": "⭐ favorito",
+    "w_underdog": "🐾 no favorito",
+    "w_quota": "cuota",
+    "w_ifwin": "si gana: +{n} puntos",
+    "prize_line": "🎁 <strong>En juego:</strong> victoria +10 puntos y +25 XP · derrota +10 XP",
+    "w_catnip_ready": "🌿 Hierba gatera LISTA para este combate ✔",
+    "w_catnip_btn": "🌿 Dale hierba gatera — primer golpe duplicado (50 puntos)",
+    "w_catnip_need": "Hacen falta 50 puntos (tienes {pts})."
   }
 };

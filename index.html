@@ -15,11 +15,11 @@
 <script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs@master/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="lang-it.js?v=16.9"></script>
-<script src="lang-en.js?v=16.9"></script>
-<script src="lang-fr.js?v=16.9"></script>
-<script src="lang-es.js?v=16.9"></script>
-<script src="lang-de.js?v=16.9"></script>
+<script src="lang-it.js?v=17.0"></script>
+<script src="lang-en.js?v=17.0"></script>
+<script src="lang-fr.js?v=17.0"></script>
+<script src="lang-es.js?v=17.0"></script>
+<script src="lang-de.js?v=17.0"></script>
 <style>
   :root{
     --bg:#14121f; --panel:#1e1b2e; --panel2:#282440;
@@ -354,7 +354,7 @@
   <div id="tab-boss" style="width:100%; max-width:440px; display:none;">
   <div class="panel" style="margin-top:20px;">
     <h2 data-i18n="boss_title">🤖 Boss dell'Arena</h2>
-    <p class="count" style="line-height:1.6;">64 leggende in 8 divisioni: ogni giorno ne compaiono 2, uguali per tutto il mondo. Batterle paga <strong>+10 punti</strong>, XP pieni e una medaglia dedicata. <strong>Un solo tentativo al giorno per boss</strong>, vinto o perso; i boss non toccano il ranking Elo. Combattono solo le carte <strong>pubblicate nel Mondo</strong>.</p>
+    <p class="count" style="line-height:1.6;" data-i18n-html="boss_intro">64 leggende in 8 divisioni: ogni giorno ne compaiono 2, uguali per tutto il mondo. Batterle paga <strong>+10 punti</strong>, XP pieni e una medaglia dedicata. <strong>Un solo tentativo al giorno per boss</strong>, vinto o perso; i boss non toccano il ranking Elo. Combattono solo le carte <strong>pubblicate nel Mondo</strong>.</p>
     <label class="small" style="margin-top:10px;" data-i18n="boss_chall">Il tuo sfidante (carte pubblicate)</label>
     <select id="bossCat"></select>
     <div id="bossList" style="margin-top:10px;"></div>
@@ -373,7 +373,7 @@
       <div id="coachEmoji" style="font-size:3rem; flex-shrink:0;">😼</div>
       <div style="flex:1; min-width:0;">
         <strong>Coach Baffo</strong>
-        <p class="count" id="coachSay" style="margin-top:2px; line-height:1.5;">Miao, recluta. Scegli un allievo e mettiamoci al lavoro.</p>
+        <p class="count" id="coachSay" style="margin-top:2px; line-height:1.5;" data-i18n="coach_greet">Miao, recluta. Scegli un allievo e mettiamoci al lavoro.</p>
       </div>
     </div>
     <label class="small" style="margin-top:14px;" data-i18n="gym_student">L'allievo di oggi</label>
@@ -381,7 +381,7 @@
     <p class="count" id="gymInfo" style="margin-top:6px; line-height:1.6;"></p>
     <label class="small" style="margin-top:12px;" data-i18n="gym_pantry">🍽️ Dispensa — compra, poi guadagnatelo col gioco</label>
     <div id="foodGrid" style="display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:8px;"></div>
-    <label class="small" style="margin-top:12px; color:var(--accent);">🌟 Combo Premium — due statistiche, un solo riposo</label>
+    <label class="small" style="margin-top:12px; color:var(--accent);" data-i18n="gym_combo">🌟 Combo Premium — due statistiche, un solo riposo</label>
     <div id="foodComboGrid" style="display:grid; grid-template-columns:repeat(2,1fr); gap:8px; margin-top:8px;"></div>
   </div>
   </div>
@@ -582,7 +582,7 @@
       <div id="cornerStats" style="margin-top:8px;"></div>
       <button class="btn secondary" id="betCatnip" style="margin-top:8px;"></button>
       <h2 style="font-size:1rem; margin-top:12px;" data-i18n="bet_sub">🎲 Pronostico</h2>
-      <p class="count" id="betInfo" style="margin-top:4px;">Scegli la puntata e su chi scommettere. Se sbagli, perdi la puntata.</p>
+      <p class="count" id="betInfo" style="margin-top:4px;" data-i18n="bet_choose">Scegli la puntata e su chi scommettere. Se sbagli, perdi la puntata.</p>
       <div id="stakeRow" style="display:flex; gap:8px; margin:10px 0 2px;"></div>
       <button class="btn" id="betA"></button>
       <button class="btn" id="betB"></button>
@@ -725,6 +725,11 @@ function setLang(l){
   try { renderUserBar(); } catch(e){}
   try { redrawAllCards(); } catch(e){}
   try { renderCollection(); renderStats(); } catch(e){}
+  // ri-renderizza tutte le viste dinamiche così cambiano lingua all'istante
+  try { renderGym(); } catch(e){}
+  try { renderMissions(); renderMedals(); renderCatdex(); } catch(e){}
+  try { if (window._curTab === 'boss') renderBosses(); } catch(e){}
+  try { renderWorldList(); loadMyWorldCards(); loadLeaderboard(); } catch(e){}
   try { if (modalIndex >= 0) openCardModal(modalIndex); } catch(e){}
 }
 async function redrawAllCards(){
@@ -1850,7 +1855,7 @@ function refreshArena(){
   collByName().forEach(({c, i}) => {
     const resting = coolLeft(c) > 0;
     const frozen = myFrozen.has(c.serial);
-    const label = '🐱 ' + c.name + ' (' + trRarity(c.rarity) + ')' + (frozen ? ' 🔒 al mercato' : (resting ? ' 😴 riposa' : ''));
+    const label = '🐱 ' + c.name + ' (' + trRarity(c.rarity) + ')' + (frozen ? ' ' + TSEC('world', 'w_selmarket') : (resting ? ' ' + TSEC('world', 'w_selrest') : ''));
     const oA = new Option(label, 'c' + i); oA.disabled = resting || frozen; selA.add(oA);
     const oB = new Option(label, 'c' + i); oB.disabled = resting || frozen; selB.add(oB);
   });
@@ -1862,7 +1867,7 @@ function refreshArena(){
     collByName().forEach(({c, i}) => {
       const resting = coolLeft(c) > 0;
       const frozen = myFrozen.has(c.serial);
-      const o = new Option('🐱 ' + c.name + ' (' + trRarity(c.rarity) + ')' + (frozen ? ' 🔒 al mercato' : (resting ? ' 😴 riposa' : '')), 'c' + i);
+      const o = new Option('🐱 ' + c.name + ' (' + trRarity(c.rarity) + ')' + (frozen ? ' ' + TSEC('world', 'w_selmarket') : (resting ? ' ' + TSEC('world', 'w_selrest') : '')), 'c' + i);
       o.disabled = resting || frozen;
       qrSel.add(o);
     });
@@ -1878,7 +1883,7 @@ function refreshArena(){
         published++;
         const resting = coolLeft(c) > 0;
         const frozen = myFrozen.has(c.serial);
-        const o = new Option('🐱 ' + c.name + ' (' + trRarity(c.rarity) + ')' + (frozen ? ' 🔒 al mercato' : (resting ? ' 😴 riposa' : '')), String(i));
+        const o = new Option('🐱 ' + c.name + ' (' + trRarity(c.rarity) + ')' + (frozen ? ' ' + TSEC('world', 'w_selmarket') : (resting ? ' ' + TSEC('world', 'w_selrest') : '')), String(i));
         o.disabled = resting || frozen;
         selMine.add(o);
         if (!resting && !frozen) eligible++;
@@ -2175,19 +2180,19 @@ function renderCatnipBtn(){
   const b = document.getElementById('betCatnip');
   if (!b) return;
   if (window._buyCatnip){
-    b.innerHTML = '🌿 Erba gatta PRONTA per questo match ✔';
+    b.innerHTML = TSEC('world', 'w_catnip_ready');
     b.style.borderColor = '#51cf66'; b.style.color = '#51cf66';
     b.onclick = null;
   } else {
-    b.innerHTML = '🌿 Dagli l\'erba gatta — primo colpo raddoppiato (50 punti)';
+    b.innerHTML = TSEC('world', 'w_catnip_btn');
     b.style.borderColor = ''; b.style.color = '';
     b.onclick = () => {
-      if (points < 50){ alert('Servono 50 punti (ne hai ' + points + ').'); return; }
+      if (points < 50){ alert(TSEC('world', 'w_catnip_need', {pts: points})); return; }
       spendPoints(50);
       window._buyCatnip = true;
       renderCatnipBtn();
       const cs = document.getElementById('cornerSay');
-      if (cs) cs.textContent = '🌿 Bravo ragazzo. Ora entra lì e fatti valere: il primo colpo sarà un treno.';
+      if (cs) cs.textContent = TC('rocco_catnip');
       try { sfx('charm'); } catch(e){}
     };
   }
@@ -2208,20 +2213,20 @@ function askBet(ea, eb){
     // l'angolo di Zio Rocco: confronto, probabilità e consiglio
     initCornerman();
     document.getElementById('cornerStats').innerHTML = cornerAnalysis(ea, eb, pA) +
-      '<div style="margin-top:8px; font-size:.82rem;">🎁 <strong>In palio:</strong> vittoria +10 punti e +25 XP · sconfitta +10 XP</div>' +
+      '<div style="margin-top:8px; font-size:.82rem;">' + TSEC('world', 'prize_line') + '</div>' +
       xpBarHtml(ea.serial);
     document.getElementById('cornerSay').textContent = cornerComment(ea, eb, pA);
     renderCatnipBtn();
     const canBet = points >= 10;
-    document.getElementById('betInfo').textContent = canBet ? 'Scegli la puntata e su chi scommettere. Se sbagli, perdi la puntata.' : 'Punti insufficienti per scommettere (minimo 10).';
+    document.getElementById('betInfo').textContent = canBet ? T('bet_choose') : T('bet_insufficient');
     const chips = [10, 25, 50, 100].filter(v => v <= points);
     function renderBtns(){
       bA.style.display = canBet ? 'block' : 'none';
       bB.style.display = canBet ? 'block' : 'none';
-      bA.innerHTML = '🔴 ' + ea.name + (favA ? ' ⭐ favorito' : ' 🐾 underdog') + ' — quota ' + qA.toFixed(2) +
-        '<br><span style="font-size:.8rem; font-weight:400;">se vince: +' + Math.round(stake * (qA - 1)) + ' punti</span>';
-      bB.innerHTML = '🔵 ' + eb.name + (favA ? ' 🐾 underdog' : ' ⭐ favorito') + ' — quota ' + qB.toFixed(2) +
-        '<br><span style="font-size:.8rem; font-weight:400;">se vince: +' + Math.round(stake * (qB - 1)) + ' punti</span>';
+      bA.innerHTML = '🔴 ' + ea.name + ' ' + (favA ? TSEC('world', 'w_fav') : TSEC('world', 'w_underdog')) + ' — ' + TSEC('world', 'w_quota') + ' ' + qA.toFixed(2) +
+        '<br><span style="font-size:.8rem; font-weight:400;">' + TSEC('world', 'w_ifwin', {n: Math.round(stake * (qA - 1))}) + '</span>';
+      bB.innerHTML = '🔵 ' + eb.name + ' ' + (favA ? TSEC('world', 'w_underdog') : TSEC('world', 'w_fav')) + ' — ' + TSEC('world', 'w_quota') + ' ' + qB.toFixed(2) +
+        '<br><span style="font-size:.8rem; font-weight:400;">' + TSEC('world', 'w_ifwin', {n: Math.round(stake * (qB - 1))}) + '</span>';
     }
     function renderChips(){
       row.innerHTML = '';
@@ -3613,7 +3618,7 @@ async function migrateMelodies(){
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
 /* ---------- versione e aggiornamento automatico ---------- */
-const APP_VERSION = '16.9';   // unica fonte di verità: aggiorna anche version.txt a ogni release
+const APP_VERSION = '17.0';   // unica fonte di verità: aggiorna anche version.txt a ogni release
 try { document.getElementById('appVer').textContent = 'v' + APP_VERSION; } catch(e){}
 function verNewer(a, b){   // a più recente di b? confronto numerico 11.10 > 11.9
   const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);
@@ -5219,7 +5224,7 @@ function renderBosses(){
     if (!myActive.has(c.serial)) return;   // contro i Boss scendono solo le carte pubblicate nel Mondo
     const rest = coolLeft(c) > 0;
     const frozen = myFrozen.has(c.serial);
-    const o = new Option('🐱 ' + c.name + ' (Lv.' + cardLevel(c.serial) + ')' + (frozen ? ' 🔒 al mercato' : (rest ? ' 😴 riposa' : '')), String(i));
+    const o = new Option('🐱 ' + c.name + ' (Lv.' + cardLevel(c.serial) + ')' + (frozen ? ' ' + TSEC('world', 'w_selmarket') : (rest ? ' ' + TSEC('world', 'w_selrest') : '')), String(i));
     o.disabled = rest || frozen;
     sel.add(o);
     if (!rest && !frozen) eligible++;
@@ -5563,7 +5568,7 @@ function renderGym(){
   sel.innerHTML = '';
   collByName().forEach(({c, i}) => {
     const frozen = myFrozen.has(c.serial);
-    const rest = frozen ? ' 🔒 al mercato' : (coolLeft(c) > 0 ? ' 😴 riposa' : '');
+    const rest = frozen ? ' ' + TSEC('world', 'w_selmarket') : (coolLeft(c) > 0 ? ' ' + TSEC('world', 'w_selrest') : '');
     const o = new Option('🐱 ' + c.name + ' (Lv.' + cardLevel(c.serial) + ')' + rest, String(i));
     o.disabled = frozen;
     sel.add(o);
@@ -6226,7 +6231,13 @@ function coachAdvice(){
   const open = TC('baffo_open');
   const parts = [];
   if (!collection.length){ coachSayMsg(TC('baffo_empty')); return; }
-  const e = gymCat() || collection[0];
+  let e = gymCat() || collection[0];
+  // se l'allievo selezionato riposa (o è al mercato), passa al primo disponibile; se riposano tutti, avvisa
+  if (coolLeft(e) > 0 || myFrozen.has(e.serial)){
+    const avail = collByName().map(x => x.c).find(c => coolLeft(c) === 0 && !myFrozen.has(c.serial));
+    if (!avail){ coachSayMsg(TC('baffo_all_rest')); return; }
+    e = avail;
+  }
   const foodByStat = {0: '🍗 ' + foodNm({id: 'pollo'}), 1: '🐁 ' + foodNm({id: 'topo'}), 2: '🌿 ' + foodNm({id: 'erba'}), 3: '🐟 ' + foodNm({id: 'pesce'}), 4: '🧀 ' + foodNm({id: 'chicche'})};
   const tronoNm = '🛋️ ' + foodNm({id: 'trono'});
   if (Array.isArray(e.statsv) && e.statsv.length === 6){

@@ -72,7 +72,11 @@
     "theme_btn": "▶️ Écouter le thème",
     "retire_btn": "🚪 Retirer du monde",
     "frame_btn": "🎨 Cadre d'Or (100 points)",
-    "del_btn": "🗑️ Supprimer"
+    "del_btn": "🗑️ Supprimer",
+    "coach_greet": "Miaou, recrue. Choisis un élève et mettons-nous au travail.",
+    "gym_combo": "🌟 Combo Premium — deux stats, un seul repos",
+    "bet_choose": "Choisis la mise et sur qui parier. Si tu te trompes, tu perds la mise.",
+    "bet_insufficient": "Pas assez de points pour parier (minimum 10)."
   },
   "stat": {
     "Forza": "Force",
@@ -354,7 +358,9 @@
     "trader_worst": "s’il faut vraiment donner quelque chose, commence par {name} — tu as mieux en main.",
     "trader_commons": "Tu as un tas de {rar} ({n}) : échange-en deux contre quelque chose de plus rare, crois-moi.",
     "trader_gem": "Et attention : il y a une {rar} de {owner} en vitrine — si tu as un bon double, tente l’échange avant qu’un autre ne la prenne.",
-    "trader_browse": "Appuie sur «Parcourir les cartes à échanger» et montre-moi ce qui circule : je te dis s’il y a une affaire."
+    "trader_browse": "Appuie sur «Parcourir les cartes à échanger» et montre-moi ce qui circule : je te dis s’il y a une affaire.",
+    "rocco_catnip": "🌿 Bravo petit. Maintenant entre là-dedans et montre-leur : le premier coup sera un train.",
+    "baffo_all_rest": "😴 Tous tes élèves se reposent : reviens quand l'un d'eux est prêt et on se met au travail."
   },
   "titles": {
     "world": "DÉFI MONDIAL",
@@ -574,7 +580,8 @@
     "r_p_fight": "Automatique au tour par tour : la Vitesse décide qui commence (en général), la Force les dégâts, l'Adresse les esquives, l'Intelligence les critiques (×1.6), le Charme ensorcelle, l'Indifférence réduit les dégâts. Aucun coup n'enlève plus de 38% des HP. Pouvoirs spéciaux, bonus aléatoires (🧶🌿📦🐟), coup final au ralenti et replay. La présentation peut être sautée (⏭️ ou depuis les Options).",
     "mgr_greet": "Le ring est un échiquier, petit. Choisis ton champion et je te dis le prochain coup.",
     "mis_desc": "Trois nouvelles missions chaque minuit, les mêmes pour le monde entier : <strong>5 points</strong> chacune, <strong>+10 de bonus</strong> si tu complètes le trio.",
-    "med_desc": "Les médailles récompensent en points : dépense-les en paris, avantage mondial, Cadre d'Or, régénérations et dans le garde-manger de la Salle."
+    "med_desc": "Les médailles récompensent en points : dépense-les en paris, avantage mondial, Cadre d'Or, régénérations et dans le garde-manger de la Salle.",
+    "boss_intro": "64 légendes en 8 divisions : 2 apparaissent chaque jour, les mêmes pour le monde entier. Les battre rapporte <strong>+10 points</strong>, des XP pleins et une médaille dédiée. <strong>Une tentative par boss et par jour</strong>, gagnée ou perdue ; les boss ne touchent pas au classement Elo. Seules les cartes <strong>publiées dans le Monde</strong> combattent."
   },
   "boss": {
     "div_1": "Errants du Quartier",
@@ -834,6 +841,16 @@
     "w_ex": "ex",
     "w_maxstreak": "max 🔥{n}",
     "w_none_rank": "Aucune carte au classement : publies-en une !",
-    "w_record_c": "{w}V/{l}D"
+    "w_record_c": "{w}V/{l}D",
+    "w_selrest": "😴 se repose",
+    "w_selmarket": "🔒 au marché",
+    "w_fav": "⭐ favori",
+    "w_underdog": "🐾 outsider",
+    "w_quota": "cote",
+    "w_ifwin": "si gagne : +{n} points",
+    "prize_line": "🎁 <strong>En jeu :</strong> victoire +10 points et +25 XP · défaite +10 XP",
+    "w_catnip_ready": "🌿 Herbe à chat PRÊTE pour ce match ✔",
+    "w_catnip_btn": "🌿 Donne-lui de l'herbe à chat — premier coup doublé (50 points)",
+    "w_catnip_need": "Il faut 50 points (tu en as {pts})."
   }
 };

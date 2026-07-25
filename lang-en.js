@@ -72,7 +72,11 @@
     "theme_btn": "▶️ Play theme song",
     "retire_btn": "🚪 Retire from the world",
     "frame_btn": "🎨 Golden Frame (100 points)",
-    "del_btn": "🗑️ Delete"
+    "del_btn": "🗑️ Delete",
+    "coach_greet": "Meow, recruit. Pick a trainee and let's get to work.",
+    "gym_combo": "🌟 Premium Combo — two stats, a single rest",
+    "bet_choose": "Choose your stake and who to bet on. If you're wrong, you lose the stake.",
+    "bet_insufficient": "Not enough points to bet (minimum 10)."
   },
   "stat": {
     "Forza": "Strength",
@@ -354,7 +358,9 @@
     "trader_worst": "if you really must trade something, start with {name} — you’ve got better in hand.",
     "trader_commons": "You’ve got a pile of {rar} cards ({n}): trade a couple for something rarer, trust me.",
     "trader_gem": "And watch out: there’s a {rar} from {owner} on the shelf — if you’ve got a good spare, try the trade before someone else grabs it.",
-    "trader_browse": "Hit «Browse cards to trade» and show me what’s around: I’ll tell you if there’s a deal."
+    "trader_browse": "Hit «Browse cards to trade» and show me what’s around: I’ll tell you if there’s a deal.",
+    "rocco_catnip": "🌿 Good lad. Now get in there and show them: the first hit will be a freight train.",
+    "baffo_all_rest": "😴 All your trainees are resting: come back when one is ready and we'll get to work."
   },
   "titles": {
     "world": "WORLD MATCH",
@@ -574,7 +580,8 @@
     "r_p_fight": "Automatic and turn-based: Speed decides who starts (usually), Strength the damage, Agility the dodges, Intelligence the criticals (×1.6), Charm bewitches, Aloofness reduces damage. No hit removes more than 38% of HP. Special powers, random power-ups (🧶🌿📦🐟), a slow-motion final blow and replay. The presentation can be skipped (⏭️ or from Options).",
     "mgr_greet": "The ring is a chessboard, kid. Pick your champion and I'll tell you the next move.",
     "mis_desc": "Three new tasks every midnight, the same for the whole world: <strong>5 points</strong> each, <strong>+10 bonus</strong> if you complete the trio.",
-    "med_desc": "Medals reward you with points: spend them on bets, the world edge, the Gold Frame, redraws and in the Gym pantry."
+    "med_desc": "Medals reward you with points: spend them on bets, the world edge, the Gold Frame, redraws and in the Gym pantry.",
+    "boss_intro": "64 legends across 8 divisions: 2 appear each day, the same for the whole world. Beating them pays <strong>+10 points</strong>, full XP and a dedicated medal. <strong>One attempt per boss per day</strong>, won or lost; bosses don't affect the Elo ranking. Only cards <strong>published in the World</strong> can fight."
   },
   "boss": {
     "div_1": "Neighborhood Strays",
@@ -834,6 +841,16 @@
     "w_ex": "ex",
     "w_maxstreak": "max 🔥{n}",
     "w_none_rank": "No cards in the ranking: publish one!",
-    "w_record_c": "{w}W/{l}L"
+    "w_record_c": "{w}W/{l}L",
+    "w_selrest": "😴 resting",
+    "w_selmarket": "🔒 on the market",
+    "w_fav": "⭐ favorite",
+    "w_underdog": "🐾 underdog",
+    "w_quota": "odds",
+    "w_ifwin": "if it wins: +{n} points",
+    "prize_line": "🎁 <strong>At stake:</strong> win +10 points and +25 XP · loss +10 XP",
+    "w_catnip_ready": "🌿 Catnip READY for this match ✔",
+    "w_catnip_btn": "🌿 Give it catnip — first hit doubled (50 points)",
+    "w_catnip_need": "You need 50 points (you have {pts})."
   }
 };
