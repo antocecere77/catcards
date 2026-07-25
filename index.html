@@ -15,11 +15,11 @@
 <script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs@master/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="lang-it.js?v=15.1"></script>
-<script src="lang-en.js?v=15.1"></script>
-<script src="lang-fr.js?v=15.1"></script>
-<script src="lang-es.js?v=15.1"></script>
-<script src="lang-de.js?v=15.1"></script>
+<script src="lang-it.js?v=16.9"></script>
+<script src="lang-en.js?v=16.9"></script>
+<script src="lang-fr.js?v=16.9"></script>
+<script src="lang-es.js?v=16.9"></script>
+<script src="lang-de.js?v=16.9"></script>
 <style>
   :root{
     --bg:#14121f; --panel:#1e1b2e; --panel2:#282440;
@@ -295,7 +295,7 @@
         <div id="mgrEmoji" style="font-size:2.6rem; flex-shrink:0;">😼</div>
         <div style="flex:1; min-width:0;">
           <strong>Mister Felini, il Manager</strong>
-          <p class="count" id="mgrSay" style="margin-top:2px; line-height:1.5;">Il ring è una scacchiera, ragazzo. Scegli il campione e ti dico la prossima mossa.</p>
+          <p class="count" id="mgrSay" style="margin-top:2px; line-height:1.5;" data-i18n-html="mgr_greet">Il ring è una scacchiera, ragazzo. Scegli il campione e ti dico la prossima mossa.</p>
         </div>
       </div>
       <label class="small" data-i18n="my_online">La tua carta per le sfide online</label>
@@ -389,7 +389,7 @@
   <div id="tab-med" style="width:100%; max-width:440px; display:none;">
   <div class="panel" style="margin-top:20px;">
     <h2 data-i18n="mis_title">📅 Missioni di oggi</h2>
-    <p class="count" style="line-height:1.5;">Tre incarichi nuovi ogni mezzanotte, uguali per tutto il mondo: <strong>5 punti</strong> l'uno, <strong>+10 di bonus</strong> se completi il tris.</p>
+    <p class="count" style="line-height:1.5;" data-i18n-html="mis_desc">Tre incarichi nuovi ogni mezzanotte, uguali per tutto il mondo: <strong>5 punti</strong> l'uno, <strong>+10 di bonus</strong> se completi il tris.</p>
     <div id="misList" style="margin-top:8px; line-height:1.5;"></div>
   </div>
   <div class="panel" style="margin-top:20px;">
@@ -400,7 +400,7 @@
       <summary style="cursor:pointer; font-weight:600;" id="bossMedalSum">🤖 Boss domati</summary>
       <div id="bossMedalList" style="display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-top:12px;"></div>
     </details>
-    <p class="count" style="margin-top:12px;">Le medaglie premiano con punti: spendili in scommesse, vantaggio mondiale, Cornice d'Oro, rigenerazioni e nella dispensa della Palestra.</p>
+    <p class="count" style="margin-top:12px;" data-i18n-html="med_desc">Le medaglie premiano con punti: spendili in scommesse, vantaggio mondiale, Cornice d'Oro, rigenerazioni e nella dispensa della Palestra.</p>
   </div>
   </div>
 
@@ -794,9 +794,16 @@ function powerName(i){ return TSEC('powers', 'pn_' + i); }
 function powerDesc(i){ return TSEC('powers', 'pd_' + i); }
 // progressi: missioni, medaglie, catdex tradotti
 function misTxt(m){ return TSEC('prog', 'm_' + m.id); }
-function achNm(a){ return a.boss ? (a.id === 'bm_all' ? TSEC('prog', 'bmall_nm') : a.nm) : TSEC('prog', 'a_' + a.id + '_nm'); }
-function achDs(a){ return a.boss ? (a.id === 'bm_all' ? TSEC('prog', 'bmall_ds') : TSEC('prog', 'bm_ds', {name: a.nm, tier: a.tier})) : TSEC('prog', 'a_' + a.id + '_ds'); }
+function achNm(a){ return a.boss ? (a.id === 'bm_all' ? TSEC('prog', 'bmall_nm') : bossName(a.bid)) : TSEC('prog', 'a_' + a.id + '_nm'); }
+function achDs(a){ return a.boss ? (a.id === 'bm_all' ? TSEC('prog', 'bmall_ds') : TSEC('prog', 'bm_ds', {name: bossName(a.bid), tier: a.tier})) : TSEC('prog', 'a_' + a.id + '_ds'); }
 function catdexTxt(o){ return TSEC('prog', 'cx_' + o.id); }
+// boss: nome, soprannome, storia (per id) e divisioni (per tier) tradotti; i dati canonici restano italiani
+function bossName(id){ const v = TSEC('boss', 'bn_' + id); return v === 'bn_' + id ? ((BOSS_BY_ID[id] || {}).name || id) : v; }
+function bossNick(id){ const v = TSEC('boss', 'bk_' + id); return v === 'bk_' + id ? ((BOSS_BY_ID[id] || {}).nick || '') : v; }
+function bossLore(id){ const v = TSEC('boss', 'bl_' + id); return v === 'bl_' + id ? ((BOSS_BY_ID[id] || {}).lore || '') : v; }
+function divName(tier){ const v = TSEC('boss', 'div_' + tier); return v === 'div_' + tier ? (DIV_NAMES[tier] || '') : v; }
+function divIntro(tier){ const v = TSEC('boss', 'di_' + tier); return v === 'di_' + tier ? (DIV_INTRO[tier] || '') : v; }
+function bossAnn(b){ return divIntro(b.tier) + '... ' + bossNick(b.id) + '... ' + bossName(b.id).toUpperCase() + '!'; }
 /* ---------- assegnazione dal seriale (deterministica) + preferenza utente (nid/did). I testi vivono in LANG_DB ---------- */
 function nickIdxOf(e){
   if (typeof e.nid === 'number' && e.nid >= 0 && e.nid < NICK_IDS.length) return e.nid;
@@ -1316,7 +1323,7 @@ function renderCollection(){
     const wrap = document.createElement('div');
     wrap.className = 'thumb' + ((c.rarity === 'Epica' || c.rarity === 'Leggendaria') ? ' holoWrap' : '');
     const im = document.createElement('img');
-    im.src = c.img; im.alt = c.name; im.title = c.name + ' (' + c.rarity + ')';
+    im.src = c.img; im.alt = c.name; im.title = c.name + ' (' + trRarity(c.rarity) + ')';
     im.onclick = () => openCardModal(i);
     const del = document.createElement('button');
     del.className = 'del'; del.textContent = '🗑'; del.title = 'Elimina ' + c.name;
@@ -1511,11 +1518,11 @@ async function openMondoNews(){
       const d = new Date(m.created_at);
       const when = d.toLocaleDateString('it-IT', {day: 'numeric', month: 'short'}) + ' ' +
                    d.toLocaleTimeString('it-IT', {hour: '2-digit', minute: '2-digit'});
-      return (mine[m.winner_serial] ? '🏆' : '💥') + ' <strong>' + m.winner_name + '</strong> di ' + (m.winner_owner || '?') +
-        ' ha battuto <strong>' + m.loser_name + '</strong> di ' + (m.loser_owner || '?') + ' · ' + when;
+      return (mine[m.winner_serial] ? '🏆' : '💥') + ' ' +
+        TSEC('world', 'w_beat', {w: '<strong>' + m.winner_name + '</strong>', wo: (m.winner_owner || '?'), l: '<strong>' + m.loser_name + '</strong>', lo: (m.loser_owner || '?')}) + ' · ' + when;
     });
     el.innerHTML = html + (html ? '<br>' : '') +
-      '<details style="margin-top:6px;"><summary style="cursor:pointer; font-weight:600;">📜 Ultimi 5 incontri delle tue carte <span class="count">(tocca per aprire)</span></summary>' +
+      '<details style="margin-top:6px;"><summary style="cursor:pointer; font-weight:600;">' + TSEC('world', 'w_recent') + ' <span class="count">' + TSEC('world', 'w_open') + '</span></summary>' +
       '<div style="margin-top:6px; line-height:1.9;">' + lines.join('<br>') + '</div></details>';
   } catch(e){}
   loadLeaderboard();   // classifica sempre fresca quando apri la scheda Mondo
@@ -1570,7 +1577,7 @@ async function loadMyWorldCards(){
     serverOwner = rows.length ? (rows[0].owner || '') : '';
     if (serverOwner && !playerNameEl.value.trim()) playerNameEl.value = serverOwner;
     updateNameSaveBtn();
-    if (!rows.length){ el.textContent = 'Nessuna tua carta è ancora pubblicata.'; return; }
+    if (!rows.length){ el.textContent = TSEC('world', 'w_none_pub'); return; }
     el.innerHTML = '';
     rows.forEach(x => {
       const div = document.createElement('div');
@@ -1584,13 +1591,13 @@ async function loadMyWorldCards(){
       span.style.cssText = 'flex:1; min-width:0; cursor:pointer;';
       span.onclick = () => showMyWorldCard(x);
       const rk = rankOf(x.serial);
-      const rkTxt = x.retired ? ' · 🚪 ritirata' : (rk ? ' · <strong style="color:var(--accent)">' + (rk === 1 ? '👑 #1' : '#' + rk) + '</strong> in classifica' : '');
-      span.innerHTML = '<strong>' + x.name + '</strong> — ' + (x.wins || 0) + ' V / ' + (x.losses || 0) + ' S' + rkTxt;
+      const rkTxt = x.retired ? ' · ' + TSEC('world', 'w_retired') : (rk ? ' · <strong style="color:var(--accent)">' + (rk === 1 ? TSEC('world', 'w_rank_champ') : '#' + rk) + '</strong> ' + TSEC('world', 'w_rank_suffix') : '');
+      span.innerHTML = '<strong>' + x.name + '</strong> — ' + TSEC('world', 'w_record', {w: (x.wins || 0), l: (x.losses || 0)}) + rkTxt;
       div.appendChild(span);
       const b = document.createElement('button');
       b.className = 'btn secondary';
       b.style.cssText = 'width:auto; margin:0; padding:8px 10px; font-size:.75rem;';
-      b.textContent = x.retired ? '↩️ Riattiva' : '🚪 Ritira';
+      b.textContent = x.retired ? TSEC('world', 'w_reactivate') : TSEC('world', 'w_retire');
       b.onclick = () => toggleRetire(x.serial, !x.retired);
       div.appendChild(b);
       el.appendChild(div);
@@ -1677,7 +1684,7 @@ function showMyWorldCard(x){
   body.innerHTML =
     (x.img ? '<img src="' + x.img + '" style="width:100%; border-radius:12px;">' : '') +
     '<h2 style="margin-top:10px;">' + x.name + '</h2>' +
-    '<p class="count">' + (x.wins || 0) + ' V / ' + (x.losses || 0) + ' S' + (x.retired ? ' · 🚪 ritirata' : '') + '</p>' +
+    '<p class="count">' + TSEC('world', 'w_record', {w: (x.wins || 0), l: (x.losses || 0)}) + (x.retired ? ' · ' + TSEC('world', 'w_retired') : '') + '</p>' +
     '<button class="btn secondary" onclick="document.getElementById(\'worldModal\').style.display=\'none\'">✖ Chiudi</button>';
   document.getElementById('worldModal').style.display = 'flex';
 }
@@ -1843,7 +1850,7 @@ function refreshArena(){
   collByName().forEach(({c, i}) => {
     const resting = coolLeft(c) > 0;
     const frozen = myFrozen.has(c.serial);
-    const label = '🐱 ' + c.name + ' (' + c.rarity + ')' + (frozen ? ' 🔒 al mercato' : (resting ? ' 😴 riposa' : ''));
+    const label = '🐱 ' + c.name + ' (' + trRarity(c.rarity) + ')' + (frozen ? ' 🔒 al mercato' : (resting ? ' 😴 riposa' : ''));
     const oA = new Option(label, 'c' + i); oA.disabled = resting || frozen; selA.add(oA);
     const oB = new Option(label, 'c' + i); oB.disabled = resting || frozen; selB.add(oB);
   });
@@ -1855,7 +1862,7 @@ function refreshArena(){
     collByName().forEach(({c, i}) => {
       const resting = coolLeft(c) > 0;
       const frozen = myFrozen.has(c.serial);
-      const o = new Option('🐱 ' + c.name + ' (' + c.rarity + ')' + (frozen ? ' 🔒 al mercato' : (resting ? ' 😴 riposa' : '')), 'c' + i);
+      const o = new Option('🐱 ' + c.name + ' (' + trRarity(c.rarity) + ')' + (frozen ? ' 🔒 al mercato' : (resting ? ' 😴 riposa' : '')), 'c' + i);
       o.disabled = resting || frozen;
       qrSel.add(o);
     });
@@ -1871,7 +1878,7 @@ function refreshArena(){
         published++;
         const resting = coolLeft(c) > 0;
         const frozen = myFrozen.has(c.serial);
-        const o = new Option('🐱 ' + c.name + ' (' + c.rarity + ')' + (frozen ? ' 🔒 al mercato' : (resting ? ' 😴 riposa' : '')), String(i));
+        const o = new Option('🐱 ' + c.name + ' (' + trRarity(c.rarity) + ')' + (frozen ? ' 🔒 al mercato' : (resting ? ' 😴 riposa' : '')), String(i));
         o.disabled = resting || frozen;
         selMine.add(o);
         if (!resting && !frozen) eligible++;
@@ -3606,7 +3613,7 @@ async function migrateMelodies(){
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
 /* ---------- versione e aggiornamento automatico ---------- */
-const APP_VERSION = '16.8';   // unica fonte di verità: aggiorna anche version.txt a ogni release
+const APP_VERSION = '16.9';   // unica fonte di verità: aggiorna anche version.txt a ogni release
 try { document.getElementById('appVer').textContent = 'v' + APP_VERSION; } catch(e){}
 function verNewer(a, b){   // a più recente di b? confronto numerico 11.10 > 11.9
   const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);
@@ -3750,7 +3757,7 @@ function renderPubList(){
       updatePubBtn();
     };
     lab.appendChild(cb);
-    lab.appendChild(document.createTextNode(' ' + c.name + ' (' + c.rarity + ')'));
+    lab.appendChild(document.createTextNode(' ' + c.name + ' (' + trRarity(c.rarity) + ')'));
     el.appendChild(lab);
   });
   updatePubBtn();
@@ -4266,7 +4273,7 @@ function applyTradeFilter(){
   el.innerHTML = rows.map(c =>
     '<div style="display:flex; align-items:center; gap:8px; padding:6px; border:1px solid #363057; border-radius:8px; margin-top:6px;">' +
     (c.img ? '<img src="' + c.img + '" style="width:40px; border-radius:6px;">' : '') +
-    '<span style="flex:1; font-size:.85rem;"><strong>' + c.name + '</strong> di ' + (c.owner || '?') + ' · ' + (c.rarity || '') + '</span>' +
+    '<span style="flex:1; font-size:.85rem;"><strong>' + c.name + '</strong> di ' + (c.owner || '?') + ' · ' + trRarity(c.rarity || '') + '</span>' +
     '<button class="btn secondary" style="width:auto; margin:0; padding:8px;" onclick="proposeTradeFor(\'' + c.serial + '\')">🔄 Proponi</button></div>'
   ).join('');
 }
@@ -4355,7 +4362,7 @@ function proposeTradeUI(theirSerial, theirName, theirOwner, theirImg){
   const list = mine.map(c =>
     '<div class="offerRow" data-serial="' + c.serial + '" onclick="selectTradeOffer(this)" style="display:flex; align-items:center; gap:8px; padding:8px; border:1px solid #363057; border-radius:8px; margin-top:6px; cursor:pointer;">' +
     (c.img ? '<img src="' + c.img + '" style="width:38px; border-radius:6px; flex-shrink:0;">' : '') +
-    '<span style="flex:1; font-size:.85rem;"><strong>' + c.name + '</strong> · ' + (c.rarity || '') + ' · Lv.' + cardLevel(c.serial) + '</span></div>'
+    '<span style="flex:1; font-size:.85rem;"><strong>' + c.name + '</strong> · ' + trRarity(c.rarity || '') + ' · Lv.' + cardLevel(c.serial) + '</span></div>'
   ).join('');
   body.innerHTML =
     '<h2>🔄 Proponi scambio</h2>' +
@@ -4510,7 +4517,7 @@ function openCreateAuction(){
   const list = mine.map(c =>
     '<div class="aucRow" data-serial="' + c.serial + '" onclick="selAucCard(this)" style="display:flex; align-items:center; gap:8px; padding:8px; border:1px solid #363057; border-radius:8px; margin-top:6px; cursor:pointer;">' +
     (c.img ? '<img src="' + c.img + '" style="width:38px; border-radius:6px;">' : '') +
-    '<span style="flex:1; font-size:.85rem;"><strong>' + c.name + '</strong> · ' + (c.rarity || '') + ' · Lv.' + cardLevel(c.serial) + '</span></div>'
+    '<span style="flex:1; font-size:.85rem;"><strong>' + c.name + '</strong> · ' + trRarity(c.rarity || '') + ' · Lv.' + cardLevel(c.serial) + '</span></div>'
   ).join('');
   body.innerHTML = '<h2>🔨 Metti all\'asta</h2>' +
     '<label class="small" style="margin-top:8px;">Tocca la carta da vendere:</label>' +
@@ -4648,16 +4655,16 @@ function renderWorldList(){
     return;
   }
   if (myRank == null){
-    msg.textContent = '⏳ ' + myCard.name + ' non è ancora nel ranking (appena pubblicata? riprova tra poco con 🔄).';
+    msg.textContent = TSEC('world', 'w_not_ranked', {name: myCard.name});
     return;
   }
   // solo gli sfidabili: entro ±5 posizioni dal mio rank, e non congelati in uno scambio
   worldCards = worldAll.filter(c => !mineSet[c.serial] && !c.frozen && Math.abs(rankOf(c.serial) - myRank) <= 5);
   if (!worldCards.length){
-    msg.textContent = '📊 ' + myCard.name + ' è #' + myRank + ', ma nessuno sfidante nel raggio ±5 al momento. Invita qualcuno a pubblicare!';
+    msg.textContent = TSEC('world', 'w_no_challengers', {name: myCard.name, rk: myRank});
     return;
   }
-  msg.textContent = '📊 ' + myCard.name + ' è #' + myRank + ' nel ranking. Ecco chi può sfidare (da 5 posizioni sopra a 5 sotto):';
+  msg.textContent = TSEC('world', 'w_you_rank', {name: myCard.name, rk: myRank});
   worldCards.forEach((c, i) => {
     const rk = rankOf(c.serial);
     const resting = c.rest_until && new Date(c.rest_until).getTime() > Date.now();
@@ -4675,13 +4682,13 @@ function renderWorldList(){
     info.style.cssText = 'flex:1; min-width:0; font-size:.85rem; cursor:pointer;';
     info.onclick = () => showWorldCard(i);
     const streak = (c.win_streak > 1 ? ' · 🔥' + c.win_streak : (c.loss_streak > 1 ? ' · 🧊' + c.loss_streak : ''));
-    info.innerHTML = '<strong>' + c.name + '</strong>' + (c.was_champion && rk !== 1 ? ' 🏆' : '') + ' di ' + (c.owner || 'anonimo') +
-      '<br><span style="color:var(--muted)">' + (c.wins || 0) + ' V / ' + (c.losses || 0) + ' S' + streak +
-      (resting ? ' · 😴 riposa (' + restMin + 'm)' : '') + '</span>';
+    info.innerHTML = '<strong>' + c.name + '</strong>' + (c.was_champion && rk !== 1 ? ' 🏆' : '') + ' ' + TSEC('world', 'w_by') + ' ' + (c.owner || TSEC('world', 'w_anon')) +
+      '<br><span style="color:var(--muted)">' + TSEC('world', 'w_record', {w: (c.wins || 0), l: (c.losses || 0)}) + streak +
+      (resting ? ' · ' + TSEC('world', 'w_rests_short', {min: restMin}) : '') + '</span>';
     const btn = document.createElement('button');
     btn.className = 'btn secondary';
     btn.style.cssText = 'width:auto; margin:0; padding:10px 14px;';
-    btn.textContent = resting ? '😴' : '⚔️ Sfida';
+    btn.textContent = resting ? '😴' : TSEC('world', 'w_btn_fight');
     btn.disabled = !!resting;
     if (!resting) btn.onclick = () => fightWorld(i);
     row.appendChild(rkEl); row.appendChild(im); row.appendChild(info); row.appendChild(btn);
@@ -4700,7 +4707,7 @@ async function showCardBySerial(serial){
 function showCardSheet(c){
   const body = document.getElementById('worldModalBody');
   const rk = rankOf(c.serial);
-  const streakTxt = c.win_streak > 1 ? ' · 🔥 ' + c.win_streak + ' di fila' : (c.loss_streak > 1 ? ' · 🧊 ' + c.loss_streak + ' ko di fila' : '');
+  const streakTxt = c.win_streak > 1 ? ' · ' + TSEC('world', 'w_sw', {n: c.win_streak}) : (c.loss_streak > 1 ? ' · ' + TSEC('world', 'w_sl', {n: c.loss_streak}) : '');
   const lvl = 1 + Math.floor(((c.wins || 0) * 25 + (c.losses || 0) * 10) / 100);
   const statKeys = statIcons();
   let statsHtml = '';
@@ -4714,10 +4721,10 @@ function showCardSheet(c){
   body.innerHTML =
     (c.img ? '<img src="' + c.img + '" style="width:100%; border-radius:12px;">' : '') +
     '<h2 style="margin-top:10px;">' + c.name + (c.nick ? ' <span style="color:var(--muted); font-size:.85rem;">«' + c.nick + '»</span>' : '') + '</h2>' +
-    '<p class="count">' + (rk === 1 ? '👑 CAMPIONE DEL MONDO · ' : (rk ? '#' + rk + ' nel ranking · ' : '')) + (c.elo || 1000) + ' pt Elo' +
-    (c.was_champion && rk !== 1 ? ' · 🏆 ex campione' : '') + streakTxt +
-    (c.best_streak > 1 ? ' · miglior striscia 🔥' + c.best_streak : '') + (c.retired ? ' · 🚪 ritirata' : '') + '</p>' +
-    '<p class="count">di ' + (c.owner || 'anonimo') + ' · ' + (c.rarity || '') + ' · Lv.' + lvl + ' · ' + (c.wins || 0) + ' V / ' + (c.losses || 0) + ' S' +
+    '<p class="count">' + (rk === 1 ? TSEC('world', 'w_wc_champ') + ' · ' : (rk ? TSEC('world', 'w_wc_rank', {rk: rk}) + ' · ' : '')) + (c.elo || 1000) + ' ' + TSEC('world', 'w_elo') +
+    (c.was_champion && rk !== 1 ? ' · ' + TSEC('world', 'w_exchamp') : '') + streakTxt +
+    (c.best_streak > 1 ? ' · ' + TSEC('world', 'w_beststreak', {n: c.best_streak}) : '') + (c.retired ? ' · ' + TSEC('world', 'w_retired') : '') + '</p>' +
+    '<p class="count">' + TSEC('world', 'w_by') + ' ' + (c.owner || TSEC('world', 'w_anon')) + ' · ' + trRarity(c.rarity || '') + ' · Lv.' + lvl + ' · ' + TSEC('world', 'w_record', {w: (c.wins || 0), l: (c.losses || 0)}) +
     (c.hp ? ' · ' + c.hp + ' HP' : '') + '</p>' +
     (statsHtml ? '<div style="margin-top:10px;">' + statsHtml + '</div>' : '') +
     ((typeof c.potere === 'number') ? '<p style="color:#ffd166; font-size:.9rem; margin-top:8px;">🌟 ' + powerName(c.potere) + ' — ' + powerDesc(c.potere) + '</p>' : '') +
@@ -4730,7 +4737,7 @@ function showWorldCard(i){
   if (!c) return;
   const body = document.getElementById('worldModalBody');
   const rk = rankOf(c.serial);
-  const streakTxt = c.win_streak > 1 ? ' · 🔥 ' + c.win_streak + ' di fila' : (c.loss_streak > 1 ? ' · 🧊 ' + c.loss_streak + ' ko di fila' : '');
+  const streakTxt = c.win_streak > 1 ? ' · ' + TSEC('world', 'w_sw', {n: c.win_streak}) : (c.loss_streak > 1 ? ' · ' + TSEC('world', 'w_sl', {n: c.loss_streak}) : '');
   const lvl = 1 + Math.floor(((c.wins || 0) * 25 + (c.losses || 0) * 10) / 100);   // livello stimato dal record mondiale
   const statKeys = statIcons();
   let statsHtml = '';
@@ -4744,12 +4751,12 @@ function showWorldCard(i){
   body.innerHTML =
     (c.img ? '<img src="' + c.img + '" style="width:100%; border-radius:12px;">' : '') +
     '<h2 style="margin-top:10px;">' + c.name + (c.nick ? ' <span style="color:var(--muted); font-size:.85rem;">«' + c.nick + '»</span>' : '') + '</h2>' +
-    '<p class="count">' + (rk === 1 ? '👑 CAMPIONE DEL MONDO · ' : (rk ? '#' + rk + ' nel ranking · ' : '')) + (c.elo || 1000) + ' pt Elo' +
-    (c.was_champion && rk !== 1 ? ' · 🏆 ex campione' : '') + streakTxt +
-    (c.best_streak > 1 ? ' · miglior striscia 🔥' + c.best_streak : '') + '</p>' +
-    '<p class="count">di ' + (c.owner || 'anonimo') + ' · ' + (c.rarity || '') + ' · Lv.' + lvl + ' · ' + (c.wins || 0) + ' V / ' + (c.losses || 0) + ' S' +
+    '<p class="count">' + (rk === 1 ? TSEC('world', 'w_wc_champ') + ' · ' : (rk ? TSEC('world', 'w_wc_rank', {rk: rk}) + ' · ' : '')) + (c.elo || 1000) + ' ' + TSEC('world', 'w_elo') +
+    (c.was_champion && rk !== 1 ? ' · ' + TSEC('world', 'w_exchamp') : '') + streakTxt +
+    (c.best_streak > 1 ? ' · ' + TSEC('world', 'w_beststreak', {n: c.best_streak}) : '') + '</p>' +
+    '<p class="count">' + TSEC('world', 'w_by') + ' ' + (c.owner || TSEC('world', 'w_anon')) + ' · ' + trRarity(c.rarity || '') + ' · Lv.' + lvl + ' · ' + TSEC('world', 'w_record', {w: (c.wins || 0), l: (c.losses || 0)}) +
     (c.hp ? ' · ' + c.hp + ' HP' : '') + '</p>' +
-    ((c.rest_until && new Date(c.rest_until).getTime() > Date.now()) ? '<p style="color:#ffb703;">😴 Sta riposando: torna tra ' + Math.ceil((new Date(c.rest_until).getTime() - Date.now()) / 60000) + ' minuti</p>' : '') +
+    ((c.rest_until && new Date(c.rest_until).getTime() > Date.now()) ? '<p style="color:#ffb703;">' + TSEC('world', 'w_resting', {min: Math.ceil((new Date(c.rest_until).getTime() - Date.now()) / 60000)}) + '</p>' : '') +
     (statsHtml ? '<div style="margin-top:10px;">' + statsHtml + '</div>' : '') +
     ((typeof c.potere === 'number') ? '<p style="color:#ffd166; font-size:.9rem; margin-top:8px;">🌟 ' + powerName(c.potere) + ' — ' + powerDesc(c.potere) + '</p>' : '') +
     '<p style="font-size:.85rem; margin-top:8px; line-height:1.6;">' + mvLine + '</p>' +
@@ -4876,12 +4883,12 @@ async function loadLeaderboard(){
       const streak = x.win_streak > 1 ? ' 🔥' + x.win_streak : (x.loss_streak > 1 ? ' 🧊' + x.loss_streak : '');
       const isChamp = i === 0 && (!champSerial || x.serial === champSerial);
       return '<span style="cursor:pointer;" onclick="showCardBySerial(\'' + x.serial + '\')">' +
-        (isChamp ? '👑 <strong style="color:var(--accent)">CAMPIONE</strong> ' : '#' + (i + 1) + ' ') +
-        '<strong>' + x.name + '</strong>' + (x.was_champion && !isChamp ? ' 🏆<small>ex</small>' : '') +
-        ' di ' + (x.owner || 'anonimo') +
-        ' — ' + (x.elo || 1000) + ' pt · ' + (x.wins || 0) + 'V/' + (x.losses || 0) + 'S' + streak +
-        (x.best_streak > 1 ? ' · max 🔥' + x.best_streak : '') + '</span>';
-    }).join('<br>') || 'Nessuna carta in ranking: pubblicane una!';
+        (isChamp ? '👑 <strong style="color:var(--accent)">' + TSEC('world', 'w_ldr_champ') + '</strong> ' : '#' + (i + 1) + ' ') +
+        '<strong>' + x.name + '</strong>' + (x.was_champion && !isChamp ? ' 🏆<small>' + TSEC('world', 'w_ex') + '</small>' : '') +
+        ' ' + TSEC('world', 'w_by') + ' ' + (x.owner || TSEC('world', 'w_anon')) +
+        ' — ' + (x.elo || 1000) + ' pt · ' + TSEC('world', 'w_record_c', {w: (x.wins || 0), l: (x.losses || 0)}) + streak +
+        (x.best_streak > 1 ? ' · ' + TSEC('world', 'w_maxstreak', {n: x.best_streak}) : '') + '</span>';
+    }).join('<br>') || TSEC('world', 'w_none_rank');
     const more = document.getElementById('leaderMoreBtn');
     if (more) more.style.display = (rows.length >= leaderN && leaderN < 200) ? 'block' : 'none';   // finite le posizioni? niente bottone
   } catch(err){
@@ -5217,7 +5224,7 @@ function renderBosses(){
     sel.add(o);
     if (!rest && !frozen) eligible++;
   });
-  if (!sel.options.length) sel.add(new Option('— pubblica prima una carta nel Mondo —', ''));
+  if (!sel.options.length) sel.add(new Option(TSEC('boss', 'bu_pub_first'), ''));
   if (Array.prototype.some.call(sel.options, o => o.value === keep && !o.disabled)) sel.value = keep;
   const today = todayKey();
   list.innerHTML = '';
@@ -5232,16 +5239,16 @@ function renderBosses(){
       '<div style="display:flex; gap:10px; align-items:center; cursor:pointer;" onclick="showBossSheet(\'' + b.id + '\')">' +
         '<img id="bossImg_' + b.id + '" style="width:56px; height:56px; border-radius:8px; object-fit:cover; display:none; flex-shrink:0;">' +
         '<div id="bossEm_' + b.id + '" style="font-size:2.2rem; flex-shrink:0;">' + b.em + '</div>' +
-        '<div style="flex:1; min-width:0;"><strong>' + b.name + '</strong> <span style="color:var(--muted); font-size:.8rem;">«' + b.nick + '»</span>' +
-        '<br><span class="count">Div.' + b.tier + ' ' + '☠️'.repeat(Math.min(b.tier, 5)) + ' · ' + b.hp + ' HP · 🌟 ' + powerName(b.potere) + (beaten ? ' · ✅ già domato' : '') + '</span></div>' +
+        '<div style="flex:1; min-width:0;"><strong>' + bossName(b.id) + '</strong> <span style="color:var(--muted); font-size:.8rem;">«' + bossNick(b.id) + '»</span>' +
+        '<br><span class="count">Div.' + b.tier + ' ' + '☠️'.repeat(Math.min(b.tier, 5)) + ' · ' + b.hp + ' HP · 🌟 ' + powerName(b.potere) + (beaten ? ' · ' + TSEC('boss', 'bu_already_beaten') : '') + '</span></div>' +
       '</div>' +
-      '<p class="count" style="margin-top:6px; line-height:1.5;">' + b.lore + '</p>' +
+      '<p class="count" style="margin-top:6px; line-height:1.5;">' + bossLore(b.id) + '</p>' +
       (tried ? '<p class="count" style="color:' + (wonToday ? '#51cf66' : '#ffb703') + ';">' +
-        (wonToday ? '🎖️ Domato oggi: premio ritirato.' : '💥 Tentativo di oggi fallito.') + ' Un solo tentativo al giorno per boss: torna domani.</p>' : '');
+        (wonToday ? TSEC('boss', 'bu_beaten_today') : TSEC('boss', 'bu_failed_today')) + ' ' + TSEC('boss', 'bu_one_try') + '</p>' : '');
     const btn = document.createElement('button');
     btn.className = 'btn secondary';
     btn.style.cssText = 'margin-top:8px;';
-    btn.textContent = tried ? (wonToday ? '✅ Battuto oggi' : '⏳ Torna domani') : '⚔️ Sfida ' + b.name;
+    btn.textContent = tried ? (wonToday ? TSEC('boss', 'bu_btn_beaten') : TSEC('boss', 'bu_btn_tomorrow')) : TSEC('boss', 'bu_btn_fight', {name: bossName(b.id)});
     btn.disabled = tried;
     if (!tried) btn.onclick = () => fightBoss(bi);
     row.appendChild(btn);
@@ -5261,16 +5268,16 @@ function renderBestiary(){
   const sum = document.getElementById('bestiarySum');
   if (!body) return;
   const doneN = BOSSES.filter(b => (bossWins[b.id] || {}).n >= 1).length;
-  if (sum) sum.innerHTML = '📖 Bestiario — <strong>' + doneN + '/' + BOSSES.length + '</strong> domati <span class="count">(tocca per aprire)</span>';
+  if (sum) sum.innerHTML = TSEC('boss', 'bu_bestiary_sum', {done: doneN, tot: BOSSES.length, open: TSEC('prog', 'cx_open')});
   let html = '';
   for (let d = 1; d <= 8; d++){
-    html += '<div style="margin-top:10px; font-weight:600; color:var(--accent); font-size:.9rem;">Div.' + d + ' · ' + DIV_NAMES[d] + '</div>';
+    html += '<div style="margin-top:10px; font-weight:600; color:var(--accent); font-size:.9rem;">Div.' + d + ' · ' + divName(d) + '</div>';
     html += '<div style="display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin-top:6px;">';
     BOSSES.filter(b => b.tier === d).forEach(b => {
       const beaten = (bossWins[b.id] || {}).n >= 1;
       html += '<div onclick="showBossSheet(\'' + b.id + '\')" style="cursor:pointer; text-align:center; padding:6px 2px; border:1px solid ' + (beaten ? 'var(--accent)' : '#363057') + '; border-radius:8px;' + (beaten ? '' : ' opacity:.5;') + '">' +
         '<div id="bestEm_' + b.id + '" style="font-size:1.7rem;">' + (beaten ? b.em : '❓') + '</div>' +
-        '<div style="font-size:.62rem; line-height:1.1; color:var(--muted); margin-top:2px;">' + (beaten ? b.name : '???') + '</div></div>';
+        '<div style="font-size:.62rem; line-height:1.1; color:var(--muted); margin-top:2px;">' + (beaten ? bossName(b.id) : '???') + '</div></div>';
     });
     html += '</div>';
   }
@@ -5283,17 +5290,17 @@ function showBossSheet(id){
   const box = document.getElementById('bossModalBody');
   const statsHtml = beaten
     ? statIcons().map((k, j) => '<div style="display:flex; justify-content:space-between; font-size:.85rem; padding:2px 0;"><span>' + k + '</span><strong>' + b.statsv[j] + '</strong></div>').join('')
-    : '<p class="count">Statistiche ignote: affronta ' + (b.name) + ' per svelarle.</p>';
+    : '<p class="count">' + TSEC('boss', 'bu_stats_unknown', {name: bossName(b.id)}) + '</p>';
   box.innerHTML =
     (beaten && b._img ? '<img src="' + b._img + '" style="width:100%; border-radius:12px;">' :
       '<div style="font-size:4rem; text-align:center; padding:20px;">' + (beaten ? b.em : '❓') + '</div>') +
-    '<h2 style="margin-top:8px;">' + (beaten ? b.name : '??? ') + (beaten ? ' <span style="color:var(--muted); font-size:.85rem;">«' + b.nick + '»</span>' : '') + '</h2>' +
-    '<p class="count">Div.' + b.tier + ' · ' + DIV_NAMES[b.tier] + ' · ' + '☠️'.repeat(Math.min(b.tier, 5)) + (beaten ? ' · ✅ domato' : ' · 🔒 mai affrontato') + '</p>' +
-    (beaten ? '<p style="font-size:.9rem; margin-top:6px; line-height:1.6; font-style:italic;">' + b.lore + '</p>' +
+    '<h2 style="margin-top:8px;">' + (beaten ? bossName(b.id) : '??? ') + (beaten ? ' <span style="color:var(--muted); font-size:.85rem;">«' + bossNick(b.id) + '»</span>' : '') + '</h2>' +
+    '<p class="count">Div.' + b.tier + ' · ' + divName(b.tier) + ' · ' + '☠️'.repeat(Math.min(b.tier, 5)) + (beaten ? ' · ' + TSEC('boss', 'bu_beaten_tag') : ' · ' + TSEC('boss', 'bu_never_tag')) + '</p>' +
+    (beaten ? '<p style="font-size:.9rem; margin-top:6px; line-height:1.6; font-style:italic;">' + bossLore(b.id) + '</p>' +
       '<p class="count" style="margin-top:6px;">❤️ ' + b.hp + ' HP · 🌟 ' + powerName(b.potere) + '</p>' +
       '<div style="margin-top:8px;">' + statsHtml + '</div>'
-      : '<p style="font-size:.9rem; margin-top:6px; line-height:1.6;">Un boss della divisione «' + DIV_NAMES[b.tier] + '» ancora avvolto nel mistero. Compare a rotazione: battilo per aggiungerlo al Bestiario.</p>') +
-    '<button class="btn secondary" onclick="document.getElementById(\'bossModal\').style.display=\'none\'">✖ Chiudi</button>';
+      : '<p style="font-size:.9rem; margin-top:6px; line-height:1.6;">' + TSEC('boss', 'bu_mystery_desc', {div: divName(b.tier)}) + '</p>') +
+    '<button class="btn secondary" onclick="document.getElementById(\'bossModal\').style.display=\'none\'">' + TSEC('boss', 'bu_close') + '</button>';
   // recupera il ritratto salvato, se c'è, per mostrarlo grande
   if (beaten && !b._img){
     idbGet('boss_' + b.id).then(img => { if (img){ b._img = img; if (document.getElementById('bossModal').style.display === 'flex') showBossSheet(id); } }).catch(() => {});
@@ -5307,18 +5314,18 @@ async function fightBoss(bi){
   const today = todayKey();
   const bw = bossWins[b.id] || {};
   if (bw.tryDay === today || bw.last === today){
-    alert('⏳ Hai già sfidato ' + b.name + ' oggi: un solo tentativo al giorno per boss, vinto o perso. Torna domani!');
+    alert(TSEC('boss', 'bu_already_today', {name: bossName(b.id)}));
     renderBosses();
     return;
   }
   const v = document.getElementById('bossCat').value;
   const mine = collection[parseInt(v, 10)];
-  if (!mine || !myActive.has(mine.serial)){ alert('Contro i Boss combattono solo le carte pubblicate nel Mondo: pubblicane una dalla scheda 🌍.'); return; }
+  if (!mine || !myActive.has(mine.serial)){ alert(TSEC('boss', 'bu_only_world')); return; }
   const restM = coolLeft(mine);
-  if (restM > 0){ alert('😴 ' + mine.name + ' sta riposando: torna tra ' + Math.ceil(restM / 60000) + ' minuti.'); return; }
+  if (restM > 0){ alert(TSEC('boss', 'bu_resting', {name: mine.name, min: Math.ceil(restM / 60000)})); return; }
   const img = await bossPortrait(b);
-  const bossEntry = {serial: b.serial, name: b.name, nick: b.nick, potere: b.potere,
-    statsv: b.statsv, hp: b.hp, dna: null, strum: null, annuncio: b.ann, img: img};
+  const bossEntry = {serial: b.serial, bid: b.id, name: bossName(b.id), nick: bossNick(b.id), potere: b.potere,
+    statsv: b.statsv, hp: b.hp, dna: null, strum: null, annuncio: bossAnn(b), img: img};
   // il tentativo si brucia all'ingresso in arena: vinto, perso o abbandonato
   bossWins[b.id] = bossWins[b.id] || {n: 0};
   bossWins[b.id].tryDay = today;
@@ -5370,7 +5377,7 @@ const ACHS = [
 /* medaglie dei Boss: una per ognuno dei 64, generate dai dati + premio per divisione ---------- */
 const BOSS_MEDAL_PT = {1:5, 2:5, 3:8, 4:8, 5:10, 6:12, 7:15, 8:25};
 const BOSS_MEDALS = BOSSES.map(b => ({
-  id: 'bm_' + b.id, ic: b.em, nm: b.name, tier: b.tier,
+  id: 'bm_' + b.id, ic: b.em, nm: b.name, bid: b.id, tier: b.tier,
   pt: BOSS_MEDAL_PT[b.tier] || 10, boss: true,
   ck: () => (bossWins[b.id] || {}).n >= 1
 })).concat([
@@ -5565,12 +5572,11 @@ function renderGym(){
   const e = gymCat();
   const info = document.getElementById('gymInfo');
   if (info){
-    if (!e){ info.textContent = 'Nessun allievo: crea prima una carta.'; }
+    if (!e){ info.textContent = TSEC('gym', 'gi_none'); }
     else {
       const cl = coolLeft(e);
-      info.innerHTML = 'Lv.' + cardLevel(e.serial) + ' · margine di allenamento: <strong>' + (e.trainUsed || 0) + '/' + trainCap(e) + '</strong> usato' +
-        ' <span style="color:var(--muted)">(+3 per ogni livello: si sale vincendo nel mondo)</span>' +
-        (cl > 0 ? '<br>😴 Sta riposando: torna tra ' + Math.ceil(cl / 60000) + ' minuti' : '<br>✅ Pronto ad allenarsi!');
+      info.innerHTML = TSEC('gym', 'gi_info', {lv: cardLevel(e.serial), used: (e.trainUsed || 0), cap: trainCap(e)}) +
+        (cl > 0 ? TSEC('gym', 'gi_resting', {min: Math.ceil(cl / 60000)}) : TSEC('gym', 'gi_ready'));
     }
   }
   const blocked = e && (trainAvail(e) <= 0 || coolLeft(e) > 0);
@@ -5591,7 +5597,7 @@ function renderGym(){
     if (e && trainAvail(e) <= 0){
       const warn = document.createElement('p');
       warn.style.cssText = 'grid-column:1/-1; color:#ffb703; font-size:.85rem; margin:4px 0 0; line-height:1.5;';
-      warn.textContent = '😼 Coach Baffo: «Niente cibo per ' + e.name + ': margine di allenamento esaurito. Vinci incontri per salire di livello (+3 di margine a livello), poi si torna a tavola.»';
+      warn.textContent = TSEC('gym', 'gi_nofood', {name: e.name});
       grid.appendChild(warn);
     }
   }
