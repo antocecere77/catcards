@@ -15,11 +15,11 @@
 <script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs@master/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="lang-it.js?v=17.0"></script>
-<script src="lang-en.js?v=17.0"></script>
-<script src="lang-fr.js?v=17.0"></script>
-<script src="lang-es.js?v=17.0"></script>
-<script src="lang-de.js?v=17.0"></script>
+<script src="lang-it.js?v=17.1"></script>
+<script src="lang-en.js?v=17.1"></script>
+<script src="lang-fr.js?v=17.1"></script>
+<script src="lang-es.js?v=17.1"></script>
+<script src="lang-de.js?v=17.1"></script>
 <style>
   :root{
     --bg:#14121f; --panel:#1e1b2e; --panel2:#282440;
@@ -312,22 +312,22 @@
   <div id="tab-mercato" style="width:100%; max-width:440px; display:none;">
   <div class="panel" style="margin-top:20px;">
     <h2 data-i18n="market_title">🔁 Mercato</h2>
-    <p class="count" style="line-height:1.6;">Scambia o vendi le tue carte con gli altri giocatori. La carta cambia proprietario con tutto (Elo, vittorie, livello); mentre è in trattativa resta congelata e non combatte. Serve essere connessi e avere carte pubblicate nel Mondo.</p>
+    <p class="count" style="line-height:1.6;" data-i18n="mkt_desc">Scambia o vendi le tue carte con gli altri giocatori. La carta cambia proprietario con tutto (Elo, vittorie, livello); mentre è in trattativa resta congelata e non combatte. Serve essere connessi e avere carte pubblicate nel Mondo.</p>
     <div id="mercatoAuth" class="count" style="margin-top:8px;"></div>
     <div style="display:flex; gap:12px; align-items:center; margin-top:12px;">
       <img id="trdImg" alt="Mercante" style="width:64px; height:64px; border-radius:50%; object-fit:cover; border:2px solid var(--accent2); display:none; flex-shrink:0;">
       <div id="trdEmoji" style="font-size:2.6rem; flex-shrink:0;">😼</div>
       <div style="flex:1; min-width:0;">
         <strong>Mister Baratto, il Mercante</strong>
-        <p class="count" id="trdSay" style="margin-top:2px; line-height:1.5;">Benvenuto al bazar, amico! Sono Mister Baratto: chiedi pure, so io come si fanno i buoni affari.</p>
+        <p class="count" id="trdSay" style="margin-top:2px; line-height:1.5;" data-i18n="trd_greet">Benvenuto al bazar, amico! Sono Mister Baratto: chiedi pure, so io come si fanno i buoni affari.</p>
       </div>
     </div>
     <button class="btn secondary" onclick="traderAdvice()" style="margin-top:8px;" data-i18n="trader_ask">💰 Chiedi consiglio al Mercante</button>
     <h2 style="font-size:1.05rem; margin-top:16px;" data-i18n="trade_title">🔄 Scambio (baratto)</h2>
     <div id="tradeIn" style="margin-top:8px;"></div>
     <div id="tradeOut" style="margin-top:8px;"></div>
-    <button class="btn secondary" onclick="renderTradeBrowse()" style="margin-top:8px;">🔍 Sfoglia carte da scambiare</button>
-    <input type="text" id="tradeOwnerFilter" list="tradeOwners" placeholder="Filtra per proprietario (es. Lu…)" oninput="applyTradeFilter()" style="margin-top:8px; display:none;">
+    <button class="btn secondary" onclick="renderTradeBrowse()" style="margin-top:8px;" data-i18n="mkt_browse_btn">🔍 Sfoglia carte da scambiare</button>
+    <input type="text" id="tradeOwnerFilter" list="tradeOwners" placeholder="Filtra per proprietario (es. Lu…)" data-i18n-ph="mkt_filter_ph" oninput="applyTradeFilter()" style="margin-top:8px; display:none;">
     <datalist id="tradeOwners"></datalist>
     <div id="tradeBrowse" style="margin-top:8px;"></div>
   </div>
@@ -338,7 +338,7 @@
       <div id="incEmoji" style="font-size:2.6rem; flex-shrink:0;">😼</div>
       <div style="flex:1; min-width:0;">
         <strong>Mister Incanto, il Banditore</strong>
-        <p class="count" id="incSay" style="margin-top:2px; line-height:1.5;">Signori, si apre l'incanto! Chi offre? Chi rilancia?</p>
+        <p class="count" id="incSay" style="margin-top:2px; line-height:1.5;" data-i18n="inc_greet">Signori, si apre l'incanto! Chi offre? Chi rilancia?</p>
       </div>
     </div>
     <button class="btn secondary" onclick="openCreateAuction()" style="margin-top:10px;" data-i18n="auc_create">🔨 Metti una carta all'asta</button>
@@ -729,6 +729,7 @@ function setLang(l){
   try { renderGym(); } catch(e){}
   try { renderMissions(); renderMedals(); renderCatdex(); } catch(e){}
   try { if (window._curTab === 'boss') renderBosses(); } catch(e){}
+  try { if (window._curTab === 'mercato'){ loadTrades(); loadAuctions(); } } catch(e){}
   try { renderWorldList(); loadMyWorldCards(); loadLeaderboard(); } catch(e){}
   try { if (modalIndex >= 0) openCardModal(modalIndex); } catch(e){}
 }
@@ -752,10 +753,17 @@ function T(k){
   const d = LDB().ui || {}, e = LDBen().ui || {};
   return (d[k] != null ? d[k] : (e[k] != null ? e[k] : k));
 }
+// cerca una chiave in più sezioni (prima trovata vince); usato dagli attributi data-i18n*
+function TL(key, sections){
+  for (const s of sections){ const d = LDB()[s] || {}, e = LDBen()[s] || {}; if (d[key] != null) return d[key]; if (e[key] != null) return e[key]; }
+  return key;
+}
 function applyI18n(){
-  document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = T(el.getAttribute('data-i18n')); });
-  // blocchi con HTML interno (es. la pagina Regole): sezione «reg», impostati via innerHTML
-  document.querySelectorAll('[data-i18n-html]').forEach(el => { el.innerHTML = TSEC('reg', el.getAttribute('data-i18n-html')); });
+  document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = TL(el.getAttribute('data-i18n'), ['ui', 'mkt', 'world']); });
+  // blocchi con HTML interno (Regole, descrizioni Mercato ecc.): innerHTML
+  document.querySelectorAll('[data-i18n-html]').forEach(el => { el.innerHTML = TL(el.getAttribute('data-i18n-html'), ['reg', 'mkt', 'ui']); });
+  // placeholder degli input
+  document.querySelectorAll('[data-i18n-ph]').forEach(el => { el.placeholder = TL(el.getAttribute('data-i18n-ph'), ['mkt', 'ui', 'world']); });
 }
 // telecronaca: frase tradotta dalla sezione battle + riempimento segnaposto {name} ecc.
 function TB(key, vars){
@@ -1615,6 +1623,7 @@ async function managerAdvice(){
   if (!session || !session.access_token){ say(TC('felini_noauth')); return; }
   if (!worldAll.length){ say(TC('felini_checking')); await loadWorldCards(); }
   const selV = document.getElementById('selMine').value;
+  if (selV === ''){ say(TSEC('reg', 'mgr_greet')); return; }   // nessun campione selezionato: solo il saluto
   const mine = collection[parseInt(selV, 10)];
   if (!mine){ say(TC('felini_nocard')); return; }
   // se il gatto scelto è a riposo, il Manager tace finché non si sblocca
@@ -1878,6 +1887,7 @@ function refreshArena(){
     const keepM = selMine.value;
     selMine.innerHTML = '';
     let eligible = 0, published = 0;
+    selMine.add(new Option(TSEC('world', 'w_pick_champ_opt'), ''));   // di default nessun campione selezionato
     collByName().forEach(({c, i}) => {
       if (myActive.has(c.serial)){
         published++;
@@ -1890,10 +1900,10 @@ function refreshArena(){
       }
     });
     if (!eligible){
-      const o = new Option(published ? '😴 tutti i gatti sono a riposo — torna più tardi' : '— pubblica prima una carta —', '');
-      o.disabled = true; selMine.add(o);   // combo non selezionabile: niente incontri finché non si sblocca
+      const o = new Option(published ? TSEC('world', 'w_all_resting') : TSEC('world', 'w_pub_first_opt'), '');
+      o.disabled = true; selMine.add(o);
     }
-    if (Array.prototype.some.call(selMine.options, o => o.value === keepM)) selMine.value = keepM;
+    selMine.value = (keepM && Array.prototype.some.call(selMine.options, o => o.value === keepM)) ? keepM : '';
     document.getElementById('onlinePanel').style.display = 'block';
   }
   if (Array.prototype.some.call(selA.options, o => o.value === keep[0])) selA.value = keep[0];
@@ -3618,7 +3628,7 @@ async function migrateMelodies(){
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
 /* ---------- versione e aggiornamento automatico ---------- */
-const APP_VERSION = '17.0';   // unica fonte di verità: aggiorna anche version.txt a ogni release
+const APP_VERSION = '17.1';   // unica fonte di verità: aggiorna anche version.txt a ogni release
 try { document.getElementById('appVer').textContent = 'v' + APP_VERSION; } catch(e){}
 function verNewer(a, b){   // a più recente di b? confronto numerico 11.10 > 11.9
   const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);
@@ -4223,38 +4233,38 @@ async function loadTrades(){
   if (!tin || !tout) return;
   try {
     const r = await fetch(SUPA_URL + '/rest/v1/trades?status=eq.pending&or=(from_id.eq.' + session.user_id + ',to_id.eq.' + session.user_id + ')&order=id.desc', {headers: supaHeaders()});
-    if (r.status === 404){ tin.innerHTML = '<span class="count">⚠️ Il Mercato non è ancora attivo sul server (manca il passaggio di configurazione). Le altre funzioni dell\'app funzionano normalmente.</span>'; tout.innerHTML = ''; return; }
+    if (r.status === 404){ tin.innerHTML = '<span class="count">' + TSEC('mkt', 'mkt_notactive') + '</span>'; tout.innerHTML = ''; return; }
     if (!r.ok) return;
     const rows = await r.json();
     const incoming = rows.filter(t => t.to_id === session.user_id);
     const outgoing = rows.filter(t => t.from_id === session.user_id);
     const dot = document.getElementById('tradeTabDot');
     if (dot) dot.style.display = incoming.length ? 'inline-block' : 'none';
-    tin.innerHTML = incoming.length ? '<strong>📥 Proposte ricevute</strong>' + incoming.map(t =>
+    tin.innerHTML = incoming.length ? '<strong>' + TSEC('mkt', 'mkt_recv_h') + '</strong>' + incoming.map(t =>
       '<div style="border:1px solid var(--accent); border-radius:8px; padding:8px; margin-top:6px; font-size:.85rem;">' +
-      (t.from_owner || '?') + ' ti offre <strong>' + t.from_name + '</strong> in cambio della tua <strong>' + t.to_name + '</strong>' +
+      TSEC('mkt', 'mkt_offers', {owner: (t.from_owner || '?'), from: t.from_name, to: t.to_name}) +
       '<div style="display:flex; gap:8px; margin-top:6px; flex-wrap:wrap;">' +
-      '<button class="btn secondary" style="margin:0; padding:8px;" onclick="showIncomingCompare(\'' + t.from_serial + '\',\'' + t.to_serial + '\',' + t.id + ')">🔍 Confronta</button>' +
-      '<button class="btn secondary" style="margin:0; padding:8px;" onclick="respondTrade(' + t.id + ',true)">✅ Accetta</button>' +
-      '<button class="btn secondary" style="margin:0; padding:8px;" onclick="respondTrade(' + t.id + ',false)">✖ Rifiuta</button></div></div>'
-    ).join('') : '<span class="count">Nessuna proposta ricevuta.</span>';
-    tout.innerHTML = outgoing.length ? '<strong>📤 Proposte inviate</strong>' + outgoing.map(t =>
+      '<button class="btn secondary" style="margin:0; padding:8px;" onclick="showIncomingCompare(\'' + t.from_serial + '\',\'' + t.to_serial + '\',' + t.id + ')">' + TSEC('mkt', 'mkt_compare_btn') + '</button>' +
+      '<button class="btn secondary" style="margin:0; padding:8px;" onclick="respondTrade(' + t.id + ',true)">' + TSEC('mkt', 'mkt_accept') + '</button>' +
+      '<button class="btn secondary" style="margin:0; padding:8px;" onclick="respondTrade(' + t.id + ',false)">' + TSEC('mkt', 'mkt_reject') + '</button></div></div>'
+    ).join('') : '<span class="count">' + TSEC('mkt', 'mkt_none_recv') + '</span>';
+    tout.innerHTML = outgoing.length ? '<strong>' + TSEC('mkt', 'mkt_sent_h') + '</strong>' + outgoing.map(t =>
       '<div style="border:1px solid #363057; border-radius:8px; padding:8px; margin-top:6px; font-size:.85rem;">' +
-      'Hai offerto <strong>' + t.from_name + '</strong> per <strong>' + t.to_name + '</strong> di ' + (t.to_owner || '?') +
-      ' <button class="btn secondary" style="margin:6px 0 0; padding:8px;" onclick="cancelTrade(' + t.id + ')">↩️ Annulla</button></div>'
+      TSEC('mkt', 'mkt_sent', {from: t.from_name, to: t.to_name, owner: (t.to_owner || '?')}) +
+      ' <button class="btn secondary" style="margin:6px 0 0; padding:8px;" onclick="cancelTrade(' + t.id + ')">' + TSEC('mkt', 'mkt_cancel') + '</button></div>'
     ).join('') : '';
   } catch(e){}
 }
 async function renderTradeBrowse(){
   const el = document.getElementById('tradeBrowse');
   if (!el) return;
-  if (!session || !session.access_token){ el.innerHTML = '<span class="count">Accedi per scambiare.</span>'; return; }
-  el.innerHTML = '<span class="count">Carico…</span>';
+  if (!session || !session.access_token){ el.innerHTML = '<span class="count">' + TSEC('mkt', 'mkt_login') + '</span>'; return; }
+  el.innerHTML = '<span class="count">' + TSEC('mkt', 'mkt_loading') + '</span>';
   try {
     const r = await fetch(SUPA_URL + '/rest/v1/cards?select=serial,name,owner,owner_id,rarity,img,elo,retired&retired=not.is.true&order=elo.desc.nullslast&limit=100', {headers: supaHeaders()});
-    if (!r.ok){ el.innerHTML = '<span class="count">❌ Errore ' + r.status + ' nel caricare le carte.</span>'; return; }
+    if (!r.ok){ el.innerHTML = '<span class="count">' + TSEC('mkt', 'mkt_err_load', {code: r.status}) + '</span>'; return; }
     const rows = (await r.json()).filter(c => c.owner_id !== session.user_id);
-    if (!rows.length){ el.innerHTML = '<span class="count">Nessuna carta disponibile per lo scambio.</span>'; document.getElementById('tradeOwnerFilter').style.display = 'none'; return; }
+    if (!rows.length){ el.innerHTML = '<span class="count">' + TSEC('mkt', 'mkt_none_avail') + '</span>'; document.getElementById('tradeOwnerFilter').style.display = 'none'; return; }
     _tradeTargets = {};
     rows.forEach(c => { _tradeTargets[c.serial] = {name: c.name, owner: c.owner, img: c.img, rarity: c.rarity}; });
     _tradeBrowseRows = rows;
@@ -4265,7 +4275,7 @@ async function renderTradeBrowse(){
     const filt = document.getElementById('tradeOwnerFilter');
     if (filt) filt.style.display = 'block';
     applyTradeFilter();
-  } catch(e){ el.innerHTML = '<span class="count">Errore di rete.</span>'; }
+  } catch(e){ el.innerHTML = '<span class="count">' + TSEC('mkt', 'mkt_neterr') + '</span>'; }
 }
 let _tradeTargets = {};
 let _tradeBrowseRows = [];
@@ -4274,12 +4284,12 @@ function applyTradeFilter(){
   if (!el) return;
   const q = (document.getElementById('tradeOwnerFilter').value || '').trim().toLowerCase();
   const rows = q ? _tradeBrowseRows.filter(c => (c.owner || '').toLowerCase().indexOf(q) === 0) : _tradeBrowseRows;
-  if (!rows.length){ el.innerHTML = '<span class="count">Nessuna carta di «' + q + '».</span>'; return; }
+  if (!rows.length){ el.innerHTML = '<span class="count">' + TSEC('mkt', 'mkt_none_of', {q: q}) + '</span>'; return; }
   el.innerHTML = rows.map(c =>
     '<div style="display:flex; align-items:center; gap:8px; padding:6px; border:1px solid #363057; border-radius:8px; margin-top:6px;">' +
     (c.img ? '<img src="' + c.img + '" style="width:40px; border-radius:6px;">' : '') +
-    '<span style="flex:1; font-size:.85rem;"><strong>' + c.name + '</strong> di ' + (c.owner || '?') + ' · ' + trRarity(c.rarity || '') + '</span>' +
-    '<button class="btn secondary" style="width:auto; margin:0; padding:8px;" onclick="proposeTradeFor(\'' + c.serial + '\')">🔄 Proponi</button></div>'
+    '<span style="flex:1; font-size:.85rem;"><strong>' + c.name + '</strong> ' + TSEC('world', 'w_by') + ' ' + (c.owner || '?') + ' · ' + trRarity(c.rarity || '') + '</span>' +
+    '<button class="btn secondary" style="width:auto; margin:0; padding:8px;" onclick="proposeTradeFor(\'' + c.serial + '\')">' + TSEC('mkt', 'mkt_propose') + '</button></div>'
   ).join('');
 }
 let _tradeTargetData = {};
@@ -4291,7 +4301,7 @@ async function proposeTradeFor(theirSerial){
   } catch(e){}
   _tradeTargetData = full;
   const t = _tradeTargets[theirSerial] || {};
-  proposeTradeUI(theirSerial, full.name || t.name || 'questa carta', full.owner || t.owner || '', full.img || t.img || null);
+  proposeTradeUI(theirSerial, full.name || t.name || TSEC('mkt', 'mkt_this_card'), full.owner || t.owner || '', full.img || t.img || null);
 }
 /* ---------- confronto carte + verdetto di Bazar ---------- */
 function tradeStrength(statsv, hp, lvl){
@@ -4316,7 +4326,7 @@ function normServer(row){
     lvl: 1 + Math.floor(((row.wins || 0) * 25 + (row.losses || 0) * 10) / 100)};
 }
 function compareRowsHtml(give, get){
-  const labels = ['💪 Forza', '🧠 Intel', '🎯 Destr', '⚡ Veloc', '✨ Fasc', '😼 Indif'];
+  const labels = STATS.map(s => s.icon + ' ' + trStat(s.key));
   const stat = labels.map((ic, i) => {
     const a = give.statsv[i] || 0, b = get.statsv[i] || 0;
     const col = b > a ? '#51cf66' : (b < a ? '#e63946' : 'var(--muted)');
@@ -4326,9 +4336,9 @@ function compareRowsHtml(give, get){
   const line = (ic, a, b) => '<div style="display:flex; justify-content:space-between; font-size:.8rem; padding:1px 0;"><span>' + ic + '</span><span>' + a + ' → <strong>' + b + '</strong></span></div>';
   const gs = tradeStrength(give.statsv, give.hp, give.lvl), ts = tradeStrength(get.statsv, get.hp, get.lvl);
   return '<div style="border-top:1px solid #2e2950; margin-top:8px; padding-top:8px;">' +
-    '<div style="font-size:.82rem; color:var(--muted); margin-bottom:4px;">Dai <strong>' + give.name + '</strong> → Ricevi <strong>' + get.name + '</strong></div>' +
-    stat + line('❤️ HP', give.hp, get.hp) + line('📊 Elo', give.elo, get.elo) + line('📈 Livello', give.lvl, get.lvl) +
-    '<p class="count" style="margin-top:6px;">😼 <strong>Mister Baratto</strong>: ' + bazarVerdict(gs, ts) + '</p></div>';
+    '<div style="font-size:.82rem; color:var(--muted); margin-bottom:4px;">' + TSEC('mkt', 'mkt_give_get', {give: give.name, get: get.name}) + '</div>' +
+    stat + line('❤️ HP', give.hp, get.hp) + line('📊 Elo', give.elo, get.elo) + line(TSEC('mkt', 'mkt_level'), give.lvl, get.lvl) +
+    '<p class="count" style="margin-top:6px;">' + TSEC('mkt', 'mkt_baratto_label') + ' ' + bazarVerdict(gs, ts) + '</p></div>';
 }
 function renderProposeCompare(mySerial){
   const box = document.getElementById('tradeCompare');
@@ -4340,26 +4350,26 @@ function renderProposeCompare(mySerial){
 async function showIncomingCompare(fromSerial, toSerial, tradeId){
   // il destinatario DÀ la sua (toSerial) e RICEVE quella offerta (fromSerial)
   const body = document.getElementById('tradeModalBody');
-  body.innerHTML = '<p class="count">Carico il confronto…</p>';
+  body.innerHTML = '<p class="count">' + TSEC('mkt', 'mkt_loading_cmp') + '</p>';
   document.getElementById('tradeModal').style.display = 'flex';
   try {
     const r = await fetch(SUPA_URL + '/rest/v1/cards?select=serial,name,statsv,hp,elo,wins,losses&serial=in.(' + fromSerial + ',' + toSerial + ')', {headers: supaHeaders()});
     const arr = r.ok ? await r.json() : [];
     const from = arr.find(x => x.serial === fromSerial) || {name: '?', statsv: []};
     const to = arr.find(x => x.serial === toSerial) || {name: '?', statsv: []};
-    body.innerHTML = '<h2>🔄 Confronto scambio</h2>' +
+    body.innerHTML = '<h2>' + TSEC('mkt', 'mkt_cmp_title') + '</h2>' +
       compareRowsHtml(normServer(to), normServer(from)) +
-      '<button class="btn" style="margin-top:12px;" onclick="document.getElementById(\'tradeModal\').style.display=\'none\'; respondTrade(' + tradeId + ',true)">✅ Accetta lo scambio</button>' +
-      '<button class="btn secondary" onclick="document.getElementById(\'tradeModal\').style.display=\'none\'; respondTrade(' + tradeId + ',false)">✖ Rifiuta</button>' +
-      '<button class="btn secondary" onclick="document.getElementById(\'tradeModal\').style.display=\'none\'">↩️ Chiudi</button>';
-  } catch(e){ body.innerHTML = '<p class="count">Errore nel caricare il confronto.</p><button class="btn secondary" onclick="document.getElementById(\'tradeModal\').style.display=\'none\'">Chiudi</button>'; }
+      '<button class="btn" style="margin-top:12px;" onclick="document.getElementById(\'tradeModal\').style.display=\'none\'; respondTrade(' + tradeId + ',true)">' + TSEC('mkt', 'mkt_accept_trade') + '</button>' +
+      '<button class="btn secondary" onclick="document.getElementById(\'tradeModal\').style.display=\'none\'; respondTrade(' + tradeId + ',false)">' + TSEC('mkt', 'mkt_reject') + '</button>' +
+      '<button class="btn secondary" onclick="document.getElementById(\'tradeModal\').style.display=\'none\'">' + TSEC('mkt', 'mkt_close') + '</button>';
+  } catch(e){ body.innerHTML = '<p class="count">' + TSEC('mkt', 'mkt_err_cmp') + '</p><button class="btn secondary" onclick="document.getElementById(\'tradeModal\').style.display=\'none\'">' + TSEC('mkt', 'mkt_close2') + '</button>'; }
 }
 function proposeTradeUI(theirSerial, theirName, theirOwner, theirImg){
   const mine = collection.filter(c => myActive.has(c.serial)).sort((a, b) => (a.name || '').localeCompare(b.name || '', undefined, {sensitivity: 'base'}));   // anche le carte a riposo sono scambiabili
   const body = document.getElementById('tradeModalBody');
   if (!mine.length){
-    body.innerHTML = '<h2>🔄 Scambio</h2><p class="count" style="margin-top:8px;">Per scambiare ti serve almeno una TUA carta pubblicata e attiva nel Mondo (e non a riposo).</p>' +
-      '<button class="btn secondary" onclick="document.getElementById(\'tradeModal\').style.display=\'none\'">✖ Chiudi</button>';
+    body.innerHTML = '<h2>' + TSEC('mkt', 'mkt_trade_h') + '</h2><p class="count" style="margin-top:8px;">' + TSEC('mkt', 'mkt_need_card') + '</p>' +
+      '<button class="btn secondary" onclick="document.getElementById(\'tradeModal\').style.display=\'none\'">' + TSEC('mkt', 'mkt_closeX') + '</button>';
     document.getElementById('tradeModal').style.display = 'flex';
     return;
   }
@@ -4370,14 +4380,14 @@ function proposeTradeUI(theirSerial, theirName, theirOwner, theirImg){
     '<span style="flex:1; font-size:.85rem;"><strong>' + c.name + '</strong> · ' + trRarity(c.rarity || '') + ' · Lv.' + cardLevel(c.serial) + '</span></div>'
   ).join('');
   body.innerHTML =
-    '<h2>🔄 Proponi scambio</h2>' +
+    '<h2>' + TSEC('mkt', 'mkt_propose_h') + '</h2>' +
     (theirImg ? '<img src="' + theirImg + '" style="width:90px; border-radius:10px; display:block; margin:8px auto;">' : '') +
-    '<p class="count">Vuoi <strong>' + theirName + '</strong>' + (theirOwner ? ' di ' + theirOwner : '') + '.</p>' +
-    '<label class="small" style="margin-top:10px;">Tocca la TUA carta da offrire:</label>' +
+    '<p class="count">' + TSEC('mkt', 'mkt_want', {name: theirName, owner: (theirOwner ? ' ' + TSEC('world', 'w_by') + ' ' + theirOwner : '')}) + '</p>' +
+    '<label class="small" style="margin-top:10px;">' + TSEC('mkt', 'mkt_tap_offer') + '</label>' +
     '<div style="max-height:30vh; overflow-y:auto; margin-top:4px;">' + list + '</div>' +
     '<div id="tradeCompare"></div>' +
-    '<button class="btn" id="tradeConfirmBtn" style="margin-top:12px; opacity:.5;" onclick="confirmProposeTrade(\'' + theirSerial + '\',\'' + theirName.replace(/'/g, '') + '\')">🔄 Scambia</button>' +
-    '<button class="btn secondary" onclick="document.getElementById(\'tradeModal\').style.display=\'none\'">✖ Annulla</button>';
+    '<button class="btn" id="tradeConfirmBtn" style="margin-top:12px; opacity:.5;" onclick="confirmProposeTrade(\'' + theirSerial + '\',\'' + theirName.replace(/'/g, '') + '\')">' + TSEC('mkt', 'mkt_do_trade') + '</button>' +
+    '<button class="btn secondary" onclick="document.getElementById(\'tradeModal\').style.display=\'none\'">' + TSEC('mkt', 'mkt_cancelX') + '</button>';
   document.getElementById('tradeModal').style.display = 'flex';
 }
 let _selectedOfferSerial = null;
@@ -4391,7 +4401,7 @@ function selectTradeOffer(row){
   try { renderProposeCompare(_selectedOfferSerial); } catch(e){}   // mostra il confronto + verdetto di Bazar
 }
 function confirmProposeTrade(theirSerial, theirName){
-  if (!_selectedOfferSerial){ alert('Tocca prima una tua carta da offrire.'); return; }
+  if (!_selectedOfferSerial){ alert(TSEC('mkt', 'mkt_pick_offer')); return; }
   document.getElementById('tradeModal').style.display = 'none';
   proposeTrade(_selectedOfferSerial, theirSerial, theirName);
 }
@@ -4399,27 +4409,27 @@ async function proposeTrade(mySerial, theirSerial, theirName){
   await refreshSessionIfNeeded();
   try {
     const r = await fetch(SUPA_URL + '/rest/v1/rpc/propose_trade', {method: 'POST', headers: supaHeaders(), body: JSON.stringify({my_serial: mySerial, their_serial: theirSerial})});
-    if (r.status === 404){ alert('⚠️ Il Mercato non è ancora attivo sul server: manca il passaggio di configurazione (SQL della tappa 2).'); return; }
-    if (!r.ok){ const t = await r.text(); alert('Scambio non proposto: ' + t.slice(0, 140)); return; }
-    toast('🔄 Proposta inviata! In attesa di risposta.');
+    if (r.status === 404){ alert(TSEC('mkt', 'mkt_notactive2')); return; }
+    if (!r.ok){ const t = await r.text(); alert(TSEC('mkt', 'mkt_trade_fail', {t: t.slice(0, 140)})); return; }
+    toast(TSEC('mkt', 'mkt_sent_ok'));
     loadTrades(); loadMyWorldCards();
-  } catch(e){ alert('Errore di rete: ' + e.message); }
+  } catch(e){ alert(TSEC('mkt', 'mkt_neterr2', {m: e.message})); }
 }
 async function respondTrade(id, accept){
   await refreshSessionIfNeeded();
   try {
     const r = await fetch(SUPA_URL + '/rest/v1/rpc/respond_trade', {method: 'POST', headers: supaHeaders(), body: JSON.stringify({trade_id: id, accept: accept})});
-    if (!r.ok){ const t = await r.text(); alert('Operazione fallita: ' + t.slice(0, 140)); return; }
-    toast(accept ? '✅ Scambio fatto! Le carte hanno cambiato proprietario.' : 'Proposta rifiutata.');
+    if (!r.ok){ const t = await r.text(); alert(TSEC('mkt', 'mkt_op_fail', {t: t.slice(0, 140)})); return; }
+    toast(accept ? TSEC('mkt', 'mkt_trade_done') : TSEC('mkt', 'mkt_rejected'));
     if (accept) await reconcileCollection();
     loadTrades(); loadMyWorldCards();
-  } catch(e){ alert('Errore di rete: ' + e.message); }
+  } catch(e){ alert(TSEC('mkt', 'mkt_neterr2', {m: e.message})); }
 }
 async function cancelTrade(id){
   await refreshSessionIfNeeded();
   try {
     await fetch(SUPA_URL + '/rest/v1/rpc/cancel_trade', {method: 'POST', headers: supaHeaders(), body: JSON.stringify({trade_id: id})});
-    toast('↩️ Proposta annullata.');
+    toast(TSEC('mkt', 'mkt_cancelled'));
     loadTrades(); loadMyWorldCards();
   } catch(e){}
 }
@@ -4447,7 +4457,7 @@ async function reconcileCollection(){
         collection.unshift(buildLocalFromRow(row));
         battleStats[row.serial] = {w: row.wins || 0, l: row.losses || 0, xp: (row.wins || 0) * 25 + (row.losses || 0) * 10};   // livello ereditato
         changed = true;
-        toast('🎁 Hai ricevuto ' + row.name + ' nello scambio!');
+        toast(TSEC('mkt', 'mkt_received', {name: row.name}));
       }
     });
     // carte CEDUTE: locali ma sul server ora di un altro
@@ -4514,25 +4524,25 @@ async function initAuctioneer(){
 }
 let _aucSelSerial = null;
 function openCreateAuction(){
-  if (!session || !session.access_token){ alert('Accedi prima (scheda 🌍 Mondo).'); return; }
+  if (!session || !session.access_token){ alert(TSEC('mkt', 'mkt_login_first')); return; }
   const mine = collection.filter(c => myActive.has(c.serial) && !myFrozen.has(c.serial)).sort((a, b) => (a.name || '').localeCompare(b.name || '', undefined, {sensitivity: 'base'}));
   const body = document.getElementById('auctionModalBody');
-  if (!mine.length){ body.innerHTML = '<h2>🔨 Asta</h2><p class="count">Ti serve una carta pubblicata e libera (non già al mercato) da mettere all\'asta.</p><button class="btn secondary" onclick="document.getElementById(\'auctionModal\').style.display=\'none\'">Chiudi</button>'; document.getElementById('auctionModal').style.display = 'flex'; return; }
+  if (!mine.length){ body.innerHTML = '<h2>' + TSEC('mkt', 'mkt_auc_h') + '</h2><p class="count">' + TSEC('mkt', 'mkt_need_free') + '</p><button class="btn secondary" onclick="document.getElementById(\'auctionModal\').style.display=\'none\'">' + TSEC('mkt', 'mkt_close2') + '</button>'; document.getElementById('auctionModal').style.display = 'flex'; return; }
   _aucSelSerial = null;
   const list = mine.map(c =>
     '<div class="aucRow" data-serial="' + c.serial + '" onclick="selAucCard(this)" style="display:flex; align-items:center; gap:8px; padding:8px; border:1px solid #363057; border-radius:8px; margin-top:6px; cursor:pointer;">' +
     (c.img ? '<img src="' + c.img + '" style="width:38px; border-radius:6px;">' : '') +
     '<span style="flex:1; font-size:.85rem;"><strong>' + c.name + '</strong> · ' + trRarity(c.rarity || '') + ' · Lv.' + cardLevel(c.serial) + '</span></div>'
   ).join('');
-  body.innerHTML = '<h2>🔨 Metti all\'asta</h2>' +
-    '<label class="small" style="margin-top:8px;">Tocca la carta da vendere:</label>' +
+  body.innerHTML = '<h2>' + TSEC('mkt', 'mkt_put_auc_h') + '</h2>' +
+    '<label class="small" style="margin-top:8px;">' + TSEC('mkt', 'mkt_tap_sell') + '</label>' +
     '<div style="max-height:30vh; overflow-y:auto; margin-top:4px;">' + list + '</div>' +
-    '<label class="small" style="margin-top:10px;">Prezzo minimo (punti)</label>' +
+    '<label class="small" style="margin-top:10px;">' + TSEC('mkt', 'mkt_min_price') + '</label>' +
     '<input type="number" id="aucMin" value="20" min="0" max="1000">' +
-    '<label class="small" style="margin-top:8px;">Durata</label>' +
-    '<select id="aucHours"><option value="1">1 ora</option><option value="6">6 ore</option><option value="24" selected>24 ore</option><option value="48">2 giorni</option></select>' +
-    '<button class="btn" style="margin-top:12px;" onclick="confirmCreateAuction()">🔨 Bandisci l\'asta</button>' +
-    '<button class="btn secondary" onclick="document.getElementById(\'auctionModal\').style.display=\'none\'">✖ Annulla</button>';
+    '<label class="small" style="margin-top:8px;">' + TSEC('mkt', 'mkt_duration') + '</label>' +
+    '<select id="aucHours"><option value="1">' + TSEC('mkt', 'mkt_h1') + '</option><option value="6">' + TSEC('mkt', 'mkt_h6') + '</option><option value="24" selected>' + TSEC('mkt', 'mkt_h24') + '</option><option value="48">' + TSEC('mkt', 'mkt_d2') + '</option></select>' +
+    '<button class="btn" style="margin-top:12px;" onclick="confirmCreateAuction()">' + TSEC('mkt', 'mkt_hold_auc') + '</button>' +
+    '<button class="btn secondary" onclick="document.getElementById(\'auctionModal\').style.display=\'none\'">' + TSEC('mkt', 'mkt_cancelX') + '</button>';
   document.getElementById('auctionModal').style.display = 'flex';
 }
 function selAucCard(row){
@@ -4541,16 +4551,16 @@ function selAucCard(row){
   row.style.borderColor = 'var(--accent)'; row.style.background = 'rgba(255,209,102,.12)';
 }
 async function confirmCreateAuction(){
-  if (!_aucSelSerial){ alert('Tocca prima una carta.'); return; }
+  if (!_aucSelSerial){ alert(TSEC('mkt', 'mkt_pick_card')); return; }
   const min = Math.max(0, parseInt(document.getElementById('aucMin').value, 10) || 0);
   const hours = parseInt(document.getElementById('aucHours').value, 10) || 24;
   document.getElementById('auctionModal').style.display = 'none';
   await refreshSessionIfNeeded();
   try {
     const r = await fetch(SUPA_URL + '/rest/v1/rpc/create_auction', {method: 'POST', headers: supaHeaders(), body: JSON.stringify({p_serial: _aucSelSerial, p_min: min, p_hours: hours})});
-    if (r.status === 404){ alert('⚠️ Le aste non sono ancora attive sul server (manca il SQL).'); return; }
-    if (!r.ok){ const t = await r.text(); alert('Asta non creata: ' + t.slice(0, 140)); return; }
-    toast('🔨 Asta bandita! La tua carta è ora al mercato.');
+    if (r.status === 404){ alert(TSEC('mkt', 'mkt_auc_notactive')); return; }
+    if (!r.ok){ const t = await r.text(); alert(TSEC('mkt', 'mkt_auc_fail', {t: t.slice(0, 140)})); return; }
+    toast(TSEC('mkt', 'mkt_auc_ok'));
     loadMyWorldCards(); loadAuctions();
   } catch(e){ alert('Errore di rete: ' + e.message); }
 }
@@ -4563,49 +4573,49 @@ async function loadAuctions(){
   await closeDueAuctions();
   try {
     const r = await fetch(SUPA_URL + '/rest/v1/auctions?select=*&status=eq.open&order=ends_at.asc', {headers: supaHeaders()});
-    if (r.status === 404){ el.innerHTML = '<span class="count">⚠️ Aste non ancora attive sul server (manca il passaggio SQL).</span>'; return; }
-    if (!r.ok){ el.innerHTML = '<span class="count">Errore ' + r.status + '.</span>'; return; }
+    if (r.status === 404){ el.innerHTML = '<span class="count">' + TSEC('mkt', 'mkt_auc_notactive2') + '</span>'; return; }
+    if (!r.ok){ el.innerHTML = '<span class="count">' + TSEC('mkt', 'mkt_err', {code: r.status}) + '</span>'; return; }
     const rows = await r.json();
-    if (!rows.length){ el.innerHTML = '<span class="count">Nessuna asta in corso. Bandiscine una!</span>'; return; }
+    if (!rows.length){ el.innerHTML = '<span class="count">' + TSEC('mkt', 'mkt_no_auc') + '</span>'; return; }
     const mineId = session ? session.user_id : null;
     el.innerHTML = rows.map(a => {
       const mins = Math.max(0, Math.round((new Date(a.ends_at).getTime() - Date.now()) / 60000));
       const timeTxt = mins >= 60 ? Math.floor(mins / 60) + 'h ' + (mins % 60) + 'm' : mins + 'm';
-      const cur = a.current_bid ? ('💰 ' + a.current_bid + ' pt di ' + (a.current_bidder_name || '?')) : 'nessuna offerta';
+      const cur = a.current_bid ? TSEC('mkt', 'mkt_curbid', {n: a.current_bid, owner: (a.current_bidder_name || '?')}) : TSEC('mkt', 'mkt_nobid');
       const isMine = mineId && a.seller_id === mineId;
       const nextMin = a.current_bid ? a.current_bid + 1 : a.min_price;
       let ctl;
       if (isMine){
-        ctl = '<span class="count">🔨 la tua asta</span>' + (a.current_bid ? '' : ' <button class="btn secondary" style="width:auto; margin:0; padding:6px 10px;" onclick="cancelAuction(' + a.id + ')">↩️ Ritira</button>');
+        ctl = '<span class="count">' + TSEC('mkt', 'mkt_your_auc') + '</span>' + (a.current_bid ? '' : ' <button class="btn secondary" style="width:auto; margin:0; padding:6px 10px;" onclick="cancelAuction(' + a.id + ')">' + TSEC('mkt', 'mkt_withdraw') + '</button>');
       } else {
         ctl = '<input type="number" id="bid_' + a.id + '" value="' + nextMin + '" min="' + nextMin + '" style="width:80px; display:inline-block; padding:6px;"> ' +
-          '<button class="btn secondary" style="width:auto; margin:0; padding:6px 10px;" onclick="placeBid(' + a.id + ',' + nextMin + ')">💰 Rilancia</button>';
+          '<button class="btn secondary" style="width:auto; margin:0; padding:6px 10px;" onclick="placeBid(' + a.id + ',' + nextMin + ')">' + TSEC('mkt', 'mkt_bid_btn') + '</button>';
       }
       return '<div style="border:1px solid #363057; border-radius:10px; padding:10px; margin-top:8px;">' +
         '<div style="display:flex; gap:8px; align-items:center; cursor:pointer;" onclick="showCardBySerial(\'' + a.serial + '\')">' +
         (a.card_img ? '<img src="' + a.card_img + '" style="width:46px; border-radius:6px;">' : '') +
-        '<div style="flex:1; min-width:0;"><strong>' + a.card_name + '</strong> 🔍 di ' + (a.seller_owner || '?') +
-        '<br><span class="count">Base ' + a.min_price + ' pt · ' + cur + ' · ⏳ ' + timeTxt + '</span></div></div>' +
+        '<div style="flex:1; min-width:0;"><strong>' + a.card_name + '</strong> 🔍 ' + TSEC('world', 'w_by') + ' ' + (a.seller_owner || '?') +
+        '<br><span class="count">' + TSEC('mkt', 'mkt_base', {n: a.min_price}) + ' · ' + cur + ' · ⏳ ' + timeTxt + '</span></div></div>' +
         '<div style="margin-top:8px;">' + ctl + '</div>' +
-        '<button class="btn secondary" style="width:auto; margin:6px 0 0; padding:6px 10px; font-size:.75rem;" onclick="showBidHistory(' + a.id + ')">📜 Storico offerte</button>' +
+        '<button class="btn secondary" style="width:auto; margin:6px 0 0; padding:6px 10px; font-size:.75rem;" onclick="showBidHistory(' + a.id + ')">' + TSEC('mkt', 'mkt_history') + '</button>' +
         '<div id="hist_' + a.id + '" style="margin-top:6px;"></div></div>';
     }).join('');
     try { reconcileCollection(); } catch(e){}
-  } catch(e){ el.innerHTML = '<span class="count">Errore di rete.</span>'; }
+  } catch(e){ el.innerHTML = '<span class="count">' + TSEC('mkt', 'mkt_neterr') + '</span>'; }
 }
 async function placeBid(id, nextMin){
   const inp = document.getElementById('bid_' + id);
   const amount = parseInt(inp.value, 10);
-  if (!(amount >= nextMin)){ alert('Devi offrire almeno ' + nextMin + ' punti.'); return; }
-  if (amount > points){ alert('Non hai abbastanza punti (ne hai ' + points + ').'); return; }
+  if (!(amount >= nextMin)){ alert(TSEC('mkt', 'mkt_min_bid', {n: nextMin})); return; }
+  if (amount > points){ alert(TSEC('mkt', 'mkt_no_points', {p: points})); return; }
   await refreshSessionIfNeeded();
   try {
     const r = await fetch(SUPA_URL + '/rest/v1/rpc/place_bid', {method: 'POST', headers: supaHeaders(), body: JSON.stringify({p_auction: id, p_amount: amount})});
-    if (!r.ok){ const t = await r.text(); alert('Offerta rifiutata: ' + t.slice(0, 140)); return; }
+    if (!r.ok){ const t = await r.text(); alert(TSEC('mkt', 'mkt_bid_fail', {t: t.slice(0, 140)})); return; }
     const bids = await r.json();   // la RPC ritorna il numero di offerte
     incantoComment(amount, typeof bids === 'number' ? bids : 1);
     pullWallet(); loadAuctions();
-  } catch(e){ alert('Errore di rete: ' + e.message); }
+  } catch(e){ alert(TSEC('mkt', 'mkt_neterr2', {m: e.message})); }
 }
 async function showBidHistory(id){
   const box = document.getElementById('hist_' + id);
@@ -4615,21 +4625,21 @@ async function showBidHistory(id){
   try {
     const r = await fetch(SUPA_URL + '/rest/v1/bids?select=bidder_name,amount,created_at&auction_id=eq.' + id + '&order=id.desc&limit=20', {headers: supaHeaders()});
     const rows = r.ok ? await r.json() : [];
-    if (!rows.length){ box.innerHTML = '<span class="count">Ancora nessuna offerta.</span>'; return; }
+    if (!rows.length){ box.innerHTML = '<span class="count">' + TSEC('mkt', 'mkt_no_bids') + '</span>'; return; }
     box.innerHTML = rows.map(b => {
       const d = new Date(b.created_at);
-      const when = d.toLocaleDateString('it-IT', {day: 'numeric', month: 'short'}) + ' ' + d.toLocaleTimeString('it-IT', {hour: '2-digit', minute: '2-digit'});
-      return '<div style="font-size:.78rem; color:var(--muted);">💰 ' + b.amount + ' pt — ' + (b.bidder_name || '?') + ' · ' + when + '</div>';
+      const when = d.toLocaleDateString(undefined, {day: 'numeric', month: 'short'}) + ' ' + d.toLocaleTimeString(undefined, {hour: '2-digit', minute: '2-digit'});
+      return '<div style="font-size:.78rem; color:var(--muted);">' + TSEC('mkt', 'mkt_bid_line', {n: b.amount, owner: (b.bidder_name || '?'), when: when}) + '</div>';
     }).join('');
-  } catch(e){ box.innerHTML = '<span class="count">Errore.</span>'; }
+  } catch(e){ box.innerHTML = '<span class="count">' + TSEC('mkt', 'mkt_err2') + '</span>'; }
 }
 async function cancelAuction(id){
-  if (!confirm('Ritirare la carta dall\'asta?')) return;
+  if (!confirm(TSEC('mkt', 'mkt_confirm_withdraw'))) return;
   await refreshSessionIfNeeded();
   try {
     const r = await fetch(SUPA_URL + '/rest/v1/rpc/cancel_auction', {method: 'POST', headers: supaHeaders(), body: JSON.stringify({p_auction: id})});
-    if (!r.ok){ const t = await r.text(); alert('Non ritirata: ' + t.slice(0, 140)); return; }
-    toast('↩️ Asta ritirata.');
+    if (!r.ok){ const t = await r.text(); alert(TSEC('mkt', 'mkt_withdraw_fail', {t: t.slice(0, 140)})); return; }
+    toast(TSEC('mkt', 'mkt_withdrawn'));
     loadMyWorldCards(); loadAuctions();
   } catch(e){}
 }
@@ -5566,6 +5576,7 @@ function renderGym(){
   if (!sel) return;
   const keep = sel.value;
   sel.innerHTML = '';
+  sel.add(new Option(TSEC('gym', 'gi_pick_opt'), ''));   // di default nessun allievo selezionato
   collByName().forEach(({c, i}) => {
     const frozen = myFrozen.has(c.serial);
     const rest = frozen ? ' ' + TSEC('world', 'w_selmarket') : (coolLeft(c) > 0 ? ' ' + TSEC('world', 'w_selrest') : '');
@@ -5573,11 +5584,11 @@ function renderGym(){
     o.disabled = frozen;
     sel.add(o);
   });
-  if (Array.prototype.some.call(sel.options, o => o.value === keep)) sel.value = keep;
+  sel.value = (keep && Array.prototype.some.call(sel.options, o => o.value === keep)) ? keep : '';
   const e = gymCat();
   const info = document.getElementById('gymInfo');
   if (info){
-    if (!e){ info.textContent = TSEC('gym', 'gi_none'); }
+    if (!e){ info.textContent = collection.length ? TSEC('gym', 'gi_pick') : TSEC('gym', 'gi_none'); }
     else {
       const cl = coolLeft(e);
       info.innerHTML = TSEC('gym', 'gi_info', {lv: cardLevel(e.serial), used: (e.trainUsed || 0), cap: trainCap(e)}) +
@@ -6139,7 +6150,7 @@ function runSguardi(done){
 async function buyFood(id){
   const f = ALL_FOODS.find(x => x.id === id);
   const e = gymCat();
-  if (!e){ toast('⚠️ Scegli prima un allievo.'); return; }
+  if (!e){ toast('⚠️ ' + TSEC('gym', 'gi_pick_alert')); return; }
   const cl = coolLeft(e);
   if (cl > 0){
     toast('😴 ' + e.name + ' sta riposando: torna tra ' + Math.ceil(cl / 60000) + ' minuti.');
@@ -6231,13 +6242,8 @@ function coachAdvice(){
   const open = TC('baffo_open');
   const parts = [];
   if (!collection.length){ coachSayMsg(TC('baffo_empty')); return; }
-  let e = gymCat() || collection[0];
-  // se l'allievo selezionato riposa (o è al mercato), passa al primo disponibile; se riposano tutti, avvisa
-  if (coolLeft(e) > 0 || myFrozen.has(e.serial)){
-    const avail = collByName().map(x => x.c).find(c => coolLeft(c) === 0 && !myFrozen.has(c.serial));
-    if (!avail){ coachSayMsg(TC('baffo_all_rest')); return; }
-    e = avail;
-  }
+  const e = gymCat();
+  if (!e){ coachSayMsg(T('coach_greet')); return; }   // nessun allievo selezionato: solo il saluto
   const foodByStat = {0: '🍗 ' + foodNm({id: 'pollo'}), 1: '🐁 ' + foodNm({id: 'topo'}), 2: '🌿 ' + foodNm({id: 'erba'}), 3: '🐟 ' + foodNm({id: 'pesce'}), 4: '🧀 ' + foodNm({id: 'chicche'})};
   const tronoNm = '🛋️ ' + foodNm({id: 'trono'});
   if (Array.isArray(e.statsv) && e.statsv.length === 6){
