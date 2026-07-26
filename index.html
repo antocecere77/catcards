@@ -15,11 +15,11 @@
 <script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs@master/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="lang-it.js?v=17.8"></script>
-<script src="lang-en.js?v=17.8"></script>
-<script src="lang-fr.js?v=17.8"></script>
-<script src="lang-es.js?v=17.8"></script>
-<script src="lang-de.js?v=17.8"></script>
+<script src="lang-it.js?v=17.9"></script>
+<script src="lang-en.js?v=17.9"></script>
+<script src="lang-fr.js?v=17.9"></script>
+<script src="lang-es.js?v=17.9"></script>
+<script src="lang-de.js?v=17.9"></script>
 <style>
   :root{
     --bg:#14121f; --panel:#1e1b2e; --panel2:#282440;
@@ -3650,7 +3650,7 @@ async function migrateMelodies(){
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
 /* ---------- versione e aggiornamento automatico ---------- */
-const APP_VERSION = '17.8';   // unica fonte di verità: aggiorna anche version.txt a ogni release
+const APP_VERSION = '17.9';   // unica fonte di verità: aggiorna anche version.txt a ogni release
 try { document.getElementById('appVer').textContent = 'v' + APP_VERSION; } catch(e){}
 function verNewer(a, b){   // a più recente di b? confronto numerico 11.10 > 11.9
   const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);
@@ -5505,6 +5505,39 @@ const SENT_DATA = [
   {id: 's68', z: 7, e: '🐙', v: 'a cat playfully wrangling a curious octopus in a tide pool'},
   {id: 's69', z: 7, e: '🦭', v: 'a cat swimming happily alongside a friendly seal'},
   {id: 's70', z: 7, e: '🐋', v: 'a colossal whale-sized sea-king cat rising from ocean waves'},
+  // Zona 8 — Le Terre di Ghiaccio
+  {id: 's71', z: 8, e: '❄️', v: 'a fluffy cat pawing at falling snowflakes, snowy landscape'},
+  {id: 's72', z: 8, e: '⛄', v: 'a cat proudly next to a lopsided snowman it just built'},
+  {id: 's73', z: 8, e: '🧊', v: 'a cat sliding across a frozen lake, comical off-balance pose'},
+  {id: 's74', z: 8, e: '🐧', v: 'a cat belly-sliding on ice racing a determined penguin'},
+  {id: 's75', z: 8, e: '🎿', v: 'a cat zooming down a snowy slope on tiny skis, scarf flying'},
+  {id: 's76', z: 8, e: '🐻‍❄️', v: 'a cat cuddling a fluffy polar bear cub in the snow'},
+  {id: 's77', z: 8, e: '🌨️', v: 'a hardy cat trudging through a blizzard, fur crusted with snow'},
+  {id: 's78', z: 8, e: '🥌', v: 'a focused cat sliding a curling stone across the ice'},
+  {id: 's79', z: 8, e: '💎', v: 'a mesmerized cat gazing at glittering blue ice crystals'},
+  {id: 's80', z: 8, e: '🥶', v: 'a regal frost-blue cat with an icy crown, breath freezing the air'},
+  // Zona 9 — Il Vulcano
+  {id: 's81', z: 9, e: '🔥', v: 'a bold cat walking across glowing embers, unbothered'},
+  {id: 's82', z: 9, e: '🌋', v: 'a cat perched on a smoking volcano rim, lava glow below'},
+  {id: 's83', z: 9, e: '🗿', v: 'a cat carved-looking from shiny black obsidian stone'},
+  {id: 's84', z: 9, e: '💥', v: 'a furious cat mid-roar with a fiery explosion behind it'},
+  {id: 's85', z: 9, e: '🧨', v: 'a hot-tempered cat beside a lit firecracker, wild eyes'},
+  {id: 's86', z: 9, e: '♨️', v: 'a relaxed cat soaking in a steaming volcanic hot spring'},
+  {id: 's87', z: 9, e: '🌡️', v: 'a red-hot cat radiating heat, air shimmering around it'},
+  {id: 's88', z: 9, e: '🕯️', v: 'a solemn cat guarding a small ancient flame in a cave'},
+  {id: 's89', z: 9, e: '🪔', v: 'a mystical cat beside an eternal glowing oil lamp'},
+  {id: 's90', z: 9, e: '🐉', v: 'a mighty dragon-like fire cat spitting sparks over lava, king'},
+  // Zona 10 — Il Cosmo
+  {id: 's91', z: 10, e: '🌙', v: 'a light cat hopping across moon craters, starry sky behind'},
+  {id: 's92', z: 10, e: '⭐', v: 'a dreamy cat holding a jar of glowing shooting stars'},
+  {id: 's93', z: 10, e: '🪐', v: 'a poised cat balancing on the rings of Saturn'},
+  {id: 's94', z: 10, e: '☄️', v: 'a streaking cat riding a comet with a glowing tail'},
+  {id: 's95', z: 10, e: '🚀', v: 'an adventurous cat in a tiny astronaut helmet on a rocket'},
+  {id: 's96', z: 10, e: '🛸', v: 'a friendly cat waving beside a glowing flying saucer'},
+  {id: 's97', z: 10, e: '🌠', v: 'a swift cat blazing across the night sky like a shooting star'},
+  {id: 's98', z: 10, e: '⚫', v: 'an eerie cat silhouette at the edge of a swirling black hole'},
+  {id: 's99', z: 10, e: '✨', v: 'a cosmic cat whose fur is a field of galaxies and stardust'},
+  {id: 's100', z: 10, e: '🌌', v: 'the ultimate cosmic emperor cat, crown of stars, nebula cape, legendary'},
 ];
 function sentSeed(stage){ return ((stage * 2654435761) + 12345) >>> 0; }
 const SENTIERI = SENT_DATA.map(c => {
