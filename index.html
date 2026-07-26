@@ -2473,13 +2473,22 @@ async function clipExists(url){
   catch(e){ _clipExists[url] = false; return false; }
 }
 async function ensureName(serial, name){
-  const ck = 'name_' + serial;   // il nome non si traduce: una sola clip riusata in tutte le lingue
+  // clip-nome CONDIVISA: una sola per carta/boss/gatto, su Storage (bucket audio, cartella «names»), riusata da tutti e in ogni lingua.
+  const ck = 'name_' + serial;
   if (_voceMem[ck]) return _voceMem[ck];
-  try { const c = await idbGet(ck); if (c){ _voceMem[ck] = c; return c; } } catch(e){}
+  const path = 'names/name_' + serial + '.wav';
+  const surl = audioUrl(path);
+  // 1) già su Storage? la uso (nessuna generazione, nessuna chiave necessaria)
+  try { if (await clipExists(surl)){ _voceMem[ck] = surl; return surl; } } catch(e){}
+  // 2) non c'è: la genero UNA volta e la carico su Storage, poi tutti la leggono da lì
   const key = apiKeyEl.value.trim();
   if (!key) return null;
   const url = await genVoice(name, key, 'it');
-  if (url){ _voceMem[ck] = url; try { await idbSet(ck, url); } catch(e){} }
+  if (!url) return null;
+  try {
+    if (session && session.access_token && await uploadClip(path, url)){ _clipExists[surl] = true; _voceMem[ck] = surl; return surl; }
+  } catch(e){}
+  _voceMem[ck] = url;   // upload non riuscito (non loggato/permessi): uso la clip locale solo per questa sessione
   return url;
 }
 async function uploadClip(path, dataUrl){
@@ -3630,7 +3639,7 @@ async function migrateMelodies(){
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
 /* ---------- versione e aggiornamento automatico ---------- */
-const APP_VERSION = '18.5';   // unica fonte di verità: aggiorna anche version.txt a ogni release
+const APP_VERSION = '18.6';   // unica fonte di verità: aggiorna anche version.txt a ogni release
 try { document.getElementById('appVer').textContent = 'v' + APP_VERSION; } catch(e){}
 function verNewer(a, b){   // a più recente di b? confronto numerico 11.10 > 11.9
   const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);
