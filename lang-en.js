@@ -572,7 +572,9 @@
     "mis_toast_tris": "🎉 TRIO! Mission «{txt}» and full day: +5 and +10 bonus!",
     "mis_toast_done": "📅 Mission complete: {ic} {txt}! +5 points",
     "med_toast": "🏅 Medal unlocked: {ic} {nm}! +{pt} points",
-    "bm_sum": "🤖 Bosses tamed — <strong>{done}/{tot}</strong> <span class=\"count\">{open}</span>"
+    "bm_sum": "🤖 Bosses tamed — <strong>{done}/{tot}</strong> <span class=\"count\">{open}</span>",
+    "a_sentiero_done_nm": "Wayfarer of the Nine Lives",
+    "a_sentiero_done_ds": "Complete the whole Path (100 stages)"
   },
   "reg": {
     "r_h_cards": "🎴 The cards",

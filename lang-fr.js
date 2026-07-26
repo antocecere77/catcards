@@ -572,7 +572,9 @@
     "mis_toast_tris": "🎉 TRIO ! Mission «{txt}» et journée complète : +5 et +10 bonus !",
     "mis_toast_done": "📅 Mission accomplie : {ic} {txt} ! +5 points",
     "med_toast": "🏅 Médaille débloquée : {ic} {nm} ! +{pt} points",
-    "bm_sum": "🤖 Boss domptés — <strong>{done}/{tot}</strong> <span class=\"count\">{open}</span>"
+    "bm_sum": "🤖 Boss domptés — <strong>{done}/{tot}</strong> <span class=\"count\">{open}</span>",
+    "a_sentiero_done_nm": "Voyageur des Neuf Vies",
+    "a_sentiero_done_ds": "Termine tout le Sentier (100 étapes)"
   },
   "reg": {
     "r_h_cards": "🎴 Les cartes",

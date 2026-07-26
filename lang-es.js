@@ -572,7 +572,9 @@
     "mis_toast_tris": "🎉 ¡TRÍO! Misión «{txt}» y día completo: ¡+5 y +10 de bono!",
     "mis_toast_done": "📅 Misión completada: {ic} {txt}! +5 puntos",
     "med_toast": "🏅 Medalla desbloqueada: {ic} {nm}! +{pt} puntos",
-    "bm_sum": "🤖 Boss domados — <strong>{done}/{tot}</strong> <span class=\"count\">{open}</span>"
+    "bm_sum": "🤖 Boss domados — <strong>{done}/{tot}</strong> <span class=\"count\">{open}</span>",
+    "a_sentiero_done_nm": "Caminante de las Nueve Vidas",
+    "a_sentiero_done_ds": "Completa todo el Sendero (100 etapas)"
   },
   "reg": {
     "r_h_cards": "🎴 Las cartas",

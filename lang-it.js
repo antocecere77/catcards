@@ -572,7 +572,9 @@
     "mis_toast_tris": "🎉 TRIS! Missione «{txt}» e giornata completa: +5 e +10 bonus!",
     "mis_toast_done": "📅 Missione completata: {ic} {txt}! +5 punti",
     "med_toast": "🏅 Medaglia sbloccata: {ic} {nm}! +{pt} punti",
-    "bm_sum": "🤖 Boss domati — <strong>{done}/{tot}</strong> <span class=\"count\">{open}</span>"
+    "bm_sum": "🤖 Boss domati — <strong>{done}/{tot}</strong> <span class=\"count\">{open}</span>",
+    "a_sentiero_done_nm": "Viandante delle Nove Vite",
+    "a_sentiero_done_ds": "Completa tutto il Sentiero (100 tappe)"
   },
   "reg": {
     "r_h_cards": "🎴 Le carte",

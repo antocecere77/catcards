@@ -15,11 +15,11 @@
 <script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs@master/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="lang-it.js?v=18.3"></script>
-<script src="lang-en.js?v=18.3"></script>
-<script src="lang-fr.js?v=18.3"></script>
-<script src="lang-es.js?v=18.3"></script>
-<script src="lang-de.js?v=18.3"></script>
+<script src="lang-it.js?v=18.7"></script>
+<script src="lang-en.js?v=18.7"></script>
+<script src="lang-fr.js?v=18.7"></script>
+<script src="lang-es.js?v=18.7"></script>
+<script src="lang-de.js?v=18.7"></script>
 <style>
   :root{
     --bg:#14121f; --panel:#1e1b2e; --panel2:#282440;
@@ -3639,7 +3639,7 @@ async function migrateMelodies(){
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
 /* ---------- versione e aggiornamento automatico ---------- */
-const APP_VERSION = '18.6';   // unica fonte di verità: aggiorna anche version.txt a ogni release
+const APP_VERSION = '18.7';   // unica fonte di verità: aggiorna anche version.txt a ogni release
 try { document.getElementById('appVer').textContent = 'v' + APP_VERSION; } catch(e){}
 function verNewer(a, b){   // a più recente di b? confronto numerico 11.10 > 11.9
   const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);
@@ -3963,7 +3963,7 @@ function renderAuth(){
     renderPubList();
   }
   if (session && session.access_token && walletSynced === null) initWallet();   // aggancia il portafoglio server una volta
-  if (session && session.access_token) try { loadTrades(); } catch(e){}   // pallino proposte in arrivo
+  if (session && session.access_token){ try { loadTrades(); } catch(e){} try { loadSentServer(); } catch(e){} }   // proposte in arrivo + progresso Sentiero dal server
   const adm = document.getElementById('adminGift');
   if (adm) adm.style.display = (session && session.email === ADMIN_EMAIL) ? 'block' : 'none';
   const admb = document.getElementById('adminBots');
@@ -5329,6 +5329,7 @@ const ACHS = [
   {id:'ricco',       ic:'💰', nm:'Riccone',            ds:'Possiedi 150 punti',                 pt:20, ck:() => points >= 150},
   {id:'onore',       ic:'🚪', nm:'Ritiro con onore',   ds:'Ritira una carta con record positivo', pt:20, ck:() => Array.isArray(window._myWorldRows) && window._myWorldRows.some(x => x.retired && (x.wins || 0) > (x.losses || 0))},
   {id:'disfatta',    ic:'💀', nm:'Disfatta',           ds:'Perdi 10 sfide mondiali di fila',    pt:30, ck:() => counters.lossStreak >= 10},
+  {id:'sentiero_done', ic:'🗺️', nm:'Viandante delle Nove Vite', ds:'Completa tutto il Sentiero (100 tappe)', pt:150, ck:() => typeof SENTIERI !== 'undefined' && SENTIERI.length >= 100 && SENTIERI.every(s => sentAlbum[s.id])},
 ];
 /* medaglie dei Boss: una per ognuno dei 64, generate dai dati + premio per divisione ---------- */
 const BOSS_MEDAL_PT = {1:5, 2:5, 3:8, 4:8, 5:10, 6:12, 7:15, 8:25};
@@ -5476,7 +5477,40 @@ const SENT_MAX = SENTIERI.length;   // tappe disponibili ora
 let sentProg = {}, sentAlbum = {};
 try { sentProg = JSON.parse(localStorage.getItem('catcards_sentprog') || '{}'); } catch(e){}
 try { sentAlbum = JSON.parse(localStorage.getItem('catcards_sentalbum') || '{}'); } catch(e){}
-function saveSent(){ try { localStorage.setItem('catcards_sentprog', JSON.stringify(sentProg)); localStorage.setItem('catcards_sentalbum', JSON.stringify(sentAlbum)); } catch(e){} }
+function saveSent(){ try { localStorage.setItem('catcards_sentprog', JSON.stringify(sentProg)); localStorage.setItem('catcards_sentalbum', JSON.stringify(sentAlbum)); } catch(e){} try { saveSentServer(); } catch(e){} }
+// progresso del Sentiero sul server (opzionale): segue l'account tra dispositivi. Locale resta la fonte primaria; il server è una copia sincronizzata.
+let _sentSaveT = null;
+function saveSentServer(){
+  if (!session || !session.access_token) return;
+  clearTimeout(_sentSaveT);
+  _sentSaveT = setTimeout(async () => {
+    try {
+      await refreshSessionIfNeeded();
+      await fetch(SUPA_URL + '/rest/v1/sentiero_progress', {
+        method: 'POST', headers: supaHeaders({Prefer: 'resolution=merge-duplicates'}),
+        body: JSON.stringify({user_id: session.user_id, prog: sentProg, album: sentAlbum, updated_at: new Date().toISOString()})
+      });
+    } catch(e){}
+  }, 1500);
+}
+async function loadSentServer(){
+  if (!session || !session.access_token) return;
+  try {
+    const r = await fetch(SUPA_URL + '/rest/v1/sentiero_progress?select=prog,album&user_id=eq.' + session.user_id, {headers: supaHeaders()});
+    if (!r.ok) return;   // tabella assente o non configurata: si continua col solo locale
+    const rows = await r.json();
+    if (!rows.length) return;
+    const sp = rows[0].prog || {}, sa = rows[0].album || {};
+    let changed = false;
+    for (const k in sp){ if ((sp[k] || 0) > (sentProg[k] || 0)){ sentProg[k] = sp[k]; changed = true; } }   // tieni il progresso più avanzato
+    for (const k in sa){ if (!sentAlbum[k]){ sentAlbum[k] = sa[k]; changed = true; } }                       // unisci le figurine
+    if (changed){
+      try { localStorage.setItem('catcards_sentprog', JSON.stringify(sentProg)); localStorage.setItem('catcards_sentalbum', JSON.stringify(sentAlbum)); } catch(e){}
+      try { if (window._curTab === 'sent') renderSentiero(); } catch(e){}
+      try { checkAchievements(); } catch(e){}
+    }
+  } catch(e){}
+}
 // ritratti CONDIVISI: stessa arte per tutti, servita dal bucket pubblico «portraits» su Storage.
 // prefix 'sent' per i gatti del sentiero, 'boss' per i boss. Se il ritratto non c'è ancora, il render mostra l'emoji.
 function portraitUrl(prefix, id){ return SUPA_URL + '/storage/v1/object/public/portraits/' + prefix + '_' + id + '.png'; }
@@ -5740,15 +5774,17 @@ async function fightSentiero(stage){
     const firstFig = !sentAlbum[s.id];
     sentAlbum[s.id] = Date.now();
     saveSent();
-    if (stage % 10 === 0){   // guardiano battuto = zona completata
-      points += 30;
+    if (stage % 10 === 0){   // guardiano battuto = zona completata: premio crescente per zona
+      const reward = 20 + (s.zone - 1) * 10;   // Vicoli 20 → Cosmo 110
+      points += reward;
       try { localStorage.setItem('catcards_points', String(points)); } catch(e){}
       renderWallet();
-      toast(TSEC('sent', 'zone_done', {pts: 30}));
+      toast(TSEC('sent', 'zone_done', {pts: reward}));
       try { sfx('win'); } catch(e){}
     } else if (firstFig){
       toast(TSEC('sent', 'got_fig', {name: sentName(s.id)}));
     }
+    try { checkAchievements(); } catch(e){}   // sblocca la medaglia «Viandante delle Nove Vite» a 100/100
   }
   renderSentiero();
 }
