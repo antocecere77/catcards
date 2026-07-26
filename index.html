@@ -15,11 +15,11 @@
 <script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs@master/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="lang-it.js?v=17.7"></script>
-<script src="lang-en.js?v=17.7"></script>
-<script src="lang-fr.js?v=17.7"></script>
-<script src="lang-es.js?v=17.7"></script>
-<script src="lang-de.js?v=17.7"></script>
+<script src="lang-it.js?v=17.8"></script>
+<script src="lang-en.js?v=17.8"></script>
+<script src="lang-fr.js?v=17.8"></script>
+<script src="lang-es.js?v=17.8"></script>
+<script src="lang-de.js?v=17.8"></script>
 <style>
   :root{
     --bg:#14121f; --panel:#1e1b2e; --panel2:#282440;
@@ -3650,7 +3650,7 @@ async function migrateMelodies(){
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
 /* ---------- versione e aggiornamento automatico ---------- */
-const APP_VERSION = '17.7';   // unica fonte di verità: aggiorna anche version.txt a ogni release
+const APP_VERSION = '17.8';   // unica fonte di verità: aggiorna anche version.txt a ogni release
 try { document.getElementById('appVer').textContent = 'v' + APP_VERSION; } catch(e){}
 function verNewer(a, b){   // a più recente di b? confronto numerico 11.10 > 11.9
   const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);
@@ -5483,6 +5483,28 @@ const SENT_DATA = [
   {id: 's48', z: 5, e: '🎷', v: 'a cool alley cat beside a saxophone in a jazz-club backstreet'},
   {id: 's49', z: 5, e: '🏢', v: 'a daring cat clinging near the top of a glass skyscraper'},
   {id: 's50', z: 5, e: '🌃', v: 'a confident boss cat on a night skyline, city lights, in charge'},
+  // Zona 6 — Il Deserto
+  {id: 's51', z: 6, e: '🌵', v: 'a cat weaving between tall cacti in the desert, careful paws'},
+  {id: 's52', z: 6, e: '🦂', v: 'a wary cat eyeing a scorpion on hot desert sand'},
+  {id: 's53', z: 6, e: '🏜️', v: 'a cat sprinting across golden sand dunes, sand kicking up'},
+  {id: 's54', z: 6, e: '🌴', v: 'a lazy cat lounging in the shade of an oasis palm tree'},
+  {id: 's55', z: 6, e: '🐍', v: 'a cat staring down a coiled desert snake, hypnotic gaze'},
+  {id: 's56', z: 6, e: '☀️', v: 'a sun-baked cat squinting under a blazing desert sun'},
+  {id: 's57', z: 6, e: '🏺', v: 'a mysterious cat among ancient sandy ruins and clay amphorae'},
+  {id: 's58', z: 6, e: '🐫', v: 'a cat trotting beside a camel caravan across the dunes'},
+  {id: 's59', z: 6, e: '💨', v: 'a rugged cat braving a swirling sandstorm, fur blown back'},
+  {id: 's60', z: 6, e: '🦁', v: 'a majestic sphinx-like desert cat with a golden sun-disc halo'},
+  // Zona 7 — Il Mare
+  {id: 's61', z: 7, e: '🦀', v: 'a cat chasing a crab along the seashore, splashing waves'},
+  {id: 's62', z: 7, e: '🐚', v: 'a cat gathering seashells on a sunny beach, curious'},
+  {id: 's63', z: 7, e: '🌊', v: 'a cat leaping back from a crashing wave, playful dodge'},
+  {id: 's64', z: 7, e: '🐟', v: 'a clever cat scooping a fish from the water with its paw'},
+  {id: 's65', z: 7, e: '🕊️', v: 'a cat squaring off against a bold seagull on a pier'},
+  {id: 's66', z: 7, e: '⛵', v: 'a sneaky cat stowing away on a small sailboat, peeking out'},
+  {id: 's67', z: 7, e: '🏴‍☠️', v: 'a swashbuckling pirate cat with an eyepatch on a ship deck'},
+  {id: 's68', z: 7, e: '🐙', v: 'a cat playfully wrangling a curious octopus in a tide pool'},
+  {id: 's69', z: 7, e: '🦭', v: 'a cat swimming happily alongside a friendly seal'},
+  {id: 's70', z: 7, e: '🐋', v: 'a colossal whale-sized sea-king cat rising from ocean waves'},
 ];
 function sentSeed(stage){ return ((stage * 2654435761) + 12345) >>> 0; }
 const SENTIERI = SENT_DATA.map(c => {
@@ -5570,22 +5592,40 @@ function sentNode(stage){
   const mine = collection[parseInt(sel.value, 10)];
   if (!mine){ if (typeof toast === 'function') toast('⚠️ ' + TSEC('sent', 'pick_card')); return; }
   const cleared = sentProg[mine.serial] || 0;
-  if (s.stage <= cleared) showSentPreview(s.id);
-  else if (s.stage === cleared + 1) fightSentiero(stage);
+  if (s.stage <= cleared + 1) showSentPreview(s.id);   // fatte e attuale: anteprima; bloccate: niente
 }
 function showSentPreview(id){
   const s = SENT_BY_ID[id];
   const body = document.getElementById('sentModalBody');
   if (!s || !body) return;
-  const seen = !!sentAlbum[id];
-  const statsHtml = seen ? statIcons().map((k, j) => '<div style="display:flex; justify-content:space-between; font-size:.85rem; padding:2px 0;"><span>' + k + '</span><strong>' + s.statsv[j] + '</strong></div>').join('') : '';
+  const sel = document.getElementById('sentCat');
+  const mine = sel ? collection[parseInt(sel.value, 10)] : null;
+  const cleared = mine ? (sentProg[mine.serial] || 0) : 0;
+  const fightable = mine && s.stage <= cleared + 1;
+  const replay = mine && s.stage <= cleared;   // già battuta: si può rigiocare
+  // scheda avversario (statistiche svelate in anteprima)
+  const oppEntry = {serial: s.serial, name: sentName(id), statsv: s.statsv, hp: s.hp, potere: s.potere};
+  const statsHtml = statIcons().map((k, j) => '<div style="display:flex; justify-content:space-between; font-size:.85rem; padding:2px 0;"><span>' + k + '</span><strong>' + s.statsv[j] + '</strong></div>').join('');
+  // angolo di Zio Rocco: probabilità e consiglio (come nelle sfide mondiali, senza scommesse)
+  let rocco = '';
+  if (mine){
+    try {
+      const sA = estStrength(mine), sB = estStrength(oppEntry);
+      const pA = 1 / (1 + Math.pow(10, (sB - sA) / 155));
+      rocco = '<div style="margin-top:10px; border-top:1px solid #2e2950; padding-top:8px;">' +
+        cornerAnalysis(mine, oppEntry, pA) +
+        '<p class="count" style="margin-top:8px; line-height:1.5;">🥊 <em>' + cornerComment(mine, oppEntry, pA) + '</em></p></div>';
+    } catch(e){}
+  }
   body.innerHTML =
-    '<div style="font-size:4rem; text-align:center; padding:14px;">' + s.em + '</div>' +
-    '<h2 style="margin-top:4px;">' + (s.guardian ? '👑 ' : '') + sentName(id) + ' <span style="color:var(--muted); font-size:.85rem;">«' + sentNick(id) + '»</span></h2>' +
+    '<div style="font-size:4rem; text-align:center; padding:10px;">' + s.em + '</div>' +
+    '<h2 style="margin-top:2px;">' + (s.guardian ? '👑 ' : '') + sentName(id) + ' <span style="color:var(--muted); font-size:.85rem;">«' + sentNick(id) + '»</span></h2>' +
     '<p class="count">' + SENT_ZONES.find(x => x.z === s.zone).e + ' ' + sentZoneName(s.zone) + ' · ' + TSEC('sent', 'stage') + ' ' + s.stage + '</p>' +
     '<p style="font-size:.9rem; margin-top:6px; line-height:1.6; font-style:italic;">' + sentLore(id) + '</p>' +
-    (seen ? '<p class="count" style="margin-top:6px;">❤️ ' + s.hp + ' HP · 🌟 ' + powerName(s.potere) + '</p><div style="margin-top:8px;">' + statsHtml + '</div>' : '') +
-    '<button class="btn secondary" onclick="document.getElementById(\'sentModal\').style.display=\'none\'">' + TSEC('mkt', 'mkt_close2') + '</button>';
+    '<p class="count" style="margin-top:6px;">❤️ ' + s.hp + ' HP · 🌟 ' + powerName(s.potere) + '</p>' +
+    '<div style="margin-top:8px;">' + statsHtml + '</div>' + rocco +
+    (fightable ? '<button class="btn" style="margin-top:12px;" onclick="document.getElementById(\'sentModal\').style.display=\'none\'; fightSentiero(' + s.stage + ')">' + TSEC('sent', replay ? 'sent_replay' : 'sent_fight') + '</button>' : '') +
+    '<button class="btn secondary" onclick="document.getElementById(\'sentModal\').style.display=\'none\'">' + TSEC('sent', 'sent_back') + '</button>';
   document.getElementById('sentModal').style.display = 'flex';
 }
 async function fightSentiero(stage){
