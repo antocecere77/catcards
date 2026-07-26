@@ -193,6 +193,7 @@
       <button class="tabBtn" data-tab="mercato" onclick="showTab('mercato')"><span data-i18n="tab_mercato">🔁 Mercato</span><span id="tradeTabDot" style="display:none; width:9px; height:9px; background:#e63946; border-radius:50%; margin-left:4px; vertical-align:middle;"></span></button>
     </div>
     <div style="display:flex; gap:8px;">
+      <button class="tabBtn" data-tab="sent" onclick="showTab('sent')"><span data-i18n="tab_sent">🗺️ Sentiero</span></button>
       <button class="tabBtn" data-tab="boss" onclick="showTab('boss')"><span data-i18n="tab_boss">🤖 Boss</span></button>
       <button class="tabBtn" data-tab="pal" onclick="showTab('pal')"><span data-i18n="tab_pal">🏋️ Palestra</span></button>
       <button class="tabBtn" data-tab="med" onclick="showTab('med')"><span data-i18n="tab_med">🏅 Medagliere</span></button>
@@ -349,6 +350,25 @@
 
   <div class="modal" id="auctionModal" style="z-index:28;" onclick="if(event.target===this)this.style.display='none'">
     <div class="panel" style="max-width:360px; margin-top:30px;" id="auctionModalBody"></div>
+  </div>
+
+  <div id="tab-sent" style="width:100%; max-width:440px; display:none;">
+  <div class="panel" style="margin-top:20px;">
+    <h2 data-i18n="sent_title">🗺️ Il Sentiero delle Nove Vite</h2>
+    <p class="count" style="line-height:1.6;" data-i18n="sent_desc">Un lungo viaggio a tappe per ogni tua carta: sfida i gatti del sentiero uno dopo l'altro. Ogni vittoria sblocca la tappa dopo e ti regala la figurina di quel gatto per l'Album. Si gioca offline, senza scommesse né riposo: se perdi, riprovi.</p>
+    <label class="small" style="margin-top:12px;" data-i18n="sent_pick">Chi cammina sul sentiero</label>
+    <select id="sentCat" onchange="renderSentiero()"></select>
+    <p class="count" id="sentMsg" style="margin-top:8px; line-height:1.6;"></p>
+    <div id="sentMap" style="margin-top:6px;"></div>
+    <details style="margin-top:16px;">
+      <summary style="cursor:pointer; font-weight:600;" id="sentAlbumSum">📒 Album delle figurine <span class="count">(tocca per aprire)</span></summary>
+      <div id="sentAlbumBody" style="margin-top:8px;"></div>
+    </details>
+  </div>
+  </div>
+
+  <div class="modal" id="sentModal" style="z-index:28;" onclick="if(event.target===this)this.style.display='none'">
+    <div class="panel" style="max-width:360px; margin-top:30px;" id="sentModalBody"></div>
   </div>
 
   <div id="tab-boss" style="width:100%; max-width:440px; display:none;">
@@ -729,6 +749,7 @@ function setLang(l){
   try { renderGym(); } catch(e){}
   try { renderMissions(); renderMedals(); renderCatdex(); } catch(e){}
   try { if (window._curTab === 'boss') renderBosses(); } catch(e){}
+  try { if (window._curTab === 'sent') renderSentiero(); } catch(e){}
   try { if (window._curTab === 'mercato'){ loadTrades(); loadAuctions(); } } catch(e){}
   try { renderWorldList(); loadMyWorldCards(); loadLeaderboard(); } catch(e){}
   try { if (modalIndex >= 0) openCardModal(modalIndex); } catch(e){}
@@ -759,9 +780,9 @@ function TL(key, sections){
   return key;
 }
 function applyI18n(){
-  document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = TL(el.getAttribute('data-i18n'), ['ui', 'mkt', 'world']); });
+  document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = TL(el.getAttribute('data-i18n'), ['ui', 'mkt', 'world', 'sent']); });
   // blocchi con HTML interno (Regole, descrizioni Mercato ecc.): innerHTML
-  document.querySelectorAll('[data-i18n-html]').forEach(el => { el.innerHTML = TL(el.getAttribute('data-i18n-html'), ['reg', 'mkt', 'ui']); });
+  document.querySelectorAll('[data-i18n-html]').forEach(el => { el.innerHTML = TL(el.getAttribute('data-i18n-html'), ['reg', 'mkt', 'ui', 'sent']); });
   // placeholder degli input
   document.querySelectorAll('[data-i18n-ph]').forEach(el => { el.placeholder = TL(el.getAttribute('data-i18n-ph'), ['mkt', 'ui', 'world']); });
 }
@@ -787,7 +808,7 @@ function TSEC(sec, key, vars){
   return s;
 }
 // titolo banner battaglia tradotto (la chiave interna resta italiana per i confronti)
-const TITLE_KEYS = {'SFIDA MONDIALE':'world', 'SFIDA DAL VIVO':'live', 'BOSS DELL\'ARENA':'boss', 'QUARTI DI FINALE':'quarti', 'SEMIFINALE':'semi', 'FINALE':'finale'};
+const TITLE_KEYS = {'SFIDA MONDIALE':'world', 'SFIDA DAL VIVO':'live', 'BOSS DELL\'ARENA':'boss', 'SENTIERO':'sentiero', 'QUARTI DI FINALE':'quarti', 'SEMIFINALE':'semi', 'FINALE':'finale'};
 function titleLabel(t){
   if (!t) return t;
   if (TITLE_KEYS[t]) return TSEC('titles', TITLE_KEYS[t]);
@@ -1424,7 +1445,7 @@ function stepCard(d){
 const NEED_LOGIN_TABS = ['arena', 'mondo', 'mercato', 'boss', 'pal'];
 function showTab(t){
   const locked = NEED_LOGIN_TABS.indexOf(t) >= 0 && !(session && session.access_token);
-  ['crea', 'coll', 'arena', 'mondo', 'mercato', 'boss', 'pal', 'med', 'reg', 'opz', 'locked'].forEach(k => {
+  ['crea', 'coll', 'arena', 'mondo', 'mercato', 'sent', 'boss', 'pal', 'med', 'reg', 'opz', 'locked'].forEach(k => {
     const el = document.getElementById('tab-' + k);
     if (el) el.style.display = (locked ? (k === 'locked') : (k === t)) ? 'block' : 'none';
   });
@@ -1434,6 +1455,7 @@ function showTab(t){
   if (t === 'arena'){ try { renderPubList(); if (!myPublished.size && collection.length) checkWorldNews().then(() => renderPubList()); } catch(e){} }
   if (t === 'mondo') openMondoNews();
   if (t === 'mercato'){ try { openMercato(); } catch(e){} }
+  if (t === 'sent'){ try { renderSentiero(); } catch(e){} }
   if (t === 'med'){ try { renderMissions(); } catch(e){} }
   if (t === 'boss'){
     try {
@@ -3628,7 +3650,7 @@ async function migrateMelodies(){
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
 /* ---------- versione e aggiornamento automatico ---------- */
-const APP_VERSION = '17.2';   // unica fonte di verità: aggiorna anche version.txt a ogni release
+const APP_VERSION = '17.4';   // unica fonte di verità: aggiorna anche version.txt a ogni release
 try { document.getElementById('appVer').textContent = 'v' + APP_VERSION; } catch(e){}
 function verNewer(a, b){   // a più recente di b? confronto numerico 11.10 > 11.9
   const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);
@@ -5399,6 +5421,186 @@ const BOSS_MEDALS = BOSSES.map(b => ({
   {id:'bm_all', ic:'🏆', nm:'Ammazzaboss', pt:200, boss: true,
    ck: () => BOSSES.every(x => (bossWins[x.id] || {}).n >= 1)}
 ]);
+/* ---------- Il Sentiero delle Nove Vite: PvE a tappe, progressione per-carta, Album figurine ---------- */
+const SENT_ZONES = [
+  {z: 1, e: '🏙️', col: '#b08968'}, {z: 2, e: '🌷', col: '#66bb6a'}, {z: 3, e: '🌲', col: '#2e9e57'},
+  {z: 4, e: '⛰️', col: '#9aa5b1'}, {z: 5, e: '🌆', col: '#ff9800'}, {z: 6, e: '🏜️', col: '#e0b036'},
+  {z: 7, e: '🌊', col: '#29a3d5'}, {z: 8, e: '❄️', col: '#5cc7f5'}, {z: 9, e: '🌋', col: '#e5591f'}, {z: 10, e: '🌌', col: '#9b7ede'},
+];
+// Zona 1 — Vicoli (10 gatti). Le altre 9 zone (90 gatti) arrivano nelle fasi successive.
+const SENT_DATA = [
+  {id: 's01', z: 1, e: '🐾', v: 'a scrappy little grey alley kitten with big curious eyes'},
+  {id: 's02', z: 1, e: '🗑️', v: 'a dumpster-diving tabby cat with a fish bone, cheeky grin'},
+  {id: 's03', z: 1, e: '🧦', v: 'a white-socked black cat lounging on a warm car hood'},
+  {id: 's04', z: 1, e: '📦', v: 'a cardboard-box cat peeking out with mischievous eyes'},
+  {id: 's05', z: 1, e: '🌙', v: 'a sleek midnight cat prowling a moonlit alley, glowing eyes'},
+  {id: 's06', z: 1, e: '🥛', v: 'a chubby cream cat with a milk moustache, content smile'},
+  {id: 's07', z: 1, e: '🎸', v: 'a scruffy busker cat with a tiny guitar and a bandana'},
+  {id: 's08', z: 1, e: '🐟', v: 'a lean fishmonger-market cat clutching a big silver fish'},
+  {id: 's09', z: 1, e: '⚡', v: 'a fast striped cat mid-dash between alley walls, motion lines'},
+  {id: 's10', z: 1, e: '👑', v: 'a battle-scarred one-eyed ginger tomcat, king of the alley, proud'},
+];
+function sentSeed(stage){ return ((stage * 2654435761) + 12345) >>> 0; }
+const SENTIERI = SENT_DATA.map(c => {
+  const stage = parseInt(c.id.slice(1), 10);       // 1..100 (globale lungo il sentiero)
+  const rng = mulberry32(sentSeed(stage));
+  const guardian = (stage % 10) === 0;
+  const lo = 12 + stage * 0.75, hi = lo + 12, bump = guardian ? 8 : 0;
+  const statsv = [0, 0, 0, 0, 0, 0].map(() => Math.round(lo + bump + rng() * (hi - lo)));
+  const hp = Math.round(70 + stage * 1.4 + (guardian ? 25 : 0) + rng() * 20);
+  const potere = Math.floor(rng() * POWERS.length);
+  return {id: c.id, stage: stage, zone: c.z, em: c.e, serial: 'F9' + String(stage).padStart(6, '0'),
+    statsv: statsv, hp: hp, potere: potere, guardian: guardian};
+});
+const SENT_BY_ID = {}; SENTIERI.forEach(s => { SENT_BY_ID[s.id] = s; });
+const SENT_MAX = SENTIERI.length;   // tappe disponibili ora
+let sentProg = {}, sentAlbum = {};
+try { sentProg = JSON.parse(localStorage.getItem('catcards_sentprog') || '{}'); } catch(e){}
+try { sentAlbum = JSON.parse(localStorage.getItem('catcards_sentalbum') || '{}'); } catch(e){}
+function saveSent(){ try { localStorage.setItem('catcards_sentprog', JSON.stringify(sentProg)); localStorage.setItem('catcards_sentalbum', JSON.stringify(sentAlbum)); } catch(e){} }
+function sentName(id){ return TSEC('sent', 'bn_' + id); }
+function sentNick(id){ return TSEC('sent', 'bk_' + id); }
+function sentLore(id){ return TSEC('sent', 'bl_' + id); }
+function sentZoneName(z){ return TSEC('sent', 'z_' + z); }
+function sentAnn(s){ return sentZoneName(s.zone) + '... ' + sentNick(s.id) + '... ' + sentName(s.id).toUpperCase() + '!'; }
+function renderSentiero(){
+  const sel = document.getElementById('sentCat');
+  if (!sel) return;
+  const keep = sel.value;
+  sel.innerHTML = '';
+  sel.add(new Option(TSEC('gym', 'gi_pick_opt'), ''));
+  collByName().forEach(({c, i}) => { sel.add(new Option('🐱 ' + c.name + ' (Lv.' + cardLevel(c.serial) + ')', String(i))); });
+  sel.value = (keep && Array.prototype.some.call(sel.options, o => o.value === keep)) ? keep : '';
+  const mine = collection[parseInt(sel.value, 10)];
+  const msg = document.getElementById('sentMsg'), map = document.getElementById('sentMap');
+  if (!mine){ if (msg) msg.textContent = collection.length ? TSEC('sent', 'pick_card') : TSEC('sent', 'no_card'); if (map) map.innerHTML = ''; renderAlbum(); return; }
+  const cleared = sentProg[mine.serial] || 0;
+  if (msg) msg.innerHTML = TSEC('sent', 'progress', {name: mine.name, done: Math.min(cleared, SENT_MAX), tot: SENT_MAX});
+  let html = '';
+  Array.from(new Set(SENTIERI.map(s => s.zone))).forEach(z => { html += sentZoneBoard(z, cleared); });
+  if (SENT_MAX < 100) html += '<p class="count" style="margin-top:14px; text-align:center;">' + TSEC('sent', 'more_soon') + '</p>';
+  if (map) map.innerHTML = html;
+  renderAlbum();
+}
+function sentEsc(s){ return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+// disegna una zona come un sentiero serpeggiante (strada curva SVG + tappe come pietre)
+function sentZoneBoard(z, cleared){
+  const zc = SENT_ZONES.find(x => x.z === z) || {e: '', col: '#888'};
+  const nodes = SENTIERI.filter(s => s.zone === z);
+  const n = nodes.length;
+  const W = 320, xL = 74, xR = 246, yTop = 64, gap = 88;
+  const H = yTop + (n - 1) * gap + 74;
+  const pos = nodes.map((s, i) => ({s: s, x: (i % 2 === 0) ? xL : xR, y: yTop + i * gap}));
+  let d = 'M ' + pos[0].x + ' ' + pos[0].y;
+  for (let i = 1; i < n; i++){ const a = pos[i - 1], b = pos[i], my = (a.y + b.y) / 2; d += ' C ' + a.x + ' ' + my + ' ' + b.x + ' ' + my + ' ' + b.x + ' ' + b.y; }
+  const gid = 'sg' + z;
+  let svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" style="display:block; margin-top:6px;">' +
+    '<defs><linearGradient id="' + gid + '" x1="0" y1="0" x2="0" y2="1">' +
+    '<stop offset="0" stop-color="' + zc.col + '" stop-opacity="0.30"/><stop offset="1" stop-color="' + zc.col + '" stop-opacity="0.08"/></linearGradient></defs>' +
+    '<rect x="4" y="4" width="' + (W - 8) + '" height="' + (H - 8) + '" rx="20" fill="url(#' + gid + ')" stroke="' + zc.col + '" stroke-opacity="0.4"/>' +
+    '<path d="' + d + '" fill="none" stroke="rgba(0,0,0,0.35)" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"/>' +
+    '<path d="' + d + '" fill="none" stroke="#6f6350" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>' +
+    '<path d="' + d + '" fill="none" stroke="#ffe082" stroke-width="2.5" stroke-dasharray="2 13" stroke-linecap="round" opacity="0.85"/>';
+  pos.forEach(({s, x, y}) => {
+    const done = s.stage <= cleared, cur = s.stage === cleared + 1, locked = s.stage > cleared + 1;
+    const r = s.guardian ? 30 : 24;
+    let fill, stroke, sw, inner, label;
+    if (done){ fill = zc.col; stroke = '#ffffff'; sw = 3; inner = s.em; label = (s.guardian ? '👑 ' : '') + sentName(s.id); }
+    else if (cur){ fill = '#241f3a'; stroke = 'var(--accent)'; sw = 4; inner = s.em; label = (s.guardian ? '👑 ' : '') + sentName(s.id); }
+    else { fill = '#241f3a'; stroke = '#4a4468'; sw = 2; inner = '🔒'; label = '???'; }
+    svg += '<g ' + (locked ? '' : 'style="cursor:pointer;" onclick="sentNode(' + s.stage + ')"') + '>';
+    if (cur) svg += '<circle cx="' + x + '" cy="' + y + '" r="' + (r + 4) + '" fill="none" stroke="var(--accent)" stroke-width="2"><animate attributeName="r" values="' + (r + 3) + ';' + (r + 10) + ';' + (r + 3) + '" dur="1.5s" repeatCount="indefinite"/><animate attributeName="opacity" values="0.75;0;0.75" dur="1.5s" repeatCount="indefinite"/></circle>';
+    svg += '<circle cx="' + x + '" cy="' + y + '" r="' + r + '" fill="' + fill + '" stroke="' + stroke + '" stroke-width="' + sw + '"/>' +
+      '<text x="' + x + '" y="' + (y + (s.guardian ? 10 : 8)) + '" text-anchor="middle" font-size="' + (s.guardian ? 30 : 22) + '">' + inner + '</text>' +
+      '<text x="' + x + '" y="' + (y - r - 6) + '" text-anchor="middle" font-size="10" fill="var(--muted)">' + s.stage + '</text>' +
+      '<text x="' + x + '" y="' + (y + r + 15) + '" text-anchor="middle" font-size="11" font-weight="600" fill="' + (locked ? '#6a6488' : '#e8e4ff') + '">' + sentEsc(label) + '</text>' +
+      '</g>';
+  });
+  svg += '</svg>';
+  return '<div style="margin-top:16px; font-weight:700; color:' + zc.col + '; text-align:center;">' + zc.e + ' ' + sentZoneName(z) + '</div>' + svg;
+}
+function sentNode(stage){
+  const s = SENTIERI[stage - 1];
+  if (!s) return;
+  const sel = document.getElementById('sentCat');
+  const mine = collection[parseInt(sel.value, 10)];
+  if (!mine){ if (typeof toast === 'function') toast('⚠️ ' + TSEC('sent', 'pick_card')); return; }
+  const cleared = sentProg[mine.serial] || 0;
+  if (s.stage <= cleared) showSentPreview(s.id);
+  else if (s.stage === cleared + 1) fightSentiero(stage);
+}
+function showSentPreview(id){
+  const s = SENT_BY_ID[id];
+  const body = document.getElementById('sentModalBody');
+  if (!s || !body) return;
+  const seen = !!sentAlbum[id];
+  const statsHtml = seen ? statIcons().map((k, j) => '<div style="display:flex; justify-content:space-between; font-size:.85rem; padding:2px 0;"><span>' + k + '</span><strong>' + s.statsv[j] + '</strong></div>').join('') : '';
+  body.innerHTML =
+    '<div style="font-size:4rem; text-align:center; padding:14px;">' + s.em + '</div>' +
+    '<h2 style="margin-top:4px;">' + (s.guardian ? '👑 ' : '') + sentName(id) + ' <span style="color:var(--muted); font-size:.85rem;">«' + sentNick(id) + '»</span></h2>' +
+    '<p class="count">' + SENT_ZONES.find(x => x.z === s.zone).e + ' ' + sentZoneName(s.zone) + ' · ' + TSEC('sent', 'stage') + ' ' + s.stage + '</p>' +
+    '<p style="font-size:.9rem; margin-top:6px; line-height:1.6; font-style:italic;">' + sentLore(id) + '</p>' +
+    (seen ? '<p class="count" style="margin-top:6px;">❤️ ' + s.hp + ' HP · 🌟 ' + powerName(s.potere) + '</p><div style="margin-top:8px;">' + statsHtml + '</div>' : '') +
+    '<button class="btn secondary" onclick="document.getElementById(\'sentModal\').style.display=\'none\'">' + TSEC('mkt', 'mkt_close2') + '</button>';
+  document.getElementById('sentModal').style.display = 'flex';
+}
+async function fightSentiero(stage){
+  if (battleOn) return;
+  const s = SENTIERI[stage - 1];
+  if (!s) return;
+  const sel = document.getElementById('sentCat');
+  const mine = collection[parseInt(sel.value, 10)];
+  if (!mine){ alert(TSEC('sent', 'pick_card')); return; }
+  const cleared = sentProg[mine.serial] || 0;
+  if (stage > cleared + 1) return;
+  const oppEntry = {serial: s.serial, sid: s.id, name: sentName(s.id), nick: sentNick(s.id), potere: s.potere,
+    statsv: s.statsv, hp: s.hp, dna: null, strum: null, annuncio: sentAnn(s), img: null, em: s.em};
+  window._mineSerial = mine.serial; window._bossId = null; currentBet = null;
+  try { loadInstrument(cardInstr(mine)); } catch(e){}
+  bracketState = null;
+  document.getElementById('bracket').style.display = 'none';
+  document.getElementById('bracketBtn').style.display = 'none';
+  document.getElementById('battleScreen').style.display = 'flex';
+  const w = await runBattle(mine, oppEntry, 'SENTIERO');
+  try { purgeStats(s.serial); } catch(e){}   // niente statistiche fittizie dell'avversario del sentiero
+  if (!w) return;
+  if (w.serial === mine.serial){
+    sentProg[mine.serial] = Math.max(cleared, stage);
+    const firstFig = !sentAlbum[s.id];
+    sentAlbum[s.id] = Date.now();
+    saveSent();
+    if (stage % 10 === 0){   // guardiano battuto = zona completata
+      points += 30;
+      try { localStorage.setItem('catcards_points', String(points)); } catch(e){}
+      renderWallet();
+      toast(TSEC('sent', 'zone_done', {pts: 30}));
+      try { sfx('win'); } catch(e){}
+    } else if (firstFig){
+      toast(TSEC('sent', 'got_fig', {name: sentName(s.id)}));
+    }
+  }
+  renderSentiero();
+}
+function renderAlbum(){
+  const body = document.getElementById('sentAlbumBody'), sum = document.getElementById('sentAlbumSum');
+  if (!body) return;
+  const doneN = Object.keys(sentAlbum).length;
+  if (sum) sum.innerHTML = TSEC('sent', 'album_sum', {done: doneN, tot: 100, open: TSEC('prog', 'cx_open')});
+  let html = '';
+  Array.from(new Set(SENTIERI.map(s => s.zone))).forEach(z => {
+    const zc = SENT_ZONES.find(x => x.z === z) || {};
+    html += '<div style="margin-top:10px; font-weight:600; color:' + (zc.col || 'var(--accent)') + '; font-size:.9rem;">' + (zc.e || '') + ' ' + sentZoneName(z) + '</div>' +
+      '<div style="display:grid; grid-template-columns:repeat(5,1fr); gap:6px; margin-top:6px;">';
+    SENTIERI.filter(s => s.zone === z).forEach(s => {
+      const got = !!sentAlbum[s.id];
+      html += '<div style="text-align:center; padding:8px 2px; border:1px solid ' + (got ? 'var(--accent)' : '#363057') + '; border-radius:8px;' + (got ? '' : ' opacity:.5;') + '">' +
+        '<div style="font-size:1.5rem;">' + (got ? s.em : '❓') + '</div>' +
+        '<div style="font-size:.58rem; color:var(--muted); line-height:1.1; margin-top:2px;">' + (got ? sentName(s.id) : '???') + '</div></div>';
+    });
+    html += '</div>';
+  });
+  body.innerHTML = html;
+}
 let toastT = null;
 function toast(t){
   const el = document.getElementById('achToast');
