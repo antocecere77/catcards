@@ -1337,5 +1337,32 @@
     "cam_fail": "Kamera nicht verfügbar: {m}",
     "qr_invalid": "Ungültiger QR.",
     "qr_self": "Du hast deine eigene Karte gescannt!"
+  },
+  "moves": {
+    "ma_0": "Kratzer",
+    "ma_1": "Hinterhalt",
+    "ma_2": "Blick",
+    "ma_3": "Sprung",
+    "ma_4": "Pfotenhieb",
+    "ma_5": "Miauen",
+    "ma_6": "Angriff",
+    "ma_7": "Schnurren",
+    "mb_0": "Blitz",
+    "mb_1": "Sofa",
+    "mb_2": "Verächtlich",
+    "mb_3": "Kosmisch",
+    "mb_4": "Wild",
+    "mb_5": "Nächtlich",
+    "mb_6": "4-Uhr",
+    "mb_7": "Hypnotisch"
+  },
+  "instr": {
+    "i_pianoforte": "Klavier",
+    "i_tromba": "Trompete",
+    "i_chitarra": "Gitarre",
+    "i_archi": "Streicher",
+    "i_organo": "Orgel",
+    "i_marimba": "Marimba",
+    "theme_line": "{stile} in {ton}, {instr}"
   }
 };

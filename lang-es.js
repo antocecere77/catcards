@@ -1337,5 +1337,32 @@
     "cam_fail": "Cámara no disponible: {m}",
     "qr_invalid": "QR no válido.",
     "qr_self": "¡Has escaneado tu propia carta!"
+  },
+  "moves": {
+    "ma_0": "Arañazo",
+    "ma_1": "Emboscada",
+    "ma_2": "Mirada",
+    "ma_3": "Salto",
+    "ma_4": "Zarpazo",
+    "ma_5": "Maullido",
+    "ma_6": "Asalto",
+    "ma_7": "Ronroneo",
+    "mb_0": "Fulminante",
+    "mb_1": "del Sofá",
+    "mb_2": "de Desdén",
+    "mb_3": "Cósmico",
+    "mb_4": "Salvaje",
+    "mb_5": "Nocturno",
+    "mb_6": "de las 4 de la Mañana",
+    "mb_7": "Hipnótico"
+  },
+  "instr": {
+    "i_pianoforte": "piano",
+    "i_tromba": "trompeta",
+    "i_chitarra": "guitarra",
+    "i_archi": "cuerdas",
+    "i_organo": "órgano",
+    "i_marimba": "marimba",
+    "theme_line": "{stile} en {ton}, {instr}"
   }
 };

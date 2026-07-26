@@ -1337,5 +1337,32 @@
     "cam_fail": "Caméra indisponible : {m}",
     "qr_invalid": "QR invalide.",
     "qr_self": "Tu as scanné ta propre carte !"
+  },
+  "moves": {
+    "ma_0": "Griffure",
+    "ma_1": "Embuscade",
+    "ma_2": "Regard",
+    "ma_3": "Bond",
+    "ma_4": "Coup de patte",
+    "ma_5": "Miaulement",
+    "ma_6": "Assaut",
+    "ma_7": "Ronron",
+    "mb_0": "Foudroyant",
+    "mb_1": "du Canapé",
+    "mb_2": "de Mépris",
+    "mb_3": "Cosmique",
+    "mb_4": "Sauvage",
+    "mb_5": "Nocturne",
+    "mb_6": "de 4h du Matin",
+    "mb_7": "Hypnotique"
+  },
+  "instr": {
+    "i_pianoforte": "piano",
+    "i_tromba": "trompette",
+    "i_chitarra": "guitare",
+    "i_archi": "cordes",
+    "i_organo": "orgue",
+    "i_marimba": "marimba",
+    "theme_line": "{stile} en {ton}, {instr}"
   }
 };

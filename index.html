@@ -15,11 +15,11 @@
 <script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs@master/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="lang-it.js?v=18.8"></script>
-<script src="lang-en.js?v=18.8"></script>
-<script src="lang-fr.js?v=18.8"></script>
-<script src="lang-es.js?v=18.8"></script>
-<script src="lang-de.js?v=18.8"></script>
+<script src="lang-it.js?v=18.9"></script>
+<script src="lang-en.js?v=18.9"></script>
+<script src="lang-fr.js?v=18.9"></script>
+<script src="lang-es.js?v=18.9"></script>
+<script src="lang-de.js?v=18.9"></script>
 <style>
   :root{
     --bg:#14121f; --panel:#1e1b2e; --panel2:#282440;
@@ -768,6 +768,16 @@ function LDB(){ return (window.LANG_DB && (window.LANG_DB[LANG] || window.LANG_D
 function LDBen(){ return (window.LANG_DB && window.LANG_DB.en) || {}; }
 function trStat(key){ const d = LDB().stat || {}, e = LDBen().stat || {}; return d[key] || e[key] || key; }
 function trRarity(name){ const d = LDB().rarity || {}, e = LDBen().rarity || {}; return d[name] || e[name] || name; }
+function trInstr(name){ const d = LDB().instr || {}, e = LDBen().instr || {}; return d['i_' + name] || e['i_' + name] || name; }
+// nomi delle mosse tradotti: EN/DE mettono il modificatore PRIMA del sostantivo, IT/FR/ES dopo
+const MOVE_ADJ_FIRST = {en: true, de: true};
+function moveName(ai, bi){
+  const M = LDB().moves || {}, e = LDBen().moves || {};
+  const a = (M['ma_' + ai] != null ? M['ma_' + ai] : (e['ma_' + ai] != null ? e['ma_' + ai] : ATK_A[ai]));
+  const b = (M['mb_' + bi] != null ? M['mb_' + bi] : (e['mb_' + bi] != null ? e['mb_' + bi] : ATK_B[bi]));
+  return MOVE_ADJ_FIRST[LANG] ? (b + ' ' + a) : (a + ' ' + b);
+}
+function mvName(m){ return (m && typeof m.ai === 'number') ? moveName(m.ai, m.bi) : (m && m.name) || ''; }
 function annText(entry, corner){
   const a = LDB().ann || LDBen().ann || {};
   const t = a[corner === 'blue' ? 'blue' : 'red'] || '{n} «{k}»';
@@ -911,14 +921,15 @@ function rollCard(seed, name){
   for (const r of RARITIES){ acc += r.chance; if (roll <= acc){ rarity = r; break; } }
   const stats = STATS.map(s => ({...s, value: Math.min(99, 35 + Math.floor(rng()*46) + rarity.bonus)}));
   const hp = 60 + Math.floor(rng()*41) + rarity.bonus;
-  const attack = ATK_A[Math.floor(rng()*ATK_A.length)] + ' ' + ATK_B[Math.floor(rng()*ATK_B.length)];
+  const ai0 = Math.floor(rng()*ATK_A.length), bi0 = Math.floor(rng()*ATK_B.length);   // stesso consumo RNG di prima
+  const attack = ATK_A[ai0] + ' ' + ATK_B[bi0];
   const atkPower = 20 + Math.floor(rng()*31) + rarity.bonus;
-  // 3 mosse con stili diversi (generate DOPO i valori sopra: le carte esistenti non cambiano)
+  // 3 mosse con stili diversi (generate DOPO i valori sopra: le carte esistenti non cambiano). Salvo gli indici ai/bi per tradurle.
   const moves = ['forte', 'rapido', 'astuto'].map((kind, ki) => {
-    const nm = ki === 0 ? attack
-      : ATK_A[Math.floor(rng()*ATK_A.length)] + ' ' + ATK_B[Math.floor(rng()*ATK_B.length)];
+    const ai = ki === 0 ? ai0 : Math.floor(rng()*ATK_A.length);
+    const bi = ki === 0 ? bi0 : Math.floor(rng()*ATK_B.length);
     const delta = kind === 'forte' ? 8 : kind === 'rapido' ? -6 : 0;
-    return {name: nm, power: Math.max(10, atkPower + delta), kind: kind};
+    return {name: ATK_A[ai] + ' ' + ATK_B[bi], ai: ai, bi: bi, power: Math.max(10, atkPower + delta), kind: kind};
   });
   return {
     name: name || NAMES[Math.floor(rng()*NAMES.length)],
@@ -1140,7 +1151,7 @@ function drawCard(card, art){
   mvs.forEach((mv, i) => {
     const my = ay + 22 + i * 38;
     ctx.fillStyle = '#fff'; ctx.textAlign = 'left'; ctx.font = 'bold 23px "Segoe UI", sans-serif';
-    ctx.fillText(kindIcon[mv.kind] + ' ' + mv.name, 78, my);
+    ctx.fillText(kindIcon[mv.kind] + ' ' + mvName(mv), 78, my);
     ctx.fillStyle = col; ctx.textAlign = 'right'; ctx.font = 'bold 25px "Segoe UI", sans-serif';
     ctx.fillText(mv.power, W-80, my);
   });
@@ -1393,11 +1404,11 @@ function openCardModal(i){
   bits.push('🥊 «' + nickOf(c) + '»');
   if (c.razza) bits.push('🐈 ' + c.razza);
   if (typeof c.potere === 'number') bits.push('🌟 ' + powerName(c.potere));
-  bits.push('🎼 ' + (c.dna ? (c.dna.stile + ' in ' + c.dna.tonalita + ', ' + instrName(c.strum)) : THEME_BANK[bankThemeIndex(c.serial)].name + (c.strum ? ' (' + instrName(c.strum) + ')' : '')));
+  bits.push('🎼 ' + (c.dna ? TSEC('instr', 'theme_line', {stile: c.dna.stile, ton: c.dna.tonalita, instr: trInstr(c.strum)}) : THEME_BANK[bankThemeIndex(c.serial)].name + (c.strum ? ' (' + trInstr(c.strum) + ')' : '')));
   const rl = recordLine(c.serial);
   if (rl) bits.push('📊 ' + rl);
   const mvs = rollCard(parseInt(c.serial, 16) >>> 0, c.name).moves;
-  const mvLine = mvs.map(m => (m.kind === 'forte' ? '💥' : m.kind === 'rapido' ? '⚡' : '✨') + ' ' + m.name).join(' · ');
+  const mvLine = mvs.map(m => (m.kind === 'forte' ? '💥' : m.kind === 'rapido' ? '⚡' : '✨') + ' ' + mvName(m)).join(' · ');
   document.getElementById('modalCap').innerHTML =
     '<em>«' + descrOf(c) + '»</em><br>' + bits.join('  ·  ') + '<br>' + mvLine +
     '<div style="max-width:300px; margin:8px auto 0;">' + xpBarHtml(c.serial) + '</div>';
@@ -3093,7 +3104,7 @@ async function runBattle(ea, eb, title){
         dmgFloat(side(def), 'MISS', 'miss');
         sfx('miss');
         att.streak = 0;
-        blog(TB('dodge', {name: att.name, move: mv.name, opp: def.name}));
+        blog(TB('dodge', {name: att.name, move: mvName(mv), opp: def.name}));
         continue;
       }
       let crit = rng() < att.intel / 280 + (mv.kind === 'rapido' ? 0.10 : 0);
@@ -3118,7 +3129,7 @@ async function runBattle(ea, eb, title){
       fx(side(def), 'hit');
       sfx(crit ? 'crit' : 'hit');
       dmgFloat(side(def), '−' + dmg, crit ? 'crit' : null);
-      blog(TB('hit', {icon: mvIcon, name: att.name, move: mv.name, crit: crit ? TB('crit_tag') : '', catnip: catnipHit ? TB('catnip_tag') : '', dmg: dmg}));
+      blog(TB('hit', {icon: mvIcon, name: att.name, move: mvName(mv), crit: crit ? TB('crit_tag') : '', catnip: catnipHit ? TB('catnip_tag') : '', dmg: dmg}));
       if (dmg >= def.maxHp * 0.3 && def.hp > 0)
         blog(TB(['dev1', 'dev2', 'dev3'][Math.floor(rng() * 3)]));
       att.streak++;
@@ -3639,7 +3650,7 @@ async function migrateMelodies(){
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
 /* ---------- versione e aggiornamento automatico ---------- */
-const APP_VERSION = '18.8';   // unica fonte di verità: aggiorna anche version.txt a ogni release
+const APP_VERSION = '18.9';   // unica fonte di verità: aggiorna anche version.txt a ogni release
 try { document.getElementById('appVer').textContent = 'v' + APP_VERSION; } catch(e){}
 function verNewer(a, b){   // a più recente di b? confronto numerico 11.10 > 11.9
   const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);
@@ -4694,7 +4705,7 @@ function showCardSheet(c){
     ).join('');
   }
   const mvs = rollCard(parseInt(c.serial, 16) >>> 0, c.name).moves;
-  const mvLine = mvs.map(m => (m.kind === 'forte' ? '💥' : m.kind === 'rapido' ? '⚡' : '✨') + ' ' + m.name + ' (' + m.power + ')').join('<br>');
+  const mvLine = mvs.map(m => (m.kind === 'forte' ? '💥' : m.kind === 'rapido' ? '⚡' : '✨') + ' ' + mvName(m) + ' (' + m.power + ')').join('<br>');
   body.innerHTML =
     (c.img ? '<img src="' + c.img + '" style="width:100%; border-radius:12px;">' : '') +
     '<h2 style="margin-top:10px;">' + c.name + (c.nick ? ' <span style="color:var(--muted); font-size:.85rem;">«' + c.nick + '»</span>' : '') + '</h2>' +
@@ -4724,7 +4735,7 @@ function showWorldCard(i){
     ).join('');
   }
   const mvs = rollCard(parseInt(c.serial, 16) >>> 0, c.name).moves;
-  const mvLine = mvs.map(m => (m.kind === 'forte' ? '💥' : m.kind === 'rapido' ? '⚡' : '✨') + ' ' + m.name + ' (' + m.power + ')').join('<br>');
+  const mvLine = mvs.map(m => (m.kind === 'forte' ? '💥' : m.kind === 'rapido' ? '⚡' : '✨') + ' ' + mvName(m) + ' (' + m.power + ')').join('<br>');
   body.innerHTML =
     (c.img ? '<img src="' + c.img + '" style="width:100%; border-radius:12px;">' : '') +
     '<h2 style="margin-top:10px;">' + c.name + (c.nick ? ' <span style="color:var(--muted); font-size:.85rem;">«' + c.nick + '»</span>' : '') + '</h2>' +

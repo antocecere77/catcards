@@ -1337,5 +1337,32 @@
     "cam_fail": "Camera not available: {m}",
     "qr_invalid": "Invalid QR.",
     "qr_self": "You scanned your own card!"
+  },
+  "moves": {
+    "ma_0": "Scratch",
+    "ma_1": "Ambush",
+    "ma_2": "Glare",
+    "ma_3": "Pounce",
+    "ma_4": "Paw-swipe",
+    "ma_5": "Meow",
+    "ma_6": "Assault",
+    "ma_7": "Purr",
+    "mb_0": "Lightning",
+    "mb_1": "Couch",
+    "mb_2": "Scornful",
+    "mb_3": "Cosmic",
+    "mb_4": "Wild",
+    "mb_5": "Nocturnal",
+    "mb_6": "4 AM",
+    "mb_7": "Hypnotic"
+  },
+  "instr": {
+    "i_pianoforte": "piano",
+    "i_tromba": "trumpet",
+    "i_chitarra": "guitar",
+    "i_archi": "strings",
+    "i_organo": "organ",
+    "i_marimba": "marimba",
+    "theme_line": "{stile} in {ton}, {instr}"
   }
 };

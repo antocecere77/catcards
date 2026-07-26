@@ -1337,5 +1337,32 @@
     "cam_fail": "Fotocamera non disponibile: {m}",
     "qr_invalid": "QR non valido.",
     "qr_self": "Hai inquadrato la tua stessa carta!"
+  },
+  "moves": {
+    "ma_0": "Graffio",
+    "ma_1": "Agguato",
+    "ma_2": "Sguardo",
+    "ma_3": "Balzo",
+    "ma_4": "Zampata",
+    "ma_5": "Miagolio",
+    "ma_6": "Assalto",
+    "ma_7": "Fusa",
+    "mb_0": "Fulmineo",
+    "mb_1": "del Divano",
+    "mb_2": "di Disprezzo",
+    "mb_3": "Cosmico",
+    "mb_4": "Selvaggio",
+    "mb_5": "Notturno",
+    "mb_6": "delle 4 del Mattino",
+    "mb_7": "Ipnotiche"
+  },
+  "instr": {
+    "i_pianoforte": "pianoforte",
+    "i_tromba": "tromba",
+    "i_chitarra": "chitarra",
+    "i_archi": "archi",
+    "i_organo": "organo",
+    "i_marimba": "marimba",
+    "theme_line": "{stile} in {ton}, {instr}"
   }
 };
