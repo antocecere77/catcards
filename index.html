@@ -3629,7 +3629,7 @@ async function migrateMelodies(){
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
 /* ---------- versione e aggiornamento automatico ---------- */
-const APP_VERSION = '18.0';   // unica fonte di verità: aggiorna anche version.txt a ogni release
+const APP_VERSION = '18.1';   // unica fonte di verità: aggiorna anche version.txt a ogni release
 try { document.getElementById('appVer').textContent = 'v' + APP_VERSION; } catch(e){}
 function verNewer(a, b){   // a più recente di b? confronto numerico 11.10 > 11.9
   const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);
@@ -5522,24 +5522,24 @@ async function genPortraits(){
   const jobs = ADVISORS.map(a => ({prefix: 'char', id: a.id, prompt: a.prompt}))
     .concat(BOSSES.map(b => ({prefix: 'boss', id: b.id, prompt: b.prompt})))
     .concat(SENTIERI.map(s => ({prefix: 'sent', id: s.id, prompt: s.prompt})));
-  let done = 0, made = 0, fail = 0;
+  let done = 0, made = 0, fail = 0, skip = 0;
   for (const job of jobs){
     done++;
     const path = job.prefix + '_' + job.id + '.png';
     const url = portraitUrl(job.prefix, job.id);
-    if (out) out.textContent = '🎨 Ritratti ' + done + '/' + jobs.length + ' · nuovi ' + made + ' · falliti ' + fail + ' — ' + job.prefix + '/' + job.id + '…';
-    if (await clipExists(url)) continue;   // già presente: salta
+    if (out) out.textContent = '🎨 Ritratti ' + done + '/' + jobs.length + ' · ✅ già presenti ' + skip + ' · ✨ nuovi ' + made + ' · ❌ falliti ' + fail + ' — ' + job.prefix + '/' + job.id + '…';
+    if (await clipExists(url)){ skip++; continue; }   // già presente: salta
     try {
       const img = await genImageData(job.prompt, key, model);
       if (img && await uploadPortrait(path, img)){ made++; _clipExists[url] = true; }
       else fail++;
     } catch(e){
-      if (e.message === 'QUOTA'){ if (out) out.textContent = '⏸️ Quota giornaliera esaurita a ' + done + '/' + jobs.length + '. Riprendi domani: riparte da dove eri (nuovi finora: ' + made + ').'; return; }
+      if (e.message === 'QUOTA'){ if (out) out.textContent = '⏸️ Quota giornaliera esaurita a ' + done + '/' + jobs.length + '. Già presenti ' + skip + ', nuovi ' + made + '. Riprendi domani: riparte da dove eri.'; return; }
       fail++;
     }
     await new Promise(r => setTimeout(r, 1200));   // pausa tra le chiamate
   }
-  if (out) out.textContent = '✅ Ritratti completati: ' + made + ' nuovi, ' + fail + ' falliti su ' + jobs.length + '.';
+  if (out) out.textContent = '✅ Fatto: ' + skip + ' già presenti, ' + made + ' nuovi, ' + fail + ' falliti su ' + jobs.length + '.';
 }
 function sentName(id){ return TSEC('sent', 'bn_' + id); }
 function sentNick(id){ return TSEC('sent', 'bk_' + id); }
