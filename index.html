@@ -3630,7 +3630,7 @@ async function migrateMelodies(){
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
 /* ---------- versione e aggiornamento automatico ---------- */
-const APP_VERSION = '18.4';   // unica fonte di verità: aggiorna anche version.txt a ogni release
+const APP_VERSION = '18.5';   // unica fonte di verità: aggiorna anche version.txt a ogni release
 try { document.getElementById('appVer').textContent = 'v' + APP_VERSION; } catch(e){}
 function verNewer(a, b){   // a più recente di b? confronto numerico 11.10 > 11.9
   const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);
@@ -5565,7 +5565,7 @@ async function genPortraits(){
       }
     }
     if (!okItem) fail++;
-    await sleep(1500);   // ritmo veloce (~40/min): il backoff scatta solo se il server segnala rate limit
+    // nessuna pausa: si va alla massima velocità; se il server segnala il rate limit, il backoff qui sopra attende e riprova
   }
   if (out) out.textContent = '✅ Fatto: ' + skip + ' già presenti, ' + made + ' nuovi, ' + fail + ' falliti su ' + jobs.length + (lastErr ? '. Ultimo errore: ' + lastErr : '.');
 }
