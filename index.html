@@ -525,6 +525,9 @@
       <p class="count" style="margin-top:4px;">Genera una volta le frasi d'angolo + gli 80 soprannomi nella <strong>lingua attualmente attiva</strong> e li carica su Storage (bucket <code>audio</code>). Cambia lingua in alto e rifai per ogni lingua che vuoi doppiare.</p>
       <button class="btn secondary" onclick="genGlobalAudio()" id="audioGenBtn" style="margin-top:8px;">🎙️ Genera audio globali (lingua attuale)</button>
       <p class="count" id="audioOut" style="margin-top:6px;"></p>
+      <label class="small" style="margin-top:14px; display:block;">🎨 Admin: ritratti condivisi</label>
+      <p class="count" style="margin-top:4px;">Genera una volta sola TUTTI i ritratti fissi (5 personaggi + 64 boss + 100 gatti del Sentiero) e li carica su Storage (bucket <code>portraits</code>). Ripartibile: salta quelli già presenti. Poi tutti gli utenti li scaricano già pronti, senza costi.</p>
+      <button class="btn secondary" onclick="genPortraits()" id="portGenBtn" style="margin-top:8px;">🎨 Genera ritratti condivisi</button>
     </div>
     <label class="small" style="margin-top:18px;">Audio e presentazioni</label>
     <button class="btn secondary" data-snd onclick="toggleSound(this)" style="margin-top:4px;">🔊 Suoni: ON</button>
@@ -2147,31 +2150,7 @@ function estStrengthRow(row){
   return sv.reduce((x, y) => x + (y || 0), 0) + hp * 0.6 + (lvl - 1) * 12 + card.atkPower * 2 + (POWER_EST[pi] || 0);
 }
 /* ---------- Zio Rocco, il Cornerman: analisi pre-match a regole (zero costi) ---------- */
-async function initCornerman(){
-  try {
-    if (localStorage.getItem('catcards_corv') !== '1'){ await idbSet('corner', null); localStorage.setItem('catcards_corv', '1'); }
-    let img = await idbGet('corner');
-    if (!img){
-      const key = apiKeyEl.value.trim();
-      if (!key) return;
-      const models = await listImageModels(key).catch(() => []);
-      const model = models[0] || GEMINI_MODELS[0];
-      const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent?key=' + encodeURIComponent(key), {
-        method: 'POST', headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({contents: [{parts: [{text: 'Comic book style portrait of a CAT (full feline face clearly visible): a grizzled old boxing cornerman cat like a veteran trainer from boxing movies, one torn ear, scar over one eye, flat wool cap, white towel over his shoulder, gruff wise squinting expression, chewed toothpick in his mouth. Tough love mentor vibes. Bold ink outlines, flat cel shading, warm colors, dark purple background. Square bust portrait.'}]}]})
-      });
-      if (!r.ok) return;
-      const j = await r.json();
-      const parts = (((j.candidates || [])[0] || {}).content || {}).parts || [];
-      const p = parts.find(x => x.inlineData && x.inlineData.data);
-      if (!p) return;
-      img = 'data:' + (p.inlineData.mimeType || 'image/png') + ';base64,' + p.inlineData.data;
-      await idbSet('corner', img);
-    }
-    const el = document.getElementById('cornerImg');
-    if (el && img){ el.src = img; el.style.display = 'block'; const em = document.getElementById('cornerEmoji'); if (em) em.style.display = 'none'; }
-  } catch(e){}
-}
+function initCornerman(){ loadAdvisor('cornerImg', 'cornerEmoji', 'rocco'); }
 function CORNER_STATS_F(){ return statIcons(); }
 function statsOf(e){
   return (Array.isArray(e.statsv) && e.statsv.length === 6) ? e.statsv
@@ -3650,7 +3629,7 @@ async function migrateMelodies(){
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
 /* ---------- versione e aggiornamento automatico ---------- */
-const APP_VERSION = '17.9';   // unica fonte di verità: aggiorna anche version.txt a ogni release
+const APP_VERSION = '18.0';   // unica fonte di verità: aggiorna anche version.txt a ogni release
 try { document.getElementById('appVer').textContent = 'v' + APP_VERSION; } catch(e){}
 function verNewer(a, b){   // a più recente di b? confronto numerico 11.10 > 11.9
   const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);
@@ -4203,32 +4182,7 @@ function openMercato(){
   initAuctioneer();
   loadAuctions();
 }
-async function initTrader(){
-  // ritratto di Bazar il Mercante: generato UNA volta con l'AI, poi salvato
-  try {
-    if (localStorage.getItem('catcards_trdv') !== '1'){ await idbSet('trader', null); localStorage.setItem('catcards_trdv', '1'); }
-    let img = await idbGet('trader');
-    if (!img){
-      const key = apiKeyEl.value.trim();
-      if (!key) return;
-      const models = await listImageModels(key).catch(() => []);
-      const model = models[0] || GEMINI_MODELS[0];
-      const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent?key=' + encodeURIComponent(key), {
-        method: 'POST', headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({contents: [{parts: [{text: 'Comic book style portrait of a CAT (full feline face clearly visible): a sly charming bazaar-merchant cat with a cunning wide grin, a golden hoop earring, a small tilted red fez, holding shiny gold coins in his paw, colorful oriental market stall behind him. Slippery salesman vibes. Bold ink outlines, flat cel shading, warm colors, dark purple background. Square bust portrait.'}]}]})
-      });
-      if (!r.ok) return;
-      const j = await r.json();
-      const parts = (((j.candidates || [])[0] || {}).content || {}).parts || [];
-      const p = parts.find(x => x.inlineData && x.inlineData.data);
-      if (!p) return;
-      img = 'data:' + (p.inlineData.mimeType || 'image/png') + ';base64,' + p.inlineData.data;
-      await idbSet('trader', img);
-    }
-    const el = document.getElementById('trdImg');
-    if (el && img){ el.src = img; el.style.display = 'block'; const em = document.getElementById('trdEmoji'); if (em) em.style.display = 'none'; }
-  } catch(e){}
-}
+function initTrader(){ loadAdvisor('trdImg', 'trdEmoji', 'baratto'); }
 function traderAdvice(){
   const say = t => { const el = document.getElementById('trdSay'); if (el) el.textContent = t; };
   const open = TC('trader_open');
@@ -4519,31 +4473,7 @@ function incantoComment(amount, bids){
   incantoSay(pool[Math.floor(Math.random() * pool.length)]);
   try { sfx('charm'); } catch(e){}
 }
-async function initAuctioneer(){
-  try {
-    if (localStorage.getItem('catcards_incv') !== '1'){ await idbSet('auctioneer', null); localStorage.setItem('catcards_incv', '1'); }
-    let img = await idbGet('auctioneer');
-    if (!img){
-      const key = apiKeyEl.value.trim();
-      if (!key) return;
-      const models = await listImageModels(key).catch(() => []);
-      const model = models[0] || GEMINI_MODELS[0];
-      const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent?key=' + encodeURIComponent(key), {
-        method: 'POST', headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({contents: [{parts: [{text: 'Comic book style portrait of a CAT (full feline face clearly visible): an energetic auctioneer cat mid-shout, one paw raised holding a wooden auction gavel, monocle, elegant bow tie, wide theatrical grin, excited wide eyes. Lively showman vibes. Bold ink outlines, flat cel shading, warm colors, dark purple background. Square bust portrait.'}]}]})
-      });
-      if (!r.ok) return;
-      const j = await r.json();
-      const parts = (((j.candidates || [])[0] || {}).content || {}).parts || [];
-      const p = parts.find(x => x.inlineData && x.inlineData.data);
-      if (!p) return;
-      img = 'data:' + (p.inlineData.mimeType || 'image/png') + ';base64,' + p.inlineData.data;
-      await idbSet('auctioneer', img);
-    }
-    const el = document.getElementById('incImg');
-    if (el && img){ el.src = img; el.style.display = 'block'; const em = document.getElementById('incEmoji'); if (em) em.style.display = 'none'; }
-  } catch(e){}
-}
+function initAuctioneer(){ loadAdvisor('incImg', 'incEmoji', 'incanto'); }
 let _aucSelSerial = null;
 function openCreateAuction(){
   if (!session || !session.access_token){ alert(TSEC('mkt', 'mkt_login_first')); return; }
@@ -5223,27 +5153,9 @@ function activeBosses(){
   return [BOSSES[Math.min(i, j)], BOSSES[Math.max(i, j)]];
 }
 async function bossPortrait(b){
-  let img = null;
-  try { img = await idbGet('boss_' + b.id); } catch(e){}
-  if (img) return img;
-  try {
-    const key = apiKeyEl.value.trim();
-    if (!key) return null;
-    const models = await listImageModels(key).catch(() => []);
-    const model = models[0] || GEMINI_MODELS[0];
-    const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent?key=' + encodeURIComponent(key), {
-      method: 'POST', headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({contents: [{parts: [{text: b.prompt}]}]})
-    });
-    if (!r.ok) return null;
-    const j = await r.json();
-    const parts = (((j.candidates || [])[0] || {}).content || {}).parts || [];
-    const p = parts.find(x => x.inlineData && x.inlineData.data);
-    if (!p) return null;
-    img = 'data:' + (p.inlineData.mimeType || 'image/png') + ';base64,' + p.inlineData.data;
-    await idbSet('boss_' + b.id, img);
-    return img;
-  } catch(e){ return null; }
+  // ritratto condiviso dal bucket pubblico: se c'è lo usiamo, altrimenti resta l'emoji (nessuna generazione per-utente)
+  const url = portraitUrl('boss', b.id);
+  return (await clipExists(url)) ? url : null;
 }
 function renderBosses(){
   const list = document.getElementById('bossList');
@@ -5329,8 +5241,9 @@ function showBossSheet(id){
     ? statIcons().map((k, j) => '<div style="display:flex; justify-content:space-between; font-size:.85rem; padding:2px 0;"><span>' + k + '</span><strong>' + b.statsv[j] + '</strong></div>').join('')
     : '<p class="count">' + TSEC('boss', 'bu_stats_unknown', {name: bossName(b.id)}) + '</p>';
   box.innerHTML =
-    (beaten && b._img ? '<img src="' + b._img + '" style="width:100%; border-radius:12px;">' :
-      '<div style="font-size:4rem; text-align:center; padding:20px;">' + (beaten ? b.em : '❓') + '</div>') +
+    (beaten
+      ? '<div style="position:relative; height:180px;"><div style="font-size:4rem; text-align:center; line-height:180px;">' + b.em + '</div><img src="' + portraitUrl('boss', b.id) + '" onerror="this.remove()" style="position:absolute; inset:0; margin:auto; max-width:100%; max-height:180px; border-radius:12px;"></div>'
+      : '<div style="font-size:4rem; text-align:center; padding:20px;">❓</div>') +
     '<h2 style="margin-top:8px;">' + (beaten ? bossName(b.id) : '??? ') + (beaten ? ' <span style="color:var(--muted); font-size:.85rem;">«' + bossNick(b.id) + '»</span>' : '') + '</h2>' +
     '<p class="count">Div.' + b.tier + ' · ' + divName(b.tier) + ' · ' + '☠️'.repeat(Math.min(b.tier, 5)) + (beaten ? ' · ' + TSEC('boss', 'bu_beaten_tag') : ' · ' + TSEC('boss', 'bu_never_tag')) + '</p>' +
     (beaten ? '<p style="font-size:.9rem; margin-top:6px; line-height:1.6; font-style:italic;">' + bossLore(b.id) + '</p>' +
@@ -5338,10 +5251,6 @@ function showBossSheet(id){
       '<div style="margin-top:8px;">' + statsHtml + '</div>'
       : '<p style="font-size:.9rem; margin-top:6px; line-height:1.6;">' + TSEC('boss', 'bu_mystery_desc', {div: divName(b.tier)}) + '</p>') +
     '<button class="btn secondary" onclick="document.getElementById(\'bossModal\').style.display=\'none\'">' + TSEC('boss', 'bu_close') + '</button>';
-  // recupera il ritratto salvato, se c'è, per mostrarlo grande
-  if (beaten && !b._img){
-    idbGet('boss_' + b.id).then(img => { if (img){ b._img = img; if (document.getElementById('bossModal').style.display === 'flex') showBossSheet(id); } }).catch(() => {});
-  }
   document.getElementById('bossModal').style.display = 'flex';
 }
 async function fightBoss(bi){
@@ -5549,7 +5458,8 @@ const SENTIERI = SENT_DATA.map(c => {
   const hp = Math.round(70 + stage * 1.4 + (guardian ? 25 : 0) + rng() * 20);
   const potere = Math.floor(rng() * POWERS.length);
   return {id: c.id, stage: stage, zone: c.z, em: c.e, serial: 'F9' + String(stage).padStart(6, '0'),
-    statsv: statsv, hp: hp, potere: potere, guardian: guardian};
+    statsv: statsv, hp: hp, potere: potere, guardian: guardian,
+    prompt: 'Comic book cartoon portrait of a CAT, full feline face clearly visible: ' + c.v + '. Bold ink outlines, flat cel shading, warm colors, dark purple background. Square bust portrait.'};
 });
 const SENT_BY_ID = {}; SENTIERI.forEach(s => { SENT_BY_ID[s.id] = s; });
 const SENT_MAX = SENTIERI.length;   // tappe disponibili ora
@@ -5557,6 +5467,80 @@ let sentProg = {}, sentAlbum = {};
 try { sentProg = JSON.parse(localStorage.getItem('catcards_sentprog') || '{}'); } catch(e){}
 try { sentAlbum = JSON.parse(localStorage.getItem('catcards_sentalbum') || '{}'); } catch(e){}
 function saveSent(){ try { localStorage.setItem('catcards_sentprog', JSON.stringify(sentProg)); localStorage.setItem('catcards_sentalbum', JSON.stringify(sentAlbum)); } catch(e){} }
+// ritratti CONDIVISI: stessa arte per tutti, servita dal bucket pubblico «portraits» su Storage.
+// prefix 'sent' per i gatti del sentiero, 'boss' per i boss. Se il ritratto non c'è ancora, il render mostra l'emoji.
+function portraitUrl(prefix, id){ return SUPA_URL + '/storage/v1/object/public/portraits/' + prefix + '_' + id + '.png'; }
+function sentImgUrl(id){ return portraitUrl('sent', id); }
+async function uploadPortrait(path, dataUrl){
+  try {
+    const blob = await (await fetch(dataUrl)).blob();
+    const r = await fetch(SUPA_URL + '/storage/v1/object/portraits/' + path, {
+      method: 'POST',
+      headers: {apikey: SUPA_KEY, Authorization: 'Bearer ' + session.access_token, 'Content-Type': 'image/png', 'x-upsert': 'true'},
+      body: blob
+    });
+    if (!r.ok){ let m = 'HTTP ' + r.status; try { const j = await r.json(); if (j.message) m = j.message.slice(0, 120); } catch(e2){} window._upErr = m; }
+    return r.ok;
+  } catch(e){ window._upErr = e.message; return false; }
+}
+// i 5 personaggi fissi: prompt per la generazione una-tantum (id → prefix 'char')
+const ADVISORS = [
+  {id: 'rocco', prompt: 'Comic book style portrait of a CAT (full feline face clearly visible): a grizzled old boxing cornerman cat like a veteran trainer from boxing movies, one torn ear, scar over one eye, flat wool cap, white towel over his shoulder, gruff wise squinting expression, chewed toothpick in his mouth. Tough love mentor vibes. Bold ink outlines, flat cel shading, warm colors, dark purple background. Square bust portrait.'},
+  {id: 'felini', prompt: 'Comic book style portrait of a CAT (full feline face clearly visible, no hat): a sleazy but elegant fight-manager cat with slicked-back grey fur, half-lidded cunning green eyes, oily wide grin with one gold fang, thin curled whiskers like a pencil mustache, pinstripe suit with silk pocket square and gold rings on his paw. Slimy charming villain vibes. Bold ink outlines, flat cel shading, warm colors, dark purple background. Square bust portrait.'},
+  {id: 'baffo', prompt: 'Cartoon portrait of a wise old grey cat gym coach: red headband, silver whistle around his neck, big mustache-like whiskers, one scarred ear, proud expression. Flat cel shading, bold outlines, warm colors, dark purple background. Square portrait, bust only.'},
+  {id: 'baratto', prompt: 'Comic book style portrait of a CAT (full feline face clearly visible): a sly charming bazaar-merchant cat with a cunning wide grin, a golden hoop earring, a small tilted red fez, holding shiny gold coins in his paw, colorful oriental market stall behind him. Slippery salesman vibes. Bold ink outlines, flat cel shading, warm colors, dark purple background. Square bust portrait.'},
+  {id: 'incanto', prompt: 'Comic book style portrait of a CAT (full feline face clearly visible): an energetic auctioneer cat mid-shout, one paw raised holding a wooden auction gavel, monocle, elegant bow tie, wide theatrical grin, excited wide eyes. Lively showman vibes. Bold ink outlines, flat cel shading, warm colors, dark purple background. Square bust portrait.'},
+];
+// carica un ritratto condiviso dentro un <img>; se non c'è ancora sullo Storage, resta l'emoji
+function loadAdvisor(imgId, emojiId, id){
+  const el = document.getElementById(imgId);
+  if (!el) return;
+  el.onload = () => { el.style.display = 'block'; const em = document.getElementById(emojiId); if (em) em.style.display = 'none'; };
+  el.onerror = () => {};
+  el.src = portraitUrl('char', id);
+}
+// genera un'immagine con l'AI e restituisce il dataURL (usato solo dal generatore admin)
+async function genImageData(prompt, key, model){
+  const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent?key=' + encodeURIComponent(key), {
+    method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({contents: [{parts: [{text: prompt}]}]})
+  });
+  if (!r.ok){ const t = await r.text().catch(() => ''); if (/RESOURCE_EXHAUSTED|quota/i.test(t)) throw new Error('QUOTA'); return null; }
+  const j = await r.json();
+  const parts = (((j.candidates || [])[0] || {}).content || {}).parts || [];
+  const p = parts.find(x => x.inlineData && x.inlineData.data);
+  return p ? ('data:' + (p.inlineData.mimeType || 'image/png') + ';base64,' + p.inlineData.data) : null;
+}
+// GENERATORE ADMIN una-tantum: crea e carica su Storage TUTTI i ritratti fissi (5 personaggi + 64 boss + 100 sentiero).
+// Ripartibile: salta quelli già presenti. Si ferma se finisce la quota giornaliera.
+async function genPortraits(){
+  const out = document.getElementById('botOut');
+  if (!session || session.email !== ADMIN_EMAIL){ if (out) out.textContent = '⚠️ Solo admin.'; return; }
+  const key = apiKeyEl.value.trim();
+  if (!key){ if (out) out.textContent = '⚠️ Manca la chiave Gemini in ⚙️ Opzioni.'; return; }
+  const models = await listImageModels(key).catch(() => []);
+  const model = models[0] || GEMINI_MODELS[0];
+  const jobs = ADVISORS.map(a => ({prefix: 'char', id: a.id, prompt: a.prompt}))
+    .concat(BOSSES.map(b => ({prefix: 'boss', id: b.id, prompt: b.prompt})))
+    .concat(SENTIERI.map(s => ({prefix: 'sent', id: s.id, prompt: s.prompt})));
+  let done = 0, made = 0, fail = 0;
+  for (const job of jobs){
+    done++;
+    const path = job.prefix + '_' + job.id + '.png';
+    const url = portraitUrl(job.prefix, job.id);
+    if (out) out.textContent = '🎨 Ritratti ' + done + '/' + jobs.length + ' · nuovi ' + made + ' · falliti ' + fail + ' — ' + job.prefix + '/' + job.id + '…';
+    if (await clipExists(url)) continue;   // già presente: salta
+    try {
+      const img = await genImageData(job.prompt, key, model);
+      if (img && await uploadPortrait(path, img)){ made++; _clipExists[url] = true; }
+      else fail++;
+    } catch(e){
+      if (e.message === 'QUOTA'){ if (out) out.textContent = '⏸️ Quota giornaliera esaurita a ' + done + '/' + jobs.length + '. Riprendi domani: riparte da dove eri (nuovi finora: ' + made + ').'; return; }
+      fail++;
+    }
+    await new Promise(r => setTimeout(r, 1200));   // pausa tra le chiamate
+  }
+  if (out) out.textContent = '✅ Ritratti completati: ' + made + ' nuovi, ' + fail + ' falliti su ' + jobs.length + '.';
+}
 function sentName(id){ return TSEC('sent', 'bn_' + id); }
 function sentNick(id){ return TSEC('sent', 'bk_' + id); }
 function sentLore(id){ return TSEC('sent', 'bl_' + id); }
@@ -5609,8 +5593,13 @@ function sentZoneBoard(z, cleared){
     else { fill = '#241f3a'; stroke = '#4a4468'; sw = 2; inner = '🔒'; label = '???'; }
     svg += '<g ' + (locked ? '' : 'style="cursor:pointer;" onclick="sentNode(' + s.stage + ')"') + '>';
     if (cur) svg += '<circle cx="' + x + '" cy="' + y + '" r="' + (r + 4) + '" fill="none" stroke="var(--accent)" stroke-width="2"><animate attributeName="r" values="' + (r + 3) + ';' + (r + 10) + ';' + (r + 3) + '" dur="1.5s" repeatCount="indefinite"/><animate attributeName="opacity" values="0.75;0;0.75" dur="1.5s" repeatCount="indefinite"/></circle>';
-    svg += '<circle cx="' + x + '" cy="' + y + '" r="' + r + '" fill="' + fill + '" stroke="' + stroke + '" stroke-width="' + sw + '"/>' +
-      '<text x="' + x + '" y="' + (y + (s.guardian ? 10 : 8)) + '" text-anchor="middle" font-size="' + (s.guardian ? 30 : 22) + '">' + inner + '</text>' +
+    svg += '<circle cx="' + x + '" cy="' + y + '" r="' + r + '" fill="' + fill + '" stroke="none"/>' +
+      '<text x="' + x + '" y="' + (y + (s.guardian ? 10 : 8)) + '" text-anchor="middle" font-size="' + (s.guardian ? 30 : 22) + '">' + inner + '</text>';
+    if (!locked){   // ritratto condiviso sopra l'emoji (se non c'è, l'immagine non si carica e resta l'emoji)
+      svg += '<clipPath id="cp_' + s.id + '"><circle cx="' + x + '" cy="' + y + '" r="' + r + '"/></clipPath>' +
+        '<image href="' + sentImgUrl(s.id) + '" x="' + (x - r) + '" y="' + (y - r) + '" width="' + (2 * r) + '" height="' + (2 * r) + '" clip-path="url(#cp_' + s.id + ')" preserveAspectRatio="xMidYMid slice"/>';
+    }
+    svg += '<circle cx="' + x + '" cy="' + y + '" r="' + r + '" fill="none" stroke="' + stroke + '" stroke-width="' + sw + '"/>' +
       '<text x="' + x + '" y="' + (y - r - 6) + '" text-anchor="middle" font-size="10" fill="var(--muted)">' + s.stage + '</text>' +
       '<text x="' + x + '" y="' + (y + r + 15) + '" text-anchor="middle" font-size="11" font-weight="600" fill="' + (locked ? '#6a6488' : '#e8e4ff') + '">' + sentEsc(label) + '</text>' +
       '</g>';
@@ -5651,7 +5640,10 @@ function showSentPreview(id){
     } catch(e){}
   }
   body.innerHTML =
-    '<div style="font-size:4rem; text-align:center; padding:10px;">' + s.em + '</div>' +
+    '<div style="position:relative; width:124px; height:124px; margin:8px auto;">' +
+      '<div style="font-size:4rem; text-align:center; line-height:124px;">' + s.em + '</div>' +
+      '<img src="' + sentImgUrl(id) + '" onerror="this.remove()" style="position:absolute; inset:0; width:124px; height:124px; object-fit:cover; border-radius:12px;">' +
+    '</div>' +
     '<h2 style="margin-top:2px;">' + (s.guardian ? '👑 ' : '') + sentName(id) + ' <span style="color:var(--muted); font-size:.85rem;">«' + sentNick(id) + '»</span></h2>' +
     '<p class="count">' + SENT_ZONES.find(x => x.z === s.zone).e + ' ' + sentZoneName(s.zone) + ' · ' + TSEC('sent', 'stage') + ' ' + s.stage + '</p>' +
     '<p style="font-size:.9rem; margin-top:6px; line-height:1.6; font-style:italic;">' + sentLore(id) + '</p>' +
@@ -5670,8 +5662,10 @@ async function fightSentiero(stage){
   if (!mine){ alert(TSEC('sent', 'pick_card')); return; }
   const cleared = sentProg[mine.serial] || 0;
   if (stage > cleared + 1) return;
+  const purl = sentImgUrl(s.id);
+  const oppImg = (await clipExists(purl)) ? purl : null;   // ritratto condiviso se presente, altrimenti niente
   const oppEntry = {serial: s.serial, sid: s.id, name: sentName(s.id), nick: sentNick(s.id), potere: s.potere,
-    statsv: s.statsv, hp: s.hp, dna: null, strum: null, annuncio: sentAnn(s), img: null, em: s.em};
+    statsv: s.statsv, hp: s.hp, dna: null, strum: null, annuncio: sentAnn(s), img: oppImg, em: s.em};
   window._mineSerial = mine.serial; window._bossId = null; currentBet = null;
   try { loadInstrument(cardInstr(mine)); } catch(e){}
   bracketState = null;
@@ -5710,9 +5704,11 @@ function renderAlbum(){
       '<div style="display:grid; grid-template-columns:repeat(5,1fr); gap:6px; margin-top:6px;">';
     SENTIERI.filter(s => s.zone === z).forEach(s => {
       const got = !!sentAlbum[s.id];
-      html += '<div style="text-align:center; padding:8px 2px; border:1px solid ' + (got ? 'var(--accent)' : '#363057') + '; border-radius:8px;' + (got ? '' : ' opacity:.5;') + '">' +
-        '<div style="font-size:1.5rem;">' + (got ? s.em : '❓') + '</div>' +
-        '<div style="font-size:.58rem; color:var(--muted); line-height:1.1; margin-top:2px;">' + (got ? sentName(s.id) : '???') + '</div></div>';
+      const fig = got
+        ? '<div style="position:relative; height:38px;"><div style="font-size:1.6rem; line-height:38px;">' + s.em + '</div><img src="' + sentImgUrl(s.id) + '" onerror="this.remove()" style="position:absolute; inset:0; margin:auto; width:38px; height:38px; object-fit:cover; border-radius:6px;"></div>'
+        : '<div style="font-size:1.6rem; height:38px; line-height:38px;">❓</div>';
+      html += '<div style="text-align:center; padding:6px 2px; border:1px solid ' + (got ? 'var(--accent)' : '#363057') + '; border-radius:8px;' + (got ? '' : ' opacity:.5;') + '">' +
+        fig + '<div style="font-size:.58rem; color:var(--muted); line-height:1.1; margin-top:2px;">' + (got ? sentName(s.id) : '???') + '</div></div>';
     });
     html += '</div>';
   });
@@ -6596,63 +6592,10 @@ function coachAdvice(){
   coachSayMsg(open[Math.floor(Math.random() * open.length)] + parts.join(' '));
   sfx('charm');
 }
-async function initGym(){
+function initGym(){
   renderGym();
-  // ritratto del Coach: generato UNA volta sola con l'AI, poi salvato per sempre
-  try {
-    let img = await idbGet('coach');
-    if (!img){
-      const key = apiKeyEl.value.trim();
-      if (!key) return;
-      const models = await listImageModels(key).catch(() => []);
-      const model = models[0] || GEMINI_MODELS[0];
-      const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent?key=' + encodeURIComponent(key), {
-        method: 'POST', headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({contents: [{parts: [{text: 'Cartoon portrait of a wise old grey cat gym coach: red headband, silver whistle around his neck, big mustache-like whiskers, one scarred ear, proud expression. Flat cel shading, bold outlines, warm colors, dark purple background. Square portrait, bust only.'}]}]})
-      });
-      if (!r.ok) return;
-      const j = await r.json();
-      const parts = (((j.candidates || [])[0] || {}).content || {}).parts || [];
-      const p = parts.find(x => x.inlineData && x.inlineData.data);
-      if (!p) return;
-      img = 'data:' + (p.inlineData.mimeType || 'image/png') + ';base64,' + p.inlineData.data;
-      await idbSet('coach', img);
-    }
-    const el = document.getElementById('coachImg');
-    if (el && img){
-      el.src = img;
-      el.style.display = 'block';
-      document.getElementById('coachEmoji').style.display = 'none';
-    }
-  } catch(e){}
-  // ritratto del Manager: anche lui una tantum (v2: gatto viscido fumettoso, non un cappello!)
-  try {
-    try { if (localStorage.getItem('catcards_mgrv') !== '2'){ await idbSet('manager', null); localStorage.setItem('catcards_mgrv', '2'); } } catch(e2){}
-    let mimg = await idbGet('manager');
-    if (!mimg){
-      const key = apiKeyEl.value.trim();
-      if (!key) return;
-      const models = await listImageModels(key).catch(() => []);
-      const model = models[0] || GEMINI_MODELS[0];
-      const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent?key=' + encodeURIComponent(key), {
-        method: 'POST', headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({contents: [{parts: [{text: 'Comic book style portrait of a CAT (full feline face clearly visible, no hat): a sleazy but elegant fight-manager cat with slicked-back grey fur, half-lidded cunning green eyes, oily wide grin with one gold fang, thin curled whiskers like a pencil mustache, pinstripe suit with silk pocket square and gold rings on his paw. Slimy charming villain vibes. Bold ink outlines, flat cel shading, warm colors, dark purple background. Square bust portrait.'}]}]})
-      });
-      if (!r.ok) return;
-      const j = await r.json();
-      const parts = (((j.candidates || [])[0] || {}).content || {}).parts || [];
-      const p = parts.find(x => x.inlineData && x.inlineData.data);
-      if (!p) return;
-      mimg = 'data:' + (p.inlineData.mimeType || 'image/png') + ';base64,' + p.inlineData.data;
-      await idbSet('manager', mimg);
-    }
-    const mel = document.getElementById('mgrImg');
-    if (mel && mimg){
-      mel.src = mimg;
-      mel.style.display = 'block';
-      document.getElementById('mgrEmoji').style.display = 'none';
-    }
-  } catch(e){}
+  loadAdvisor('coachImg', 'coachEmoji', 'baffo');   // Coach Baffo (ritratto condiviso)
+  loadAdvisor('mgrImg', 'mgrEmoji', 'felini');       // Mister Felini (ritratto condiviso)
 }
 
 /* ---------- sfida dal vivo via QR ---------- */
