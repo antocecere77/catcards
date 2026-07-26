@@ -15,11 +15,11 @@
 <script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs@master/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="lang-it.js?v=18.7"></script>
-<script src="lang-en.js?v=18.7"></script>
-<script src="lang-fr.js?v=18.7"></script>
-<script src="lang-es.js?v=18.7"></script>
-<script src="lang-de.js?v=18.7"></script>
+<script src="lang-it.js?v=18.8"></script>
+<script src="lang-en.js?v=18.8"></script>
+<script src="lang-fr.js?v=18.8"></script>
+<script src="lang-es.js?v=18.8"></script>
+<script src="lang-de.js?v=18.8"></script>
 <style>
   :root{
     --bg:#14121f; --panel:#1e1b2e; --panel2:#282440;
@@ -1369,7 +1369,7 @@ function renderCollection(){
     del.className = 'del'; del.textContent = '🗑'; del.title = 'Elimina ' + c.name;
     del.onclick = (ev) => {
       ev.stopPropagation();
-      if (confirm('Eliminare la carta di ' + c.name + '? Verranno cancellate anche le sue statistiche di combattimento.')){
+      if (confirm(TSEC('msg', 'del_card_confirm', {name: c.name}))){
         collection.splice(i, 1);
         purgeStats(c.serial);
         persistColl(); renderCollection();
@@ -1427,7 +1427,7 @@ function setNick(i){
   document.getElementById('worldModal').style.display = 'none';
   openCardModal(modalIndex);
   if (myPublished.has(c.serial) && session && session.access_token) republishOne(c.serial);   // il mondo vede il nuovo soprannome
-  toast('🥊 ' + c.name + ' ora è «' + nickOf(c) + '»');
+  toast(TSEC('msg', 'nick_set', {name: c.name, nick: nickOf(c)}));
 }
 function closeModal(){ document.getElementById('modal').style.display = 'none'; }
 function stepCard(d){
@@ -1743,8 +1743,8 @@ async function toggleRetire(serial, retire){
 async function retireCard(){
   if (modalIndex < 0) return;
   const c = collection[modalIndex];
-  if (!session || !session.access_token){ alert('Per ritirare una carta dal mondo devi prima accedere (scheda 🌍 Mondo).'); return; }
-  if (!confirm('Ritirare ' + c.name + ' dall\'Arena Mondiale? Resterà in classifica con il suo record come «ritirata», ma nessuno potrà più sfidarla. (Ripubblicandola tornerà in attività.)')) return;
+  if (!session || !session.access_token){ alert(TSEC('msg', 'retire_login')); return; }
+  if (!confirm(TSEC('msg', 'retire_confirm', {name: c.name}))) return;
   await refreshSessionIfNeeded();
   try {
     const r = await fetch(SUPA_URL + '/rest/v1/cards?serial=eq.' + encodeURIComponent(c.serial), {
@@ -1752,14 +1752,14 @@ async function retireCard(){
       body: JSON.stringify({retired: true})
     });
     const rows = r.ok ? await r.json() : [];
-    if (!r.ok) alert('Errore: HTTP ' + r.status);
-    else if (!rows.length) alert('Questa carta non risulta pubblicata (o non è tua).');
-    else alert('🚪 ' + c.name + ' si è ritirata dal mondo con onore. Il suo record resta in classifica.');
-  } catch(err){ alert('Errore di rete: ' + err.message); }
+    if (!r.ok) alert(TSEC('msg', 'err_http', {code: r.status}));
+    else if (!rows.length) alert(TSEC('msg', 'card_not_pub'));
+    else alert(TSEC('msg', 'retired_ok', {name: c.name}));
+  } catch(err){ alert(TSEC('msg', 'err_net', {m: err.message})); }
 }
 function deleteSaved(){
   if (modalIndex < 0) return;
-  if (!confirm('Eliminare la carta di ' + collection[modalIndex].name + '? Verranno cancellate anche le sue statistiche di combattimento.')) return;
+  if (!confirm(TSEC('msg', 'del_card_confirm', {name: collection[modalIndex].name}))) return;
   const sn = collection[modalIndex].serial;
   collection.splice(modalIndex, 1);
   purgeStats(sn);
@@ -1851,7 +1851,7 @@ async function copyChallenge(){
   const code = 'CATCARD:' + btoa(unescape(encodeURIComponent(JSON.stringify(
     {s: c.serial, n: c.name, p: c.potere, v: c.statsv || null, h: c.hp || null, r: c.rarity || null, i: thumb}
   ))));
-  const done = () => alert('Codice copiato! Invialo a un amico (es. su WhatsApp): lo incollerà nella sua app per sfidare ' + c.name + '. Nota: il codice è lungo perché contiene anche la foto.');
+  const done = () => alert(TSEC('msg', 'code_copied', {name: c.name}));
   if (navigator.clipboard && navigator.clipboard.writeText)
     navigator.clipboard.writeText(code).then(done).catch(() => prompt('Copia questo codice:', code));
   else prompt('Copia questo codice:', code);
@@ -2576,10 +2576,10 @@ async function genGlobalAudio(){
       if (/quota|RESOURCE_EXHAUSTED|exhausted|429/i.test(lastErr)){
         if (out) out.textContent = '⛔ ' + lang.toUpperCase() + ': quota giornaliera Gemini esaurita. ✅ ' + ok + ' fatte finora. Riprendi domani: continua da dove eri.';
         if (btn) btn.disabled = false;
-        alert('⛔ Quota giornaliera di Gemini esaurita.\n\nLe clip già fatte sono salvate. Riprendi domani (la quota si azzera) e completerà solo le mancanti.');
+        alert(TSEC('msg', 'audio_quota'));
         return;
       }
-      if (fail === 1) alert('🎙️ Errore audio (' + lang.toUpperCase() + '): ' + lastErr);
+      if (fail === 1) alert(TSEC('msg', 'audio_err', {lang: lang.toUpperCase(), err: lastErr}));
     }
     await new Promise(r => setTimeout(r, 550));   // ritmo più gentile per non sforare i limiti
   }
@@ -2934,7 +2934,7 @@ async function startBattle(){
   const eb = getEntry(document.getElementById('selB').value);
   if (!ea || !eb) return;
   if (ea.serial === eb.serial){
-    alert('Un gatto non può combattere contro sé stesso! Scegli due carte diverse.');
+    alert(TSEC('msg', 'same_cat'));
     return;
   }
   const restA = coolLeft(ea), restB = coolLeft(eb);
@@ -3237,7 +3237,7 @@ function importBackup(ev){
     try {
       const d = JSON.parse(rd.result);
       if (!Array.isArray(d.collection)) throw 0;
-      if (!confirm('Importare il backup? Sostituirà collezione, rivali e statistiche attuali (' + d.collection.length + ' carte nel backup).')) return;
+      if (!confirm(TSEC('msg', 'backup_confirm', {n: d.collection.length}))) return;
       collection = d.collection;
       rivals = Array.isArray(d.rivals) ? d.rivals : [];
       battleStats = (d.stats && typeof d.stats === 'object') ? d.stats : {};
@@ -3245,7 +3245,7 @@ function importBackup(ev){
       try { localStorage.setItem('catcards_stats', JSON.stringify(battleStats)); } catch(e){}
       renderCollection(); renderStats();
       alert('Backup importato: ' + collection.length + ' carte.');
-    } catch(e){ alert('File di backup non valido.'); }
+    } catch(e){ alert(TSEC('msg', 'backup_invalid')); }
   };
   rd.readAsText(f);
   ev.target.value = '';
@@ -3261,7 +3261,7 @@ async function shareImage(src, name){
     if (navigator.canShare && navigator.canShare({files: [file]})){
       await navigator.share({files: [file], title: 'CatCards', text: 'La carta di ' + name + '! 🐱⚔️'});
     } else {
-      alert('La condivisione diretta non è supportata da questo browser: usa «Scarica» e allega l\'immagine.');
+      alert(TSEC('msg', 'share_unsupported'));
     }
   } catch(e){}
 }
@@ -3639,7 +3639,7 @@ async function migrateMelodies(){
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
 /* ---------- versione e aggiornamento automatico ---------- */
-const APP_VERSION = '18.7';   // unica fonte di verità: aggiorna anche version.txt a ogni release
+const APP_VERSION = '18.8';   // unica fonte di verità: aggiorna anche version.txt a ogni release
 try { document.getElementById('appVer').textContent = 'v' + APP_VERSION; } catch(e){}
 function verNewer(a, b){   // a più recente di b? confronto numerico 11.10 > 11.9
   const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);
@@ -3999,7 +3999,7 @@ async function applyOwnerName(){
       body: JSON.stringify({owner: name})
     });
     if (!r.ok){ alert('Cambio nome fallito: HTTP ' + r.status); return; }
-  } catch(err){ alert('Errore di rete: ' + err.message); return; }
+  } catch(err){ alert(TSEC('msg', 'err_net', {m: err.message})); return; }
   alert('✅ Ora tutte le tue carte nel mondo giocano come «' + name + '».');
   loadMyWorldCards();
 }
@@ -4032,7 +4032,7 @@ async function republishOne(serial){
   if (!session || !session.access_token) return;
   await refreshSessionIfNeeded();
   const e = collection.find(c => c.serial === serial);
-  if (!e){ alert('Questa carta non è più nella tua collezione locale.'); return; }
+  if (!e){ alert(TSEC('msg', 'card_gone_local')); return; }
   const owner = playerNameEl.value.trim() || 'anonimo';
   try {
     const row = await makeCardRow(e, owner);
@@ -4041,7 +4041,7 @@ async function republishOne(serial){
       body: JSON.stringify([row])
     });
     if (!r.ok) alert('Aggiornamento fallito: HTTP ' + r.status);
-  } catch(err){ alert('Errore di rete: ' + err.message); }
+  } catch(err){ alert(TSEC('msg', 'err_net', {m: err.message})); }
   loadMyWorldCards();
 }
 async function publishCards(){
@@ -4148,7 +4148,7 @@ function matchToast(p){
     if (mine[m.winner_serial]){
       toast('🏆 ' + m.winner_name + ' ha difeso l\'onore: battuto ' + m.loser_name + ' di ' + (m.loser_owner || '?') + '!');
     } else {
-      toast('💥 ' + m.loser_name + ' è stata battuta da ' + m.winner_name + ' di ' + (m.winner_owner || '?') + ' — ora riposa 😴');
+      toast(TSEC('msg', 'news_beaten', {loser: m.loser_name, winner: m.winner_name, by: TSEC('world', 'w_by'), owner: (m.winner_owner || '?')}));
     }
     try { sfx('bell'); } catch(e){}
   } catch(e){}
@@ -4524,7 +4524,7 @@ async function confirmCreateAuction(){
     if (!r.ok){ const t = await r.text(); alert(TSEC('mkt', 'mkt_auc_fail', {t: t.slice(0, 140)})); return; }
     toast(TSEC('mkt', 'mkt_auc_ok'));
     loadMyWorldCards(); loadAuctions();
-  } catch(e){ alert('Errore di rete: ' + e.message); }
+  } catch(e){ alert(TSEC('msg', 'err_net', {m: e.message})); }
 }
 async function closeDueAuctions(){
   try { await fetch(SUPA_URL + '/rest/v1/rpc/close_due_auctions', {method: 'POST', headers: supaHeaders(), body: '{}'}); } catch(e){}
@@ -4743,11 +4743,11 @@ function showWorldCard(i){
 }
 async function fightWorld(i){
   if (battleOn) return;
-  if (!session || !session.access_token){ alert('Accedi prima (in cima alla scheda Mondo) per sfidare online.'); return; }
+  if (!session || !session.access_token){ alert(TSEC('msg', 'world_login')); return; }
   await refreshSessionIfNeeded();
   const remote = worldCards[i];
   if (remote && remote.rest_until && new Date(remote.rest_until).getTime() > Date.now()){
-    alert('😴 ' + remote.name + ' sta riposando: riprova tra ' + Math.ceil((new Date(remote.rest_until).getTime() - Date.now()) / 60000) + ' minuti.');
+    alert(TSEC('msg', 'opp_resting', {name: remote.name, min: Math.ceil((new Date(remote.rest_until).getTime() - Date.now()) / 60000)}));
     return;
   }
   // vincolo ranking: puoi sfidare solo entro ±5 posizioni
@@ -4757,7 +4757,7 @@ async function fightWorld(i){
     const rMine = my2 ? rankOf(my2.serial) : null;
     const rOpp = rankOf(remote.serial);
     if (rMine != null && rOpp != null && Math.abs(rOpp - rMine) > 5){
-      alert('🔒 Fuori portata: ' + remote.name + ' è #' + rOpp + ', tu sei #' + rMine + '. Puoi sfidare solo tra 5 posizioni sopra e 5 sotto: scala il ranking!');
+      alert(TSEC('msg', 'out_of_range', {name: remote.name, ro: rOpp, rm: rMine}));
       return;
     }
   }
@@ -4767,12 +4767,12 @@ async function fightWorld(i){
     if (rr.ok){
       const rows = await rr.json();
       if (rows.length && rows[0].frozen){
-        alert('🔄 ' + remote.name + ' è impegnata in uno scambio: non è sfidabile ora.');
+        alert(TSEC('msg', 'opp_trading', {name: remote.name}));
         loadWorldCards();
         return;
       }
       if (rows.length && rows[0].rest_until && new Date(rows[0].rest_until).getTime() > Date.now()){
-        alert('😴 ' + remote.name + ' è appena andato a riposo: riprova tra ' + Math.ceil((new Date(rows[0].rest_until).getTime() - Date.now()) / 60000) + ' minuti.');
+        alert(TSEC('msg', 'opp_resting', {name: remote.name, min: Math.ceil((new Date(rows[0].rest_until).getTime() - Date.now()) / 60000)}));
         loadWorldCards();
         return;
       }
@@ -4780,9 +4780,9 @@ async function fightWorld(i){
   } catch(e){}
   const v = document.getElementById('selMine').value;
   const mineEntry = collection[parseInt(v, 10)];
-  if (!mineEntry){ alert('Per sfidare online serve una TUA carta pubblicata e attiva: pubblicane una da «Scegli quali carte pubblicare».'); return; }
+  if (!mineEntry){ alert(TSEC('msg', 'need_pub_card')); return; }
   const restM = coolLeft(mineEntry);
-  if (restM > 0){ alert('😴 ' + mineEntry.name + ' sta riposando: torna tra ' + Math.ceil(restM / 60000) + ' minuti (un\'ora di recupero dopo ogni incontro o allenamento).'); return; }
+  if (restM > 0){ alert(TSEC('msg', 'opp_resting', {name: mineEntry.name, min: Math.ceil(restM / 60000)})); return; }
   const remoteEntry = {
     serial: remote.serial, name: remote.name, nick: remote.nick,
     potere: (typeof remote.potere === 'number') ? remote.potere : undefined,
@@ -5899,16 +5899,16 @@ function spendPoints(n){
   renderWallet();
 }
 function buyCatnip(){
-  if (window._buyCatnip){ alert('Vantaggio già acquistato: vale per il tuo prossimo incontro.'); return; }
-  if (points < 50){ alert('Servono 50 punti (ne hai ' + points + '). Vinci scommesse e medaglie!'); return; }
-  if (!confirm('Spendere 50 punti? La tua carta inizierà il prossimo incontro con l\'erba gatta (primo colpo raddoppiato).')) return;
+  if (window._buyCatnip){ alert(TSEC('msg', 'catnip_have')); return; }
+  if (points < 50){ alert(TSEC('msg', 'catnip_need', {pts: points})); return; }
+  if (!confirm(TSEC('msg', 'catnip_confirm'))) return;
   spendPoints(50);
   window._buyCatnip = true;
-  toast('🌿 Vantaggio pronto: vale per il tuo prossimo incontro!');
+  toast(TSEC('msg', 'catnip_ready'));
 }
 function regenPaid(){
-  if (points < 30){ alert('Rigenerare il disegno costa 30 punti (ne hai ' + points + ').'); return; }
-  if (!confirm('Spendere 30 punti per un nuovo disegno AI?')) return;
+  if (points < 30){ alert(TSEC('msg', 'regen_cost', {pts: points})); return; }
+  if (!confirm(TSEC('msg', 'regen_confirm'))) return;
   spendPoints(30);
   doGenerate();
 }
@@ -5932,9 +5932,9 @@ async function redrawEntry(e){
 async function buyFrame(){
   if (modalIndex < 0) return;
   const c = collection[modalIndex];
-  if (c.frame === 'oro'){ alert(c.name + ' sfoggia già la Cornice d\'Oro!'); return; }
-  if (points < 100){ alert('La Cornice d\'Oro costa 100 punti (ne hai ' + points + ').'); return; }
-  if (!confirm('Spendere 100 punti per la Cornice d\'Oro di ' + c.name + '? Resterà per sempre.')) return;
+  if (c.frame === 'oro'){ alert(TSEC('msg', 'frame_have', {name: c.name})); return; }
+  if (points < 100){ alert(TSEC('msg', 'frame_cost', {pts: points})); return; }
+  if (!confirm(TSEC('msg', 'frame_confirm', {name: c.name}))) return;
   spendPoints(100);
   c.frame = 'oro';
   await redrawEntry(c);
@@ -6573,13 +6573,13 @@ async function buyFood(id){
     coachSayMsg('📈 ' + e.name + ' ha esaurito il margine di allenamento: ogni livello (vinto combattendo) sblocca +3 punti di crescita.');
     return;
   }
-  if (points < f.cost){ toast('💰 Servono ' + f.cost + ' punti (ne hai ' + points + '): vincile nel mondo!'); return; }
+  if (points < f.cost){ toast(TSEC('msg', 'food_need', {cost: f.cost, pts: points})); return; }
   spendPoints(f.cost);
   const gid = peekFoodGame(f);   // il gioco di turno per questo cibo (non cambia se annulli)
   const res = await playSkillGame(gid);
   if (res === null){
     spendPoints(-f.cost);   // annullato prima di iniziare: rimborso completo, gioco invariato
-    toast('↩️ Allenamento annullato: ' + f.cost + ' punti restituiti.');
+    toast(TSEC('msg', 'train_cancel', {cost: f.cost}));
     return;
   }
   advanceFoodGame(f);   // giocato davvero: la prossima volta l'altro gioco
@@ -6703,10 +6703,10 @@ function qrPayload(e){
 function showQr(){
   const v = document.getElementById('qrCat').value;
   const e = getEntry(v);
-  if (!e){ alert('Scegli prima il tuo campione nel menu qui sopra.'); return; }
+  if (!e){ alert(TSEC('msg', 'pick_champ')); return; }
   const rest = coolLeft(e);
   if (rest > 0){ alert('😴 ' + e.name + ' sta riposando: torna tra ' + Math.ceil(rest / 60000) + ' minuti.'); return; }
-  if (typeof QRCode === 'undefined'){ alert('Generatore QR non caricato: ricarica la pagina con internet attivo.'); return; }
+  if (typeof QRCode === 'undefined'){ alert(TSEC('msg', 'qr_gen_fail')); return; }
   const holder = document.getElementById('qrHolder');
   holder.innerHTML = '';
   document.getElementById('qrName').textContent = '🐱 ' + e.name + ' attende sfidanti!';
@@ -6722,17 +6722,17 @@ function stopScan(){
   document.getElementById('scanModal').style.display = 'none';
 }
 async function scanQr(){
-  if (typeof jsQR === 'undefined'){ alert('Lettore QR non caricato: serve internet.'); return; }
+  if (typeof jsQR === 'undefined'){ alert(TSEC('msg', 'qr_read_fail')); return; }
   const v = document.getElementById('qrCat').value;
   const mine = getEntry(v);
-  if (!mine){ alert('Scegli prima il tuo campione nel menu qui sopra.'); return; }
+  if (!mine){ alert(TSEC('msg', 'pick_champ')); return; }
   const rest = coolLeft(mine);
   if (rest > 0){ alert('😴 ' + mine.name + ' sta riposando: torna tra ' + Math.ceil(rest / 60000) + ' minuti.'); return; }
   document.getElementById('scanModal').style.display = 'flex';
   const video = document.getElementById('scanVideo');
   try {
     scanStream = await navigator.mediaDevices.getUserMedia({video: {facingMode: 'environment'}});
-  } catch(err){ stopScan(); alert('Fotocamera non disponibile: ' + err.message); return; }
+  } catch(err){ stopScan(); alert(TSEC('msg', 'cam_fail', {m: err.message})); return; }
   video.srcObject = scanStream;
   try { await video.play(); } catch(e){}
   const cv = document.createElement('canvas');
@@ -6756,9 +6756,9 @@ async function scanQr(){
 }
 async function onQrFound(data, mine){
   let o;
-  try { o = JSON.parse(decodeURIComponent(escape(atob(data.slice(9))))); } catch(e){ alert('QR non valido.'); return; }
-  if (!o.s || !o.n){ alert('QR non valido.'); return; }
-  if (o.s === mine.serial){ alert('Hai inquadrato la tua stessa carta!'); return; }
+  try { o = JSON.parse(decodeURIComponent(escape(atob(data.slice(9))))); } catch(e){ alert(TSEC('msg', 'qr_invalid')); return; }
+  if (!o.s || !o.n){ alert(TSEC('msg', 'qr_invalid')); return; }
+  if (o.s === mine.serial){ alert(TSEC('msg', 'qr_self')); return; }
   const entry = {serial: o.s, name: o.n,
     potere: (typeof o.p === 'number') ? o.p : undefined,
     statsv: (Array.isArray(o.v) && o.v.length === 6) ? o.v : undefined,
