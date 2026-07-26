@@ -15,11 +15,11 @@
 <script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs@master/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="lang-it.js?v=17.6"></script>
-<script src="lang-en.js?v=17.6"></script>
-<script src="lang-fr.js?v=17.6"></script>
-<script src="lang-es.js?v=17.6"></script>
-<script src="lang-de.js?v=17.6"></script>
+<script src="lang-it.js?v=17.7"></script>
+<script src="lang-en.js?v=17.7"></script>
+<script src="lang-fr.js?v=17.7"></script>
+<script src="lang-es.js?v=17.7"></script>
+<script src="lang-de.js?v=17.7"></script>
 <style>
   :root{
     --bg:#14121f; --panel:#1e1b2e; --panel2:#282440;
@@ -3650,7 +3650,7 @@ async function migrateMelodies(){
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
 /* ---------- versione e aggiornamento automatico ---------- */
-const APP_VERSION = '17.6';   // unica fonte di verità: aggiorna anche version.txt a ogni release
+const APP_VERSION = '17.7';   // unica fonte di verità: aggiorna anche version.txt a ogni release
 try { document.getElementById('appVer').textContent = 'v' + APP_VERSION; } catch(e){}
 function verNewer(a, b){   // a più recente di b? confronto numerico 11.10 > 11.9
   const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);
@@ -5461,6 +5461,28 @@ const SENT_DATA = [
   {id: 's28', z: 3, e: '🦌', v: 'a silent stalking cat crouched low, a deer grazing in the mist'},
   {id: 's29', z: 3, e: '🐺', v: 'a wild grey cat howling like a wolf cub under the moon'},
   {id: 's30', z: 3, e: '🐻', v: 'a huge bear-sized brown cat, king of the forest, mighty and calm'},
+  // Zona 4 — La Montagna
+  {id: 's31', z: 4, e: '🥾', v: 'a cat trotting behind a hiker on a mountain trail, hopeful eyes'},
+  {id: 's32', z: 4, e: '🐐', v: 'a mischievous cat on a cliff edge with startled mountain goats'},
+  {id: 's33', z: 4, e: '🪨', v: 'a cat balancing gracefully on a precarious boulder, calm focus'},
+  {id: 's34', z: 4, e: '🦅', v: 'a fierce cat on a high crag staring down a soaring eagle'},
+  {id: 's35', z: 4, e: '⛺', v: 'a sneaky cat raiding a campsite tent at night, tiny lantern glow'},
+  {id: 's36', z: 4, e: '🏔️', v: 'a hardy cat sitting on a snowy alpine peak above the clouds'},
+  {id: 's37', z: 4, e: '🌬️', v: 'a cat with wildly windswept fur on a gusty ridge, squinting'},
+  {id: 's38', z: 4, e: '🧗', v: 'a determined cat climbing a sheer rock wall, claws dug in'},
+  {id: 's39', z: 4, e: '🔔', v: 'a mountain cat with a small bell on its collar, alert pose'},
+  {id: 's40', z: 4, e: '🐏', v: 'a mighty ram-horned grey cat, king of the mountain, iron paws'},
+  // Zona 5 — La Città
+  {id: 's41', z: 5, e: '🚕', v: 'a nimble cat weaving between city taxis, motion blur, cool look'},
+  {id: 's42', z: 5, e: '🏙️', v: 'a sleek cat prowling a city rooftop at dusk, skyline behind'},
+  {id: 's43', z: 5, e: '🍕', v: 'a cat dragging a slice from an open pizza box, guilty grin'},
+  {id: 's44', z: 5, e: '🚦', v: 'a polite cat sitting at a crosswalk under a traffic light'},
+  {id: 's45', z: 5, e: '🤸', v: 'an acrobatic cat mid-leap between two rooftops, dynamic pose'},
+  {id: 's46', z: 5, e: '💡', v: 'a relaxed cat lounging under a glowing neon sign at night'},
+  {id: 's47', z: 5, e: '🚇', v: 'a streetwise cat on a subway platform, train lights behind'},
+  {id: 's48', z: 5, e: '🎷', v: 'a cool alley cat beside a saxophone in a jazz-club backstreet'},
+  {id: 's49', z: 5, e: '🏢', v: 'a daring cat clinging near the top of a glass skyscraper'},
+  {id: 's50', z: 5, e: '🌃', v: 'a confident boss cat on a night skyline, city lights, in charge'},
 ];
 function sentSeed(stage){ return ((stage * 2654435761) + 12345) >>> 0; }
 const SENTIERI = SENT_DATA.map(c => {
