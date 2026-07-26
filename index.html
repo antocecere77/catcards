@@ -15,11 +15,11 @@
 <script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs@master/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="lang-it.js?v=17.5"></script>
-<script src="lang-en.js?v=17.5"></script>
-<script src="lang-fr.js?v=17.5"></script>
-<script src="lang-es.js?v=17.5"></script>
-<script src="lang-de.js?v=17.5"></script>
+<script src="lang-it.js?v=17.6"></script>
+<script src="lang-en.js?v=17.6"></script>
+<script src="lang-fr.js?v=17.6"></script>
+<script src="lang-es.js?v=17.6"></script>
+<script src="lang-de.js?v=17.6"></script>
 <style>
   :root{
     --bg:#14121f; --panel:#1e1b2e; --panel2:#282440;
@@ -3650,7 +3650,7 @@ async function migrateMelodies(){
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
 /* ---------- versione e aggiornamento automatico ---------- */
-const APP_VERSION = '17.5';   // unica fonte di verità: aggiorna anche version.txt a ogni release
+const APP_VERSION = '17.6';   // unica fonte di verità: aggiorna anche version.txt a ogni release
 try { document.getElementById('appVer').textContent = 'v' + APP_VERSION; } catch(e){}
 function verNewer(a, b){   // a più recente di b? confronto numerico 11.10 > 11.9
   const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);
@@ -5439,6 +5439,28 @@ const SENT_DATA = [
   {id: 's08', z: 1, e: '🐟', v: 'a lean fishmonger-market cat clutching a big silver fish'},
   {id: 's09', z: 1, e: '⚡', v: 'a fast striped cat mid-dash between alley walls, motion lines'},
   {id: 's10', z: 1, e: '👑', v: 'a battle-scarred one-eyed ginger tomcat, king of the alley, proud'},
+  // Zona 2 — I Giardini
+  {id: 's11', z: 2, e: '🦋', v: 'a playful cat mid-leap chasing a butterfly among flowers'},
+  {id: 's12', z: 2, e: '🌻', v: 'a lazy cat napping in a patch of sunflowers, sunbeam on its fur'},
+  {id: 's13', z: 2, e: '🐝', v: 'a cat with a swollen nose eyeing a bee, comically wary'},
+  {id: 's14', z: 2, e: '🐦', v: 'a focused cat crouched watching little birds, twitching tail'},
+  {id: 's15', z: 2, e: '🐸', v: 'a wet cat by a pond with a startled frog leaping away'},
+  {id: 's16', z: 2, e: '🌹', v: 'a proud cat among rose bushes with a small scratch on its ear'},
+  {id: 's17', z: 2, e: '🐌', v: 'a very calm cat watching a snail, half-lidded patient eyes'},
+  {id: 's18', z: 2, e: '💦', v: 'a soaked cat splashing in a garden fountain, droplets flying'},
+  {id: 's19', z: 2, e: '🦔', v: 'a friendly cat gently sitting beside a little hedgehog'},
+  {id: 's20', z: 2, e: '🌳', v: 'a wise old grey cat resting under a great willow tree, serene'},
+  // Zona 3 — La Foresta
+  {id: 's21', z: 3, e: '🍄', v: 'a forest cat sniffing a red mushroom among ferns'},
+  {id: 's22', z: 3, e: '🦉', v: 'a night forest cat staring down a wise owl on a branch'},
+  {id: 's23', z: 3, e: '🌰', v: 'a cat hoarding acorns, cheeks full, squirrel glaring nearby'},
+  {id: 's24', z: 3, e: '🦊', v: 'a sly reddish cat with a fox-like cunning grin in the woods'},
+  {id: 's25', z: 3, e: '🐗', v: 'a tough scarred cat guarding a forest clearing, fierce stance'},
+  {id: 's26', z: 3, e: '🕸️', v: 'a cat comically tangled in a big spiderweb, determined face'},
+  {id: 's27', z: 3, e: '🌲', v: 'a cat clinging high up a tall pine tree, looking down proudly'},
+  {id: 's28', z: 3, e: '🦌', v: 'a silent stalking cat crouched low, a deer grazing in the mist'},
+  {id: 's29', z: 3, e: '🐺', v: 'a wild grey cat howling like a wolf cub under the moon'},
+  {id: 's30', z: 3, e: '🐻', v: 'a huge bear-sized brown cat, king of the forest, mighty and calm'},
 ];
 function sentSeed(stage){ return ((stage * 2654435761) + 12345) >>> 0; }
 const SENTIERI = SENT_DATA.map(c => {
