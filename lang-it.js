@@ -882,7 +882,8 @@
     "w_catnip_need": "Servono 50 punti (ne hai {pts}).",
     "w_pick_champ_opt": "— scegli un campione —",
     "w_all_resting": "😴 tutti i gatti sono a riposo — torna più tardi",
-    "w_pub_first_opt": "— pubblica prima una carta —"
+    "w_pub_first_opt": "— pubblica prima una carta —",
+    "w_loading": "Carico la classifica…"
   },
   "mkt": {
     "mkt_desc": "Scambia o vendi le tue carte con gli altri giocatori. La carta cambia proprietario con tutto (Elo, vittorie, livello); mentre è in trattativa resta congelata e non combatte. Serve essere connessi e avere carte pubblicate nel Mondo.",

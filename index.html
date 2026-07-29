@@ -15,11 +15,11 @@
 <script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs@master/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="lang-it.js?v=19.0"></script>
-<script src="lang-en.js?v=19.0"></script>
-<script src="lang-fr.js?v=19.0"></script>
-<script src="lang-es.js?v=19.0"></script>
-<script src="lang-de.js?v=19.0"></script>
+<script src="lang-it.js?v=19.1"></script>
+<script src="lang-en.js?v=19.1"></script>
+<script src="lang-fr.js?v=19.1"></script>
+<script src="lang-es.js?v=19.1"></script>
+<script src="lang-de.js?v=19.1"></script>
 <style>
   :root{
     --bg:#14121f; --panel:#1e1b2e; --panel2:#282440;
@@ -1663,7 +1663,11 @@ async function loadMyWorldCards(){
     serverOwner = rows.length ? (rows[0].owner || '') : '';
     if (serverOwner && !playerNameEl.value.trim()) playerNameEl.value = serverOwner;
     updateNameSaveBtn();
-    if (!rows.length){ el.textContent = TSEC('world', 'w_none_pub'); return; }
+    if (!rows.length){ el.textContent = TSEC('world', 'w_none_pub'); el._sig = ''; return; }
+    // firma: ridisegno solo se cambia qualcosa di visibile (evita il flicker delle miniature a ogni evento del mondo)
+    const sig = LANG + '|' + rows.map(x => x.serial + ':' + (x.wins || 0) + ':' + (x.losses || 0) + ':' + (x.retired ? 1 : 0) + ':' + (rankOf(x.serial) || 0)).join(',');
+    if (el._sig === sig) return;
+    el._sig = sig;
     el.innerHTML = '';
     rows.forEach(x => {
       const div = document.createElement('div');
@@ -3684,7 +3688,7 @@ async function migrateMelodies(){
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
 /* ---------- versione e aggiornamento automatico ---------- */
-const APP_VERSION = '19.0';   // unica fonte di verità: aggiorna anche version.txt a ogni release
+const APP_VERSION = '19.1';   // unica fonte di verità: aggiorna anche version.txt a ogni release
 try { document.getElementById('appVer').textContent = 'v' + APP_VERSION; } catch(e){}
 function verNewer(a, b){   // a più recente di b? confronto numerico 11.10 > 11.9
   const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);
@@ -4670,23 +4674,33 @@ function renderWorldList(){
   const selV = document.getElementById('selMine').value;
   const myCard = collection[parseInt(selV, 10)];
   const myRank = myCard ? rankOf(myCard.serial) : null;
-  list.innerHTML = '';
   worldCards = [];
   if (!myCard){
     msg.textContent = '';
+    list.innerHTML = ''; list._sig = '';
     return;
   }
   if (myRank == null){
     msg.textContent = TSEC('world', 'w_not_ranked', {name: myCard.name});
+    list.innerHTML = ''; list._sig = '';
     return;
   }
   // solo gli sfidabili: entro ±5 posizioni dal mio rank, e non congelati in uno scambio
   worldCards = worldAll.filter(c => !mineSet[c.serial] && !c.frozen && Math.abs(rankOf(c.serial) - myRank) <= 5);
   if (!worldCards.length){
     msg.textContent = TSEC('world', 'w_no_challengers', {name: myCard.name, rk: myRank});
+    list.innerHTML = ''; list._sig = '';
     return;
   }
   msg.textContent = TSEC('world', 'w_you_rank', {name: myCard.name, rk: myRank});
+  // firma: se l'insieme sfidabile e i dati visibili non cambiano, non ridisegno (niente flicker sulle immagini)
+  const sig = LANG + '|' + myRank + '|' + worldCards.map(c => {
+    const rm = c.rest_until && new Date(c.rest_until).getTime() > Date.now() ? Math.ceil((new Date(c.rest_until).getTime() - Date.now()) / 60000) : 0;
+    return c.serial + ':' + rankOf(c.serial) + ':' + (c.elo || 1000) + ':' + (c.wins || 0) + ':' + (c.losses || 0) + ':' + (c.win_streak || 0) + ':' + (c.loss_streak || 0) + ':' + rm;
+  }).join(',');
+  if (list._sig === sig) return;
+  list._sig = sig;
+  list.innerHTML = '';
   worldCards.forEach((c, i) => {
     const rk = rankOf(c.serial);
     const resting = c.rest_until && new Date(c.rest_until).getTime() > Date.now();
@@ -4887,7 +4901,8 @@ let leaderN = 15;
 function moreLeader(){ leaderN = Math.min(200, leaderN + 25); loadLeaderboard(); }
 async function loadLeaderboard(){
   const el = document.getElementById('leaderList');
-  el.textContent = 'Carico la classifica…';
+  if (!el) return;
+  if (!el._sig) el.textContent = TSEC('world', 'w_loading');   // solo al primo caricamento, poi si aggiorna in-place senza svuotare
   try {
     const r = await fetch(SUPA_URL + '/rest/v1/cards?select=serial,name,owner,wins,losses,retired,elo,win_streak,loss_streak,best_streak,was_champion&order=elo.desc.nullslast,wins.desc&limit=' + leaderN, {headers: supaHeaders()});
     if (!r.ok) throw new Error('HTTP ' + r.status);
@@ -4901,7 +4916,7 @@ async function loadLeaderboard(){
       } catch(e){}
     }
     const rows = orderWithChampion(raw);
-    el.innerHTML = rows.map((x, i) => {
+    const html = (rows.map((x, i) => {
       const streak = x.win_streak > 1 ? ' 🔥' + x.win_streak : (x.loss_streak > 1 ? ' 🧊' + x.loss_streak : '');
       const isChamp = i === 0 && (!champSerial || x.serial === champSerial);
       return '<span style="cursor:pointer;" onclick="showCardBySerial(\'' + x.serial + '\')">' +
@@ -4910,11 +4925,14 @@ async function loadLeaderboard(){
         ' ' + TSEC('world', 'w_by') + ' ' + (x.owner || TSEC('world', 'w_anon')) +
         ' — ' + (x.elo || 1000) + ' pt · ' + TSEC('world', 'w_record_c', {w: (x.wins || 0), l: (x.losses || 0)}) + streak +
         (x.best_streak > 1 ? ' · ' + TSEC('world', 'w_maxstreak', {n: x.best_streak}) : '') + '</span>';
-    }).join('<br>') || TSEC('world', 'w_none_rank');
+    }).join('<br>') || TSEC('world', 'w_none_rank'));
+    // firma col LANG: aggiorno solo se il contenuto è davvero cambiato (niente sparizione/ricomparsa)
+    const sig = LANG + '|' + html;
+    if (el._sig !== sig){ el.innerHTML = html; el._sig = sig; }
     const more = document.getElementById('leaderMoreBtn');
     if (more) more.style.display = (rows.length >= leaderN && leaderN < 200) ? 'block' : 'none';   // finite le posizioni? niente bottone
   } catch(err){
-    el.textContent = '❌ Errore: ' + err.message;
+    if (!el._sig) el.textContent = '❌ Errore: ' + err.message;   // su errore di un refresh non cancello la classifica già mostrata
   }
 }
 

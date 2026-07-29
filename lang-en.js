@@ -882,7 +882,8 @@
     "w_catnip_need": "You need 50 points (you have {pts}).",
     "w_pick_champ_opt": "— pick a champion —",
     "w_all_resting": "😴 all your cats are resting — come back later",
-    "w_pub_first_opt": "— publish a card first —"
+    "w_pub_first_opt": "— publish a card first —",
+    "w_loading": "Loading the ranking…"
   },
   "mkt": {
     "mkt_desc": "Trade or sell your cards with other players. The card changes owner with everything (Elo, wins, level); while in negotiation it stays frozen and can't fight. You need to be signed in and have cards published in the World.",

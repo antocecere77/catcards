@@ -882,7 +882,8 @@
     "w_catnip_need": "Il faut 50 points (tu en as {pts}).",
     "w_pick_champ_opt": "— choisis un champion —",
     "w_all_resting": "😴 tous tes chats se reposent — reviens plus tard",
-    "w_pub_first_opt": "— publie d'abord une carte —"
+    "w_pub_first_opt": "— publie d'abord une carte —",
+    "w_loading": "Chargement du classement…"
   },
   "mkt": {
     "mkt_desc": "Échange ou vends tes cartes avec les autres joueurs. La carte change de propriétaire avec tout (Elo, victoires, niveau) ; pendant la négociation elle reste gelée et ne combat pas. Il faut être connecté et avoir des cartes publiées dans le Monde.",

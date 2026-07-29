@@ -882,7 +882,8 @@
     "w_catnip_need": "Hacen falta 50 puntos (tienes {pts}).",
     "w_pick_champ_opt": "— elige un campeón —",
     "w_all_resting": "😴 todos tus gatos descansan — vuelve más tarde",
-    "w_pub_first_opt": "— publica primero una carta —"
+    "w_pub_first_opt": "— publica primero una carta —",
+    "w_loading": "Cargando la clasificación…"
   },
   "mkt": {
     "mkt_desc": "Intercambia o vende tus cartas con otros jugadores. La carta cambia de dueño con todo (Elo, victorias, nivel); mientras está en negociación queda congelada y no combate. Hay que estar conectado y tener cartas publicadas en el Mundo.",

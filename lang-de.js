@@ -882,7 +882,8 @@
     "w_catnip_need": "Du brauchst 50 Punkte (du hast {pts}).",
     "w_pick_champ_opt": "— wähle einen Champion —",
     "w_all_resting": "😴 alle deine Katzen ruhen — komm später wieder",
-    "w_pub_first_opt": "— veröffentliche zuerst eine Karte —"
+    "w_pub_first_opt": "— veröffentliche zuerst eine Karte —",
+    "w_loading": "Rangliste wird geladen…"
   },
   "mkt": {
     "mkt_desc": "Tausche oder verkaufe deine Karten mit anderen Spielern. Die Karte wechselt mit allem den Besitzer (Elo, Siege, Level); während der Verhandlung bleibt sie eingefroren und kämpft nicht. Du musst angemeldet sein und Karten in der Welt veröffentlicht haben.",
