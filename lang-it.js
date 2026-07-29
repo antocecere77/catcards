@@ -1478,6 +1478,17 @@
     "pl_10": "Stasera si premia chi ha graffiato più forte.",
     "place_1": "Primo posto · Oro",
     "place_2": "Secondo posto · Argento",
-    "place_3": "Terzo posto · Bronzo"
+    "place_3": "Terzo posto · Bronzo",
+    "full_mvp": "Il gatto con più vittorie mondiali della settimana. Il migliore, semplicemente.",
+    "full_instancabile": "Chi ha disputato più incontri di tutti: mai fermo, sempre sul ring.",
+    "full_cecchino": "La miglior percentuale di vittorie (almeno 5 incontri): precisione, non fortuna.",
+    "full_dominatore": "La striscia di vittorie consecutive più lunga della settimana.",
+    "react_1": "Che zampata!",
+    "react_2": "Applausi, prego! 👏",
+    "react_3": "Da pelo d’oca!",
+    "react_4": "Un vero fenomeno!",
+    "react_5": "Miao che classe!",
+    "react_6": "Il pubblico impazzisce!",
+    "cer_podium": "🏆 E ora… il podio!"
   }
 };

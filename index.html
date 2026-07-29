@@ -15,11 +15,11 @@
 <script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs@master/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="lang-it.js?v=19.5"></script>
-<script src="lang-en.js?v=19.5"></script>
-<script src="lang-fr.js?v=19.5"></script>
-<script src="lang-es.js?v=19.5"></script>
-<script src="lang-de.js?v=19.5"></script>
+<script src="lang-it.js?v=19.8"></script>
+<script src="lang-en.js?v=19.8"></script>
+<script src="lang-fr.js?v=19.8"></script>
+<script src="lang-es.js?v=19.8"></script>
+<script src="lang-de.js?v=19.8"></script>
 <style>
   :root{
     --bg:#14121f; --panel:#1e1b2e; --panel2:#282440;
@@ -190,14 +190,16 @@
       <button class="tabBtn" data-tab="coll" onclick="showTab('coll')" id="collTabBtn"><span data-i18n="tab_carte">📚 Carte</span><span id="collCountTag"></span></button>
       <button class="tabBtn" data-tab="arena" onclick="showTab('arena')"><span data-i18n="tab_dojo">🥋 Dojo</span></button>
       <button class="tabBtn" data-tab="mondo" onclick="showTab('mondo')"><span data-i18n="tab_mondo">🌍 Mondo</span><span id="mondoDot" style="display:none; width:9px; height:9px; background:#e63946; border-radius:50%; margin-left:5px; vertical-align:middle;"></span></button>
-      <button class="tabBtn" data-tab="mercato" onclick="showTab('mercato')"><span data-i18n="tab_mercato">🔁 Mercato</span><span id="tradeTabDot" style="display:none; width:9px; height:9px; background:#e63946; border-radius:50%; margin-left:4px; vertical-align:middle;"></span></button>
     </div>
     <div style="display:flex; gap:8px;">
-      <button class="tabBtn" data-tab="award" onclick="showTab('award')"><span data-i18n="tab_award">🏆 Award</span></button>
+      <button class="tabBtn" data-tab="mercato" onclick="showTab('mercato')"><span data-i18n="tab_mercato">🔁 Mercato</span><span id="tradeTabDot" style="display:none; width:9px; height:9px; background:#e63946; border-radius:50%; margin-left:4px; vertical-align:middle;"></span></button>
       <button class="tabBtn" data-tab="sent" onclick="showTab('sent')"><span data-i18n="tab_sent">🗺️ Sentiero</span></button>
       <button class="tabBtn" data-tab="boss" onclick="showTab('boss')"><span data-i18n="tab_boss">🤖 Boss</span></button>
       <button class="tabBtn" data-tab="pal" onclick="showTab('pal')"><span data-i18n="tab_pal">🏋️ Palestra</span></button>
+    </div>
+    <div style="display:flex; gap:8px;">
       <button class="tabBtn" data-tab="med" onclick="showTab('med')"><span data-i18n="tab_med">🏅 Medagliere</span></button>
+      <button class="tabBtn" data-tab="award" onclick="showTab('award')"><span data-i18n="tab_award">🏆 Award</span></button>
       <button class="tabBtn" data-tab="reg" onclick="showTab('reg')"><span data-i18n="tab_reg">📖 Regole</span></button>
       <button class="tabBtn" data-tab="opz" onclick="showTab('opz')">⚙️</button>
     </div>
@@ -1603,7 +1605,7 @@ function awardBlocks(rows, order){
     if (!list.length) return;
     html += '<div style="margin-top:12px; padding:10px 12px; background:var(--panel2); border-radius:12px;">' +
       '<div style="font-weight:800; color:var(--accent);">' + (AW_ICON[k] || '🏆') + ' ' + TSEC('award', 'aw_' + k) + '</div>' +
-      '<div style="font-size:.7rem; color:var(--muted); margin-bottom:4px;">' + TSEC('award', 'd_' + k) + '</div>';
+      '<div style="font-size:.72rem; color:var(--muted); margin-bottom:4px; line-height:1.4;">' + TSEC('award', 'full_' + k) + '</div>';
     list.forEach(x => {
       html += '<div style="display:flex; align-items:center; gap:8px; padding:3px 0; cursor:pointer;" onclick="showCardBySerial(\'' + x.serial + '\')">' +
         '<span style="font-size:1.05rem;">' + awMedal(x.rank) + '</span>' +
@@ -1685,65 +1687,127 @@ async function runGala(rows, preview){
   try { const r = await fetch(SUPA_URL + '/rest/v1/cards?select=serial,img&serial=in.(' + serials.join(',') + ')', {headers: awH()}); if (r.ok) (await r.json()).forEach(c => imgs[c.serial] = c.img); } catch(e){}
   const by = {}; rows.forEach(x => { (by[x.award] = by[x.award] || []).push(x); });
   Object.values(by).forEach(l => l.sort((a, b) => a.rank - b.rank));
-  const scenes = [{type: 'say', text: TSEC('award', 'cer_open', {host: TSEC('award', 'host')}), fx: 'crowd'}];
+  const scenes = [{type: 'say', text: TSEC('award', 'cer_open', {host: TSEC('award', 'host')}), fx: 'crowd', icon: '🎩'}];
   ['instancabile', 'cecchino', 'dominatore', 'mvp'].forEach(k => {   // MVP per ultimo: gran finale
     const list = by[k]; if (!list || !list.length) return;
     scenes.push({type: 'title', award: k, quip: TSEC('award', 'cer_q_' + k), finale: k === 'mvp'});
     scenes.push({type: 'drum'});
-    list.forEach(w => {
+    const ordered = list.slice().sort((a, b) => b.rank - a.rank);   // dal bronzo verso l'oro: crescendo
+    ordered.forEach(w => {
+      if (w.rank === 1 && ordered.length > 1) scenes.push({type: 'drum'});   // rullo extra prima del vincitore
       const key = w.rank === 1 ? 'cer_gold' : w.rank === 2 ? 'cer_silver' : 'cer_bronze';
       scenes.push({type: 'reveal', w: w, img: imgs[w.serial], line: TSEC('award', key, {name: w.name || '?', owner: w.owner || '?'}), gold: w.rank === 1});
     });
+    if (list.length >= 2) scenes.push({type: 'podium', award: k, list: list});   // riepilogo podio a fine categoria
   });
-  scenes.push({type: 'say', text: TSEC('award', 'cer_close'), fx: 'win'});
+  scenes.push({type: 'say', text: TSEC('award', 'cer_close'), fx: 'win', icon: '🎉'});
   showGalaOverlay(scenes, preview);
 }
+const GALA_CSS = '@keyframes galaFall{to{transform:translateY(108vh) rotate(720deg)}}' +
+  '@keyframes galaPop{0%{transform:scale(.6);opacity:0}60%{transform:scale(1.08)}100%{transform:scale(1);opacity:1}}' +
+  '@keyframes galaBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}' +
+  '@keyframes galaShake{0%,100%{transform:translateX(0) rotate(0)}25%{transform:translateX(-4px) rotate(-8deg)}75%{transform:translateX(4px) rotate(8deg)}}' +
+  '@keyframes galaCurtL{to{transform:translateX(-102%)}}@keyframes galaCurtR{to{transform:translateX(102%)}}' +
+  '@keyframes galaCurtLc{from{transform:translateX(-102%)}to{transform:translateX(0)}}@keyframes galaCurtRc{from{transform:translateX(102%)}to{transform:translateX(0)}}' +
+  '@keyframes galaSpin{to{transform:rotate(360deg)}}' +
+  '@keyframes galaEnv{0%{transform:scale(.4);opacity:0}25%{transform:scale(1.05);opacity:1}65%{transform:scale(1.15) rotate(6deg);opacity:1}100%{transform:scale(1.7) rotate(-6deg);opacity:0}}' +
+  '@keyframes galaRevealIn{0%{transform:scale(.5);opacity:0}100%{transform:scale(1);opacity:1}}' +
+  '@keyframes galaCrown{0%{transform:translate(-50%,-130px) rotate(-30deg);opacity:0}70%{transform:translate(-50%,6px) rotate(8deg);opacity:1}100%{transform:translate(-50%,0) rotate(0);opacity:1}}' +
+  '@keyframes galaFlash{0%,100%{opacity:0}50%{opacity:.9}}' +
+  '@keyframes galaLights{to{background-position:44px 0}}' +
+  '@keyframes galaSweep{0%{transform:translate(-55%,-8%) rotate(12deg)}100%{transform:translate(55%,-8%) rotate(12deg)}}';
 function showGalaOverlay(scenes, preview){
   closeGala();
-  if (!document.getElementById('galaCss')){ const st = document.createElement('style'); st.id = 'galaCss'; st.textContent = '@keyframes galaFall{to{transform:translateY(108vh) rotate(720deg);}}@keyframes galaPop{0%{transform:scale(.6);opacity:0}60%{transform:scale(1.08)}100%{transform:scale(1);opacity:1}}'; document.head.appendChild(st); }
+  if (!document.getElementById('galaCss')){ const st = document.createElement('style'); st.id = 'galaCss'; st.textContent = GALA_CSS; document.head.appendChild(st); }
+  else document.getElementById('galaCss').textContent = GALA_CSS;
+  try { document.body.style.overflow = 'hidden'; } catch(e){}
   const ov = document.createElement('div'); ov.id = 'galaOverlay';
-  ov.style.cssText = 'position:fixed; inset:0; z-index:100000; background:radial-gradient(circle at 50% 18%, #2a1550, #0a0713 72%); color:#fff; display:flex; align-items:center; justify-content:center; text-align:center; overflow:hidden;';
+  ov.style.cssText = 'position:fixed; inset:0; z-index:100000; background:radial-gradient(circle at 50% 18%, #2a1550, #0a0713 72%); color:#fff; display:flex; flex-direction:column; overflow:hidden;';
+  const bulbs = 'position:absolute; left:0; right:0; height:14px; z-index:4; pointer-events:none; background:radial-gradient(circle at 11px 50%, #ffd36e 3px, transparent 4px) repeat-x; background-size:44px 100%; animation:galaLights .6s linear infinite;';
   ov.innerHTML =
-    '<div id="galaConfetti" style="position:absolute; inset:0; pointer-events:none;"></div>' +
-    (preview ? '<div style="position:absolute; top:12px; left:0; right:0; font-size:.62rem; letter-spacing:2px; color:#ffd36e;">' + TSEC('award', 'cer_preview') + '</div>' : '') +
-    '<div id="galaStage" style="width:100%; max-width:440px; padding:20px; z-index:2;"></div>' +
-    '<div style="position:absolute; left:12px; bottom:12px; width:64px; height:64px; border-radius:50%; border:2px solid #ffd36e; overflow:hidden; display:flex; align-items:center; justify-content:center; font-size:1.8rem; background:#0006; z-index:3;">🎩<img src="' + portraitUrl('char', 'gala') + '" onerror="this.remove()" style="position:absolute; inset:0; width:100%; height:100%; object-fit:cover;"></div>' +
-    '<button class="btn secondary" style="position:absolute; top:10px; right:10px; width:auto; padding:6px 12px; z-index:4;" onclick="event.stopPropagation(); closeGala();">' + TSEC('award', 'btn_skip') + '</button>';
+    '<div style="position:absolute; top:-18%; left:0; width:58%; height:120%; z-index:1; pointer-events:none; background:radial-gradient(ellipse at center, #ffffff26, transparent 62%); animation:galaSweep 4.5s ease-in-out infinite alternate;"></div>' +
+    '<div style="' + bulbs + ' top:0;"></div><div style="' + bulbs + ' bottom:0;"></div>' +
+    '<div id="galaConfetti" style="position:absolute; inset:0; pointer-events:none; z-index:5;"></div>' +
+    '<div id="galaCurtL" style="position:absolute; top:0; bottom:0; left:0; width:52%; z-index:6; background:repeating-linear-gradient(90deg,#6a0f1a,#9a1626 16px,#6a0f1a 32px); box-shadow:inset -14px 0 34px #000b;"></div>' +
+    '<div id="galaCurtR" style="position:absolute; top:0; bottom:0; right:0; width:52%; z-index:6; background:repeating-linear-gradient(90deg,#6a0f1a,#9a1626 16px,#6a0f1a 32px); box-shadow:inset 14px 0 34px #000b;"></div>' +
+    (preview ? '<div style="position:absolute; top:8px; left:0; right:0; text-align:center; font-size:.6rem; letter-spacing:2px; color:#ffd36e; z-index:8;">' + TSEC('award', 'cer_preview') + '</div>' : '') +
+    '<button class="btn secondary" style="position:absolute; top:8px; right:8px; width:auto; padding:6px 12px; z-index:8;" onclick="event.stopPropagation(); closeGala();">' + TSEC('award', 'btn_skip') + '</button>' +
+    '<div id="galaStage" style="flex:1; min-height:0; width:100%; max-width:440px; margin:0 auto; display:flex; align-items:center; justify-content:center; text-align:center; padding:14px; z-index:2; overflow:hidden;"></div>' +
+    '<div style="width:100%; max-width:440px; margin:0 auto; display:flex; align-items:flex-end; gap:10px; padding:8px 12px 20px; z-index:3;">' +
+      '<div style="width:74px; height:74px; border-radius:50%; border:2px solid #ffd36e; overflow:hidden; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:2rem; background:#0006; position:relative; animation:galaBob 1.5s ease-in-out infinite;">🎩<img src="' + portraitUrl('char', 'gala') + '" onerror="this.remove()" style="position:absolute; inset:0; width:100%; height:100%; object-fit:cover;"></div>' +
+      '<div id="galaBubble" style="flex:1; min-width:0; background:#fff; color:#1a1030; border-radius:14px; padding:11px 14px; font-size:1rem; line-height:1.4; text-align:left; position:relative; box-shadow:0 4px 16px #0008; font-weight:600;"><div style="position:absolute; left:-6px; bottom:16px; width:12px; height:12px; background:#fff; transform:rotate(45deg);"></div><span id="galaBubbleTxt"></span></div>' +
+    '</div>';
   document.body.appendChild(ov);
+  // sipario: si apre dopo un istante
+  setTimeout(() => { const l = document.getElementById('galaCurtL'), r = document.getElementById('galaCurtR'); if (l) l.style.animation = 'galaCurtL .9s ease-in forwards'; if (r) r.style.animation = 'galaCurtR .9s ease-in forwards'; }, 250);
   ov.addEventListener('click', galaNext);
   _gala = {scenes: scenes, i: -1, t: null};
-  galaNext();
+  _gala.t = setTimeout(galaNext, 1200);   // parte quando il sipario è aperto
 }
-function closeGala(){ if (_gala && _gala.t) clearTimeout(_gala.t); _gala = null; const o = document.getElementById('galaOverlay'); if (o) o.remove(); }
+function closeGala(){ if (_gala && _gala.t) clearTimeout(_gala.t); _gala = null; const o = document.getElementById('galaOverlay'); if (o) o.remove(); try { document.body.style.overflow = ''; } catch(e){} }
+function galaSay(txt){ const b = document.getElementById('galaBubbleTxt'); if (b) b.textContent = txt; }
+function galaFlash(n){ const ov = document.getElementById('galaOverlay'); if (!ov) return; for (let i = 0; i < n; i++){ const f = document.createElement('div'); f.style.cssText = 'position:absolute; inset:0; background:#fff; z-index:7; pointer-events:none; opacity:0; animation:galaFlash .5s ' + (i * 0.42) + 's;'; ov.appendChild(f); setTimeout(() => f.remove(), 600 + i * 420); } }
+function galaCountUp(id, target, dur){ const el = document.getElementById(id); if (!el) return; const t0 = performance.now(); (function step(t){ const p = Math.min(1, (t - t0) / dur); el.textContent = Math.round(target * p); if (p < 1 && document.getElementById(id) === el) requestAnimationFrame(step); })(performance.now()); }
+function galaPodCol(w, h){ if (!w) return ''; const bar = w.rank === 1 ? 'linear-gradient(#ffe08a,#b8860b)' : w.rank === 2 ? 'linear-gradient(#eef2f7,#9aa4b0)' : 'linear-gradient(#e0a878,#9c6b3f)'; return '<div style="display:flex; flex-direction:column; align-items:center; width:96px;"><div style="font-size:1.5rem;">' + awMedal(w.rank) + '</div><div style="font-size:.78rem; font-weight:800; max-width:96px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">' + awEsc(w.name || '?') + '</div><div style="width:100%; height:' + h + 'px; margin-top:4px; border-radius:7px 7px 0 0; background:' + bar + ';"></div></div>'; }
 function galaNext(){
   if (!_gala) return;
   if (_gala.t){ clearTimeout(_gala.t); _gala.t = null; }
   _gala.i++;
-  if (_gala.i >= _gala.scenes.length){ closeGala(); try { if (window._curTab === 'award') openAward(); } catch(e){} return; }
+  if (_gala.i >= _gala.scenes.length){   // fine: chiudi il sipario, poi via
+    const l = document.getElementById('galaCurtL'), r = document.getElementById('galaCurtR');
+    if (l) l.style.animation = 'galaCurtLc .8s ease-out forwards'; if (r) r.style.animation = 'galaCurtRc .8s ease-out forwards';
+    _gala = null;
+    setTimeout(() => { const o = document.getElementById('galaOverlay'); if (o) o.remove(); try { document.body.style.overflow = ''; } catch(e){} try { if (window._curTab === 'award') openAward(); } catch(e){} }, 850);
+    return;
+  }
   const s = _gala.scenes[_gala.i], stage = document.getElementById('galaStage'); if (!stage) return;
-  let dwell = 2800;
-  if (s.type === 'say'){ stage.innerHTML = '<div style="font-size:1.15rem; line-height:1.5; background:#ffffff12; border:1px solid #ffffff33; border-radius:16px; padding:16px 18px; animation:galaPop .4s;">' + s.text + '</div>'; if (s.fx) try { sfx(s.fx); } catch(e){} }
-  else if (s.type === 'title'){ stage.innerHTML = (s.finale ? '<div style="font-size:.72rem; letter-spacing:2px; color:#ffd36e;">' + TSEC('award', 'cer_mvp_finale') + '</div>' : '') + '<div style="font-size:1.7rem; font-weight:900; margin-top:6px; animation:galaPop .4s;">' + (AW_ICON[s.award] || '🏆') + ' ' + TSEC('award', 'aw_' + s.award) + '</div><div style="color:#ffd36e; margin-top:4px; font-size:.95rem; font-weight:700;">' + TSEC('award', 'd_' + s.award) + '</div><div style="opacity:.7; margin-top:2px; font-size:.82rem; font-style:italic;">' + s.quip + '</div>'; try { sfx('bell'); } catch(e){} dwell = 2100; }
-  else if (s.type === 'drum'){ stage.innerHTML = '<div style="font-size:1.3rem; animation:galaPop .3s;">' + TSEC('award', 'cer_drumroll') + '</div>'; try { sfx('miss'); } catch(e){} dwell = 1200; }
+  let dwell = 2900;
+  if (s.type === 'say'){ stage.innerHTML = '<div style="font-size:4rem; animation:galaPop .4s;">' + (s.icon || '🎬') + '</div>'; galaSay(s.text); if (s.fx) try { sfx(s.fx); } catch(e){} }
+  else if (s.type === 'title'){
+    stage.innerHTML = '<div style="animation:galaPop .4s;">' + (s.finale ? '<div style="font-size:.7rem; letter-spacing:2px; color:#ffd36e;">' + TSEC('award', 'cer_mvp_finale') + '</div>' : '') +
+      '<div style="font-size:2rem; font-weight:900; margin-top:6px;">' + (AW_ICON[s.award] || '🏆') + ' ' + TSEC('award', 'aw_' + s.award) + '</div>' +
+      '<div style="color:#ffd36e; margin-top:6px; font-size:1rem; font-weight:700;">' + TSEC('award', 'd_' + s.award) + '</div>' +
+      '<div style="opacity:.7; margin-top:4px; font-size:.82rem; font-style:italic;">' + s.quip + '</div></div>';
+    galaSay(TSEC('award', 'full_' + s.award)); try { sfx('bell'); } catch(e){} dwell = 2700;
+  }
+  else if (s.type === 'drum'){ stage.innerHTML = '<div style="font-size:3.4rem; display:inline-block; animation:galaShake .25s linear infinite;">🥁</div>'; galaSay(TSEC('award', 'cer_drumroll')); try { sfx('miss'); } catch(e){} dwell = 1300; }
+  else if (s.type === 'podium'){
+    const by = {}; s.list.forEach(w => by[w.rank] = w);
+    stage.innerHTML = '<div style="animation:galaPop .4s;"><div style="display:flex; align-items:flex-end; justify-content:center; gap:8px;">' + galaPodCol(by[2], 66) + galaPodCol(by[1], 94) + galaPodCol(by[3], 50) + '</div><div style="margin-top:10px; font-weight:800; color:#ffd36e;">' + (AW_ICON[s.award] || '🏆') + ' ' + TSEC('award', 'aw_' + s.award) + '</div></div>';
+    galaSay(TSEC('award', 'cer_podium')); try { sfx('bell'); } catch(e){} dwell = 2700;
+  }
   else if (s.type === 'reveal'){
-    const w = s.w;
-    const av = s.img ? '<img src="' + s.img + '" style="width:120px; border-radius:12px; box-shadow:0 6px 24px #000;">' : '<div style="font-size:3rem;">🐱</div>';
-    stage.innerHTML = '<div style="animation:galaPop .5s;">' + av +
-      '<div style="font-size:.8rem; letter-spacing:1px; color:#ffd36e; margin-top:8px;">' + TSEC('award', 'place_' + w.rank) + '</div>' +
-      '<div style="font-size:1.4rem; font-weight:900; margin-top:2px;">' + awMedal(w.rank) + ' ' + awEsc(w.name || '?') + '</div>' +
-      '<div style="opacity:.85;">' + TSEC('award', 'by') + ' ' + awEsc(w.owner || '?') + '</div>' +
-      '<div style="opacity:.95; margin-top:5px; font-size:1rem;">' + (AW_ICON[w.award] || '🏆') + ' ' + awValue(w.award, w.value) + '</div>' +
-      '<div style="font-size:1.5rem; font-weight:900; color:#ffd36e; margin-top:6px; text-shadow:0 2px 8px #000;">' + TSEC('award', 'cer_pts', {p: w.points}) + '</div></div>';
-    try { sfx(s.gold ? 'crit' : 'hit'); } catch(e){}
-    if (s.gold) galaConfetti();
-    dwell = 3000;
+    const w = s.w, gold = s.gold;
+    const imgStyle = gold ? 'max-height:34vh; max-width:74%; border-radius:12px; border:3px solid #ffd36e; box-shadow:0 0 34px #ffd36ecc;' : 'max-height:24vh; max-width:54%; border-radius:12px; box-shadow:0 6px 20px #000;';
+    const av = s.img ? '<img src="' + s.img + '" style="' + imgStyle + '">' : '<div style="font-size:3rem;">🐱</div>';
+    const halo = gold ? '<div style="position:absolute; inset:-34%; z-index:0; border-radius:50%; background:conic-gradient(from 0deg,#ffd36e00,#ffd36e55,#ffd36e00,#ffd36e55,#ffd36e00); animation:galaSpin 6s linear infinite;"></div>' : '';
+    const crown = (gold && w.award === 'mvp') ? '<div style="position:absolute; top:-34px; left:50%; font-size:2.3rem; z-index:2; animation:galaCrown .8s .35s both;">👑</div>' : '';
+    const nameSz = gold ? '1.9rem' : '1.2rem';
+    const pp = ((LDB().award || {}).cer_pts || (LDBen().award || {}).cer_pts || '+{p}').split('{p}');
+    const content = '<div style="position:relative; display:inline-block; z-index:1;">' + halo + crown + '<div style="position:relative; z-index:1;">' + av + '</div></div>' +
+      '<div style="font-size:' + (gold ? '.85rem' : '.75rem') + '; letter-spacing:1px; color:#ffd36e; margin-top:8px; font-weight:' + (gold ? '800' : '400') + ';">' + TSEC('award', 'place_' + w.rank) + '</div>' +
+      '<div style="font-size:' + nameSz + '; font-weight:900; margin-top:1px;' + (gold ? ' text-shadow:0 2px 10px #ffd36e88;' : '') + '">' + awMedal(w.rank) + ' ' + awEsc(w.name || '?') + '</div>' +
+      '<div style="opacity:.85; font-size:.88rem;">' + TSEC('award', 'by') + ' ' + awEsc(w.owner || '?') + '</div>' +
+      '<div style="margin-top:4px; font-size:.98rem;">' + (AW_ICON[w.award] || '🏆') + ' ' + awValue(w.award, w.value) + '</div>' +
+      '<div style="font-size:' + (gold ? '1.7rem' : '1.3rem') + '; font-weight:900; color:#ffd36e; margin-top:4px; text-shadow:0 2px 8px #000;">' + pp[0] + '<span id="galaPts">0</span>' + (pp[1] || '') + '</div>';
+    stage.innerHTML = '<div style="position:relative;"><div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:4.4rem; z-index:3; pointer-events:none; animation:galaEnv .7s forwards;">✉️</div><div style="animation:galaRevealIn .5s .5s both;">' + content + '</div></div>';
+    galaSay(s.line + (gold ? ' ' + TSEC('award', 'react_' + (1 + Math.floor(Math.random() * 6))) : ''));
+    setTimeout(() => galaCountUp('galaPts', w.points, 900), 650);
+    if (gold){
+      try { sfx('crit'); } catch(e){}
+      try { sfx('crowd'); } catch(e){}
+      galaConfetti(); setTimeout(galaConfetti, 700);
+      setTimeout(() => { try { sfx('win'); } catch(e){} }, 450);
+      galaFlash(3);
+      dwell = 4400;
+    } else { try { sfx('hit'); } catch(e){} dwell = 2700; }
   }
   _gala.t = setTimeout(galaNext, dwell);
 }
 function galaConfetti(){
   const box = document.getElementById('galaConfetti'); if (!box) return;
   const cols = ['#ffd36e', '#ff6b6b', '#4dd2ff', '#8affc1', '#c792ea', '#fff'];
-  for (let i = 0; i < 40; i++){
+  for (let i = 0; i < 44; i++){
     const d = document.createElement('div'), dur = 2 + Math.random() * 2, delay = Math.random() * 0.3;
     d.style.cssText = 'position:absolute; top:-14px; left:' + (Math.random() * 100) + '%; width:8px; height:13px; background:' + cols[i % cols.length] + '; opacity:.92; transform:rotate(' + (Math.random() * 360) + 'deg); animation:galaFall ' + dur + 's linear ' + delay + 's forwards;';
     box.appendChild(d); setTimeout(() => d.remove(), (dur + delay) * 1000 + 300);
@@ -3921,7 +3985,7 @@ async function migrateMelodies(){
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
 /* ---------- versione e aggiornamento automatico ---------- */
-const APP_VERSION = '19.5';   // unica fonte di verità: aggiorna anche version.txt a ogni release
+const APP_VERSION = '19.8';   // unica fonte di verità: aggiorna anche version.txt a ogni release
 try { document.getElementById('appVer').textContent = 'v' + APP_VERSION; } catch(e){}
 function verNewer(a, b){   // a più recente di b? confronto numerico 11.10 > 11.9
   const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);

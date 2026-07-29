@@ -1478,6 +1478,17 @@
     "pl_10": "Heute ehren wir, wer am härtesten gekratzt hat.",
     "place_1": "Erster Platz · Gold",
     "place_2": "Zweiter Platz · Silber",
-    "place_3": "Dritter Platz · Bronze"
+    "place_3": "Dritter Platz · Bronze",
+    "full_mvp": "Die Katze mit den meisten Weltsiegen dieser Woche. Einfach die Beste.",
+    "full_instancabile": "Hat die meisten Kämpfe bestritten: nie eine Pause, immer im Ring.",
+    "full_cecchino": "Die beste Siegquote (mindestens 5 Kämpfe): Präzision, kein Glück.",
+    "full_dominatore": "Die längste Serie aufeinanderfolgender Siege der Woche.",
+    "react_1": "Was für ein Prankenhieb!",
+    "react_2": "Applaus, bitte! 👏",
+    "react_3": "Gänsehaut!",
+    "react_4": "Ein echtes Phänomen!",
+    "react_5": "Was für Klasse!",
+    "react_6": "Das Publikum tobt!",
+    "cer_podium": "🏆 Und jetzt… das Podium!"
   }
 };

@@ -1478,6 +1478,17 @@
     "pl_10": "Ce soir on récompense qui a griffé le plus fort.",
     "place_1": "Première place · Or",
     "place_2": "Deuxième place · Argent",
-    "place_3": "Troisième place · Bronze"
+    "place_3": "Troisième place · Bronze",
+    "full_mvp": "Le chat avec le plus de victoires mondiales cette semaine. Tout simplement le meilleur.",
+    "full_instancabile": "A disputé le plus de combats : jamais à l’arrêt, toujours sur le ring.",
+    "full_cecchino": "Le meilleur pourcentage de victoires (au moins 5 combats) : précision, pas chance.",
+    "full_dominatore": "La plus longue série de victoires consécutives de la semaine.",
+    "react_1": "Quel coup de patte !",
+    "react_2": "Applaudissements ! 👏",
+    "react_3": "Frissons garantis !",
+    "react_4": "Un vrai phénomène !",
+    "react_5": "Quelle classe !",
+    "react_6": "Le public est en délire !",
+    "cer_podium": "🏆 Et maintenant… le podium !"
   }
 };

@@ -1478,6 +1478,17 @@
     "pl_10": "Tonight we crown who scratched hardest.",
     "place_1": "First place · Gold",
     "place_2": "Second place · Silver",
-    "place_3": "Third place · Bronze"
+    "place_3": "Third place · Bronze",
+    "full_mvp": "The cat with the most world wins this week. Simply the best.",
+    "full_instancabile": "Fought more matches than anyone: never stops, always in the ring.",
+    "full_cecchino": "The best win rate (at least 5 matches): precision, not luck.",
+    "full_dominatore": "The longest streak of consecutive wins this week.",
+    "react_1": "What a paw!",
+    "react_2": "Applause, please! 👏",
+    "react_3": "Goosebumps!",
+    "react_4": "A true phenomenon!",
+    "react_5": "What class!",
+    "react_6": "The crowd goes wild!",
+    "cer_podium": "🏆 And now… the podium!"
   }
 };

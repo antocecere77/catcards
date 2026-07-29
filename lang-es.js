@@ -1478,6 +1478,17 @@
     "pl_10": "Esta noche premiamos a quien arañó más fuerte.",
     "place_1": "Primer puesto · Oro",
     "place_2": "Segundo puesto · Plata",
-    "place_3": "Tercer puesto · Bronce"
+    "place_3": "Tercer puesto · Bronce",
+    "full_mvp": "El gato con más victorias mundiales de la semana. Simplemente el mejor.",
+    "full_instancabile": "Disputó más combates que nadie: nunca para, siempre en el ring.",
+    "full_cecchino": "El mejor porcentaje de victorias (al menos 5 combates): precisión, no suerte.",
+    "full_dominatore": "La racha de victorias consecutivas más larga de la semana.",
+    "react_1": "¡Vaya zarpazo!",
+    "react_2": "¡Un aplauso! 👏",
+    "react_3": "¡Piel de gallina!",
+    "react_4": "¡Todo un fenómeno!",
+    "react_5": "¡Qué clase!",
+    "react_6": "¡El público enloquece!",
+    "cer_podium": "🏆 Y ahora… ¡el podio!"
   }
 };
