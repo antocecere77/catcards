@@ -15,11 +15,11 @@
 <script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs@master/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="lang-it.js?v=20.0"></script>
-<script src="lang-en.js?v=20.0"></script>
-<script src="lang-fr.js?v=20.0"></script>
-<script src="lang-es.js?v=20.0"></script>
-<script src="lang-de.js?v=20.0"></script>
+<script src="lang-it.js?v=20.1"></script>
+<script src="lang-en.js?v=20.1"></script>
+<script src="lang-fr.js?v=20.1"></script>
+<script src="lang-es.js?v=20.1"></script>
+<script src="lang-de.js?v=20.1"></script>
 <style>
   :root{
     --bg:#14121f; --panel:#1e1b2e; --panel2:#282440;
@@ -1684,11 +1684,15 @@ async function playAwardGala(replay){
   runGala(rows, preview);
 }
 async function runGala(rows, preview){
-  const serials = [...new Set(rows.map(r => r.serial).filter(Boolean))];
+  const WEEKLY = ['mvp', 'instancabile', 'cecchino', 'dominatore'];
+  const weekly = rows.filter(r => WEEKLY.indexOf(r.award) >= 0);
+  const brokenSet = {}; rows.forEach(r => { if (typeof r.award === 'string' && r.award.indexOf('hall_') === 0) brokenSet[r.award.slice(5)] = true; });   // record caduti questa settimana
+  let hall = [];
+  try { hall = (await awRpc('hall_of_fame')) || []; } catch(e){}
+  const serials = [...new Set(weekly.map(r => r.serial).concat(hall.map(h => h.serial)).filter(Boolean))];
   const imgs = {};
-  try { const r = await fetch(SUPA_URL + '/rest/v1/cards?select=serial,img&serial=in.(' + serials.join(',') + ')', {headers: awH()}); if (r.ok) (await r.json()).forEach(c => imgs[c.serial] = c.img); } catch(e){}
-  const by = {}; rows.forEach(x => { (by[x.award] = by[x.award] || []).push(x); });
-  Object.values(by).forEach(l => l.sort((a, b) => a.rank - b.rank));
+  if (serials.length){ try { const r = await fetch(SUPA_URL + '/rest/v1/cards?select=serial,img&serial=in.(' + serials.join(',') + ')', {headers: awH()}); if (r.ok) (await r.json()).forEach(c => imgs[c.serial] = c.img); } catch(e){} }
+  const by = {}; weekly.forEach(x => { (by[x.award] = by[x.award] || []).push(x); });
   const scenes = [{type: 'say', text: TSEC('award', 'cer_open', {host: TSEC('award', 'host')}), fx: 'crowd', icon: '🎩'}];
   ['instancabile', 'cecchino', 'dominatore', 'mvp'].forEach(k => {   // MVP per ultimo: gran finale
     const list = by[k]; if (!list || !list.length) return;
@@ -1696,12 +1700,20 @@ async function runGala(rows, preview){
     scenes.push({type: 'drum'});
     const ordered = list.slice().sort((a, b) => b.rank - a.rank);   // dal bronzo verso l'oro: crescendo
     ordered.forEach(w => {
-      if (w.rank === 1 && ordered.length > 1) scenes.push({type: 'drum'});   // rullo extra prima del vincitore
+      if (w.rank === 1 && ordered.length > 1) scenes.push({type: 'susp'});   // "…e il vincitore è…" prima dell'oro
       const key = w.rank === 1 ? 'cer_gold' : w.rank === 2 ? 'cer_silver' : 'cer_bronze';
       scenes.push({type: 'reveal', w: w, img: imgs[w.serial], line: TSEC('award', key, {name: w.name || '?', owner: w.owner || '?'}), gold: w.rank === 1});
     });
-    if (list.length >= 2) scenes.push({type: 'podium', award: k, list: list});   // riepilogo podio a fine categoria
+    if (list.length >= 2) scenes.push({type: 'podium', award: k, list: list.slice().sort((a, b) => a.rank - b.rank)});
   });
+  // 🏛️ segmento Hall of Fame finale: i record di sempre + "è caduto un record!"
+  if (hall.length){
+    scenes.push({type: 'say', text: TSEC('award', 'cer_hall_intro'), fx: 'bell', icon: '🏛️'});
+    ['striscia', 'veterano', 'recordman', 'winrate'].forEach(k => {
+      const x = hall.find(h => h.award === k); if (!x) return;
+      scenes.push({type: 'hofreveal', x: x, img: imgs[x.serial], broke: !!brokenSet[k]});
+    });
+  }
   scenes.push({type: 'say', text: TSEC('award', 'cer_close'), fx: 'win', icon: '🎉'});
   showGalaOverlay(scenes, preview);
 }
@@ -1774,6 +1786,7 @@ function galaNext(){
     galaSay(TSEC('award', 'full_' + s.award)); try { sfx('bell'); } catch(e){} dwell = 3400;
   }
   else if (s.type === 'drum'){ stage.innerHTML = '<div style="font-size:3.4rem; display:inline-block; animation:galaShake .25s linear infinite;">🥁</div>'; galaSay(TSEC('award', 'cer_drumroll')); try { sfx('miss'); } catch(e){} dwell = 2000; }
+  else if (s.type === 'susp'){ stage.innerHTML = '<div style="font-size:3.8rem; display:inline-block; animation:galaShake .2s linear infinite;">🥁</div>'; galaSay(TSEC('award', 'cer_suspense')); try { sfx('miss'); } catch(e){} dwell = 2600; }
   else if (s.type === 'podium'){
     const by = {}; s.list.forEach(w => by[w.rank] = w);
     stage.innerHTML = '<div style="animation:galaPop .4s;"><div style="display:flex; align-items:flex-end; justify-content:center; gap:8px;">' + galaPodCol(by[2], 66) + galaPodCol(by[1], 94) + galaPodCol(by[3], 50) + '</div><div style="margin-top:10px; font-weight:800; color:#ffd36e;">' + (AW_ICON[s.award] || '🏆') + ' ' + TSEC('award', 'aw_' + s.award) + '</div></div>';
@@ -1781,7 +1794,7 @@ function galaNext(){
   }
   else if (s.type === 'reveal'){
     const w = s.w, gold = s.gold;
-    const imgStyle = gold ? 'max-height:34vh; max-width:74%; border-radius:12px; border:3px solid #ffd36e; box-shadow:0 0 34px #ffd36ecc;' : 'max-height:24vh; max-width:54%; border-radius:12px; box-shadow:0 6px 20px #000;';
+    const imgStyle = gold ? 'max-height:36vh; max-width:78%; border-radius:12px; border:3px solid #ffd36e; box-shadow:0 0 36px #ffd36ecc;' : 'max-height:30vh; max-width:66%; border-radius:12px; border:2px solid #ffffff44; box-shadow:0 6px 20px #000;';
     const av = s.img ? '<img src="' + s.img + '" style="' + imgStyle + '">' : '<div style="font-size:3rem;">🐱</div>';
     const halo = gold ? '<div style="position:absolute; inset:-34%; z-index:0; border-radius:50%; background:conic-gradient(from 0deg,#ffd36e00,#ffd36e55,#ffd36e00,#ffd36e55,#ffd36e00); animation:galaSpin 6s linear infinite;"></div>' : '';
     const crown = (gold && w.award === 'mvp') ? '<div style="position:absolute; top:-34px; left:50%; font-size:2.3rem; z-index:2; animation:galaCrown .8s .35s both;">👑</div>' : '';
@@ -1802,8 +1815,8 @@ function galaNext(){
       galaConfetti(); setTimeout(galaConfetti, 700);
       setTimeout(() => { try { sfx('win'); } catch(e){} }, 450);
       galaFlash(3);
-      dwell = 5400;
-    } else { try { sfx('hit'); } catch(e){} dwell = 3300; }
+      dwell = 5600;
+    } else { try { sfx('hit'); } catch(e){} dwell = 4000; }
   }
   _gala.t = setTimeout(galaNext, dwell);
 }
@@ -3988,7 +4001,7 @@ async function migrateMelodies(){
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
 /* ---------- versione e aggiornamento automatico ---------- */
-const APP_VERSION = '20.0';   // unica fonte di verità: aggiorna anche version.txt a ogni release
+const APP_VERSION = '20.1';   // unica fonte di verità: aggiorna anche version.txt a ogni release
 try { document.getElementById('appVer').textContent = 'v' + APP_VERSION; } catch(e){}
 function verNewer(a, b){   // a più recente di b? confronto numerico 11.10 > 11.9
   const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);

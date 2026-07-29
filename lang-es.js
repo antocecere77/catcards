@@ -1489,6 +1489,11 @@
     "react_4": "¡Todo un fenómeno!",
     "react_5": "¡Qué clase!",
     "react_6": "¡El público enloquece!",
-    "cer_podium": "🏆 Y ahora… ¡el podio!"
+    "cer_podium": "🏆 Y ahora… ¡el podio!",
+    "cer_suspense": "🥁 …y el ganador es…",
+    "cer_hall_intro": "🏛️ Y ahora… ¡los Récords de Siempre!",
+    "cer_hall_hold": "Este récord sigue en pie. ¡Qué campeón!",
+    "cer_record_broken": "¡Nuevo récord! ¡{name} entra en la leyenda!",
+    "rec_new": "¡NUEVO RÉCORD!"
   }
 };
