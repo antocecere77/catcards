@@ -15,11 +15,11 @@
 <script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs@master/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="lang-it.js?v=19.8"></script>
-<script src="lang-en.js?v=19.8"></script>
-<script src="lang-fr.js?v=19.8"></script>
-<script src="lang-es.js?v=19.8"></script>
-<script src="lang-de.js?v=19.8"></script>
+<script src="lang-it.js?v=20.0"></script>
+<script src="lang-en.js?v=20.0"></script>
+<script src="lang-fr.js?v=20.0"></script>
+<script src="lang-es.js?v=20.0"></script>
+<script src="lang-de.js?v=20.0"></script>
 <style>
   :root{
     --bg:#14121f; --panel:#1e1b2e; --panel2:#282440;
@@ -1582,7 +1582,8 @@ function renderAwardPromo(){
     '<div style="font-size:.72rem; color:#fff; opacity:.9; margin-top:8px;">' + TSEC('award', 'promo_line', {host: TSEC('award', 'host')}) + '</div>' +
     '<div style="font-size:.6rem; letter-spacing:2px; color:' + st.a + '; margin-top:2px;">' + TSEC('award', 'promo_when') + '</div>' +
     '<div id="awCd" style="font-size:1.5rem; font-weight:800; color:#fff; margin-top:4px; text-shadow:0 2px 8px #000;">—</div>' +
-    '<button class="btn secondary" style="margin-top:10px; width:auto; padding:8px 16px;" onclick="playAwardGala(true)">' + TSEC('award', 'btn_replay') + '</button>';
+    // anteprima/replay: per ora solo admin finché non esiste una serata vera; poi compare per tutti
+    (((session && session.email === ADMIN_EMAIL) || _awHasEdition) ? '<button class="btn secondary" style="margin-top:10px; width:auto; padding:8px 16px;" onclick="playAwardGala(true)">' + TSEC('award', 'btn_replay') + '</button>' : '');
   tickAwardCd();
 }
 async function loadAwardClose(){
@@ -1631,6 +1632,7 @@ async function loadAwardPast(){
   try {
     const r = await fetch(SUPA_URL + '/rest/v1/awards?select=week_id,award,rank,serial,name,owner,value,points&order=week_id.desc,award.asc,rank.asc&limit=200', {headers: awH()});
     const rows = r.ok ? await r.json() : [];
+    const had = _awHasEdition; _awHasEdition = rows.length > 0; if (_awHasEdition !== had) renderAwardPromo();   // esiste una serata vera: mostra il replay a tutti
     if (!rows.length){ box.innerHTML = '<p class="count">' + TSEC('award', 'past_empty') + '</p>'; return; }
     const map = {}, weeks = [];
     rows.forEach(x => { if (!map[x.week_id]){ map[x.week_id] = []; weeks.push(x.week_id); } map[x.week_id].push(x); });
@@ -1663,7 +1665,7 @@ async function loadAwardHall(){
   } catch(e){ box.innerHTML = '<p class="count">—</p>'; }
 }
 /* ---------- 🎬 La cerimonia del Sabato Sera (tutto client; i vincitori sono già decisi dal server) ---------- */
-let _gala = null;
+let _gala = null, _awHasEdition = false;
 async function awLatestEdition(){
   try { const r = await fetch(SUPA_URL + '/rest/v1/awards?select=week_id&order=week_id.desc&limit=1', {headers: awH()}); const j = r.ok ? await r.json() : []; return j.length ? j[0].week_id : null; } catch(e){ return null; }
 }
@@ -1761,20 +1763,21 @@ function galaNext(){
     return;
   }
   const s = _gala.scenes[_gala.i], stage = document.getElementById('galaStage'); if (!stage) return;
-  let dwell = 2900;
+  let dwell = 3600;
   if (s.type === 'say'){ stage.innerHTML = '<div style="font-size:4rem; animation:galaPop .4s;">' + (s.icon || '🎬') + '</div>'; galaSay(s.text); if (s.fx) try { sfx(s.fx); } catch(e){} }
   else if (s.type === 'title'){
-    stage.innerHTML = '<div style="animation:galaPop .4s;">' + (s.finale ? '<div style="font-size:.7rem; letter-spacing:2px; color:#ffd36e;">' + TSEC('award', 'cer_mvp_finale') + '</div>' : '') +
-      '<div style="font-size:2rem; font-weight:900; margin-top:6px;">' + (AW_ICON[s.award] || '🏆') + ' ' + TSEC('award', 'aw_' + s.award) + '</div>' +
-      '<div style="color:#ffd36e; margin-top:6px; font-size:1rem; font-weight:700;">' + TSEC('award', 'd_' + s.award) + '</div>' +
-      '<div style="opacity:.7; margin-top:4px; font-size:.82rem; font-style:italic;">' + s.quip + '</div></div>';
-    galaSay(TSEC('award', 'full_' + s.award)); try { sfx('bell'); } catch(e){} dwell = 2700;
+    // PALCO: solo il titolo della categoria. Il presentatore (fumetto) spiega di cosa si tratta.
+    stage.innerHTML = '<div style="animation:galaPop .4s;">' + (s.finale ? '<div style="font-size:.72rem; letter-spacing:2px; color:#ffd36e; margin-bottom:8px;">' + TSEC('award', 'cer_mvp_finale') + '</div>' : '') +
+      '<div style="font-size:2.3rem; font-weight:900;">' + (AW_ICON[s.award] || '🏆') + '</div>' +
+      '<div style="font-size:1.9rem; font-weight:900; margin-top:4px;">' + TSEC('award', 'aw_' + s.award) + '</div>' +
+      '<div style="color:#ffd36e; margin-top:8px; font-size:1.05rem; font-weight:700;">' + TSEC('award', 'd_' + s.award) + '</div></div>';
+    galaSay(TSEC('award', 'full_' + s.award)); try { sfx('bell'); } catch(e){} dwell = 3400;
   }
-  else if (s.type === 'drum'){ stage.innerHTML = '<div style="font-size:3.4rem; display:inline-block; animation:galaShake .25s linear infinite;">🥁</div>'; galaSay(TSEC('award', 'cer_drumroll')); try { sfx('miss'); } catch(e){} dwell = 1300; }
+  else if (s.type === 'drum'){ stage.innerHTML = '<div style="font-size:3.4rem; display:inline-block; animation:galaShake .25s linear infinite;">🥁</div>'; galaSay(TSEC('award', 'cer_drumroll')); try { sfx('miss'); } catch(e){} dwell = 2000; }
   else if (s.type === 'podium'){
     const by = {}; s.list.forEach(w => by[w.rank] = w);
     stage.innerHTML = '<div style="animation:galaPop .4s;"><div style="display:flex; align-items:flex-end; justify-content:center; gap:8px;">' + galaPodCol(by[2], 66) + galaPodCol(by[1], 94) + galaPodCol(by[3], 50) + '</div><div style="margin-top:10px; font-weight:800; color:#ffd36e;">' + (AW_ICON[s.award] || '🏆') + ' ' + TSEC('award', 'aw_' + s.award) + '</div></div>';
-    galaSay(TSEC('award', 'cer_podium')); try { sfx('bell'); } catch(e){} dwell = 2700;
+    galaSay(TSEC('award', 'cer_podium')); try { sfx('bell'); } catch(e){} dwell = 3400;
   }
   else if (s.type === 'reveal'){
     const w = s.w, gold = s.gold;
@@ -1799,8 +1802,8 @@ function galaNext(){
       galaConfetti(); setTimeout(galaConfetti, 700);
       setTimeout(() => { try { sfx('win'); } catch(e){} }, 450);
       galaFlash(3);
-      dwell = 4400;
-    } else { try { sfx('hit'); } catch(e){} dwell = 2700; }
+      dwell = 5400;
+    } else { try { sfx('hit'); } catch(e){} dwell = 3300; }
   }
   _gala.t = setTimeout(galaNext, dwell);
 }
@@ -3985,7 +3988,7 @@ async function migrateMelodies(){
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
 /* ---------- versione e aggiornamento automatico ---------- */
-const APP_VERSION = '19.8';   // unica fonte di verità: aggiorna anche version.txt a ogni release
+const APP_VERSION = '20.0';   // unica fonte di verità: aggiorna anche version.txt a ogni release
 try { document.getElementById('appVer').textContent = 'v' + APP_VERSION; } catch(e){}
 function verNewer(a, b){   // a più recente di b? confronto numerico 11.10 > 11.9
   const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);
