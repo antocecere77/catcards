@@ -15,11 +15,11 @@
 <script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs@master/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="lang-it.js?v=19.1"></script>
-<script src="lang-en.js?v=19.1"></script>
-<script src="lang-fr.js?v=19.1"></script>
-<script src="lang-es.js?v=19.1"></script>
-<script src="lang-de.js?v=19.1"></script>
+<script src="lang-it.js?v=19.2"></script>
+<script src="lang-en.js?v=19.2"></script>
+<script src="lang-fr.js?v=19.2"></script>
+<script src="lang-es.js?v=19.2"></script>
+<script src="lang-de.js?v=19.2"></script>
 <style>
   :root{
     --bg:#14121f; --panel:#1e1b2e; --panel2:#282440;
@@ -3688,7 +3688,7 @@ async function migrateMelodies(){
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
 /* ---------- versione e aggiornamento automatico ---------- */
-const APP_VERSION = '19.1';   // unica fonte di verità: aggiorna anche version.txt a ogni release
+const APP_VERSION = '19.2';   // unica fonte di verità: aggiorna anche version.txt a ogni release
 try { document.getElementById('appVer').textContent = 'v' + APP_VERSION; } catch(e){}
 function verNewer(a, b){   // a più recente di b? confronto numerico 11.10 > 11.9
   const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);
@@ -5650,6 +5650,9 @@ async function genPortraits(){
     .concat(SENTIERI.map(s => ({prefix: 'sent', id: s.id, prompt: s.prompt})));
   const sleep = ms => new Promise(r => setTimeout(r, ms));
   let done = 0, made = 0, fail = 0, skip = 0, lastErr = '';
+  const failed = [];
+  // errori transitori (di rete/server): vale la pena ritentare. "too many connections" rientra qui.
+  const transient = m => /too many|connection|network|timeout|failed to fetch|econn|reset|temporar|unavailable|overload|50\d|429|rate/i.test(String(m || ''));
   const show = extra => { if (out) out.textContent = '🎨 ' + done + '/' + jobs.length + ' · ✅ ' + skip + ' · ✨ ' + made + ' · ❌ ' + fail + (extra ? ' — ' + extra : '') + (lastErr ? '  ⟨ultimo errore: ' + lastErr + '⟩' : ''); };
   for (const job of jobs){
     done++;
@@ -5657,23 +5660,23 @@ async function genPortraits(){
     const url = portraitUrl(job.prefix, job.id);
     show(job.prefix + '/' + job.id + '…');
     if (await clipExists(url)){ skip++; continue; }   // già presente: salta
-    let okItem = false;
-    for (let attempt = 0; attempt < 3 && !okItem; attempt++){
+    let okItem = false, why = '';
+    for (let attempt = 0; attempt < 5 && !okItem; attempt++){
+      if (attempt > 0){ const w = Math.min(3000 * Math.pow(2, attempt - 1), 24000); show(job.prefix + '/' + job.id + ' · ritento ' + attempt + '/4 tra ' + (w / 1000) + 's…'); await sleep(w); }   // backoff 3s,6s,12s,24s
       try {
         const img = await genImageData(job.prompt, key, tryModels);
-        if (!img){ lastErr = window._genErr || 'generazione fallita'; break; }         // errore non transitorio: non ritentare
+        if (!img){ why = window._genErr || 'generazione fallita'; if (transient(why)) continue; else break; }   // solo se transitorio ritenta
         if (await uploadPortrait(path, img)){ made++; _clipExists[url] = true; okItem = true; }
-        else { lastErr = 'upload fallito: ' + (window._upErr || '?') + ' (bucket «portraits» pubblico e scrivibile?)'; break; }
+        else { why = 'upload: ' + (window._upErr || '?'); if (transient(why)) continue; else break; }
       } catch(e){
         if (e.message === 'QUOTA'){ if (out) out.textContent = '⏸️ Quota GIORNALIERA esaurita a ' + done + '/' + jobs.length + ' (nuovi: ' + made + ', già presenti: ' + skip + '). Riprendi domani: riparte da dove eri.'; return; }
-        if (e.message === 'RATE'){ show('⏳ limite al minuto: attendo 20s e riprovo…'); await sleep(20000); continue; }   // rate limit: aspetta e ritenta
-        lastErr = e.message; break;
+        why = e.message; if (transient(why)) continue; else break;   // RATE/rete: ritenta col backoff qui sopra
       }
     }
-    if (!okItem) fail++;
-    // nessuna pausa: si va alla massima velocità; se il server segnala il rate limit, il backoff qui sopra attende e riprova
+    if (!okItem){ fail++; failed.push(job.prefix + '/' + job.id); lastErr = why || lastErr; }
   }
-  if (out) out.textContent = '✅ Fatto: ' + skip + ' già presenti, ' + made + ' nuovi, ' + fail + ' falliti su ' + jobs.length + (lastErr ? '. Ultimo errore: ' + lastErr : '.');
+  if (out) out.textContent = '✅ Fatto: ' + skip + ' già presenti, ' + made + ' nuovi, ' + fail + ' falliti su ' + jobs.length +
+    (failed.length ? '. ⚠️ Falliti: ' + failed.join(', ') + (lastErr ? ' — motivo: ' + lastErr : '') + '. Ripremi il pulsante per riprovare solo questi.' : '.');
 }
 // ADMIN: carica su Storage i ritratti GIÀ presenti in locale (IndexedDB), generati in passato — senza rigenerarli né spendere.
 // Copre i 5 personaggi e i boss che avevi già incontrato. I gatti del Sentiero non erano in locale: per quelli serve «Genera ritratti».
