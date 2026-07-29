@@ -15,11 +15,11 @@
 <script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs@master/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="lang-it.js?v=18.9"></script>
-<script src="lang-en.js?v=18.9"></script>
-<script src="lang-fr.js?v=18.9"></script>
-<script src="lang-es.js?v=18.9"></script>
-<script src="lang-de.js?v=18.9"></script>
+<script src="lang-it.js?v=19.0"></script>
+<script src="lang-en.js?v=19.0"></script>
+<script src="lang-fr.js?v=19.0"></script>
+<script src="lang-es.js?v=19.0"></script>
+<script src="lang-de.js?v=19.0"></script>
 <style>
   :root{
     --bg:#14121f; --panel:#1e1b2e; --panel2:#282440;
@@ -778,6 +778,40 @@ function moveName(ai, bi){
   return MOVE_ADJ_FIRST[LANG] ? (b + ' ' + a) : (a + ' ' + b);
 }
 function mvName(m){ return (m && typeof m.ai === 'number') ? moveName(m.ai, m.bi) : (m && m.name) || ''; }
+/* ---------- razza: normalizzatore a vocabolario controllato (tutela anti-invenzioni AI) ----------
+   Non mostro MAI il testo grezzo dell'AI: riconosco solo parole note (razza + colore + mantello)
+   e ricompongo la scritta solo con pezzi tradotti. Parole inventate → ignorate. Nulla → "Gatto comune". */
+const RAZZA_ADJ_FIRST = {en: true, de: true};
+const BREED_ORDER = ['mainecoon','blurusso','norvegese','scottish','esotico','siberiano','certosino','siamese','persiano','ragdoll','sphynx','bengala','british','angora','birmano','abissino','orientale','turco','savana','bombay','rex','soriano','tigrato','europeo','comune'];
+const BREED_SYN = {mainecoon:['maine coon','maine'],blurusso:['blu di russia','russian blue','russo'],norvegese:['norvegese','delle foreste'],scottish:['scottish','fold'],esotico:['esotico','esotica','exotic'],siberiano:['siberiano','siberiana'],certosino:['certosino','certosina','chartreux'],siamese:['siamese'],persiano:['persiano','persiana'],ragdoll:['ragdoll'],sphynx:['sphynx','sfinge','senza pelo','nudo'],bengala:['bengala','bengalese','bengal'],british:['british','britannico','britannica'],angora:['angora'],birmano:['birmano','birmana','sacro di birmania'],abissino:['abissino','abissina'],orientale:['orientale'],turco:['turco','van'],savana:['savannah','savana'],bombay:['bombay'],rex:['rex','devon','cornish'],soriano:['soriano','soriana'],tigrato:['tigrato','tigrata','tabby'],europeo:['europeo','europea'],comune:['comune','domestico','domestica','meticcio','meticcia']};
+const COLOR_ORDER = ['tartarugato','tricolore','bicolore','pointed','maculato','striato','bianco','nero','grigio','blu','rosso','crema','marrone','fulvo'];
+const COLOR_SYN = {tartarugato:['tartarugato','tartaruga','tortie'],tricolore:['tricolore','calico'],bicolore:['bicolore','smoking','tuxedo'],pointed:['point','colorpoint','colourpoint','mascherato'],maculato:['maculato','maculata','pezzato','pezzata','macchie'],striato:['striato','striata'],bianco:['bianco','bianca'],nero:['nero','nera'],grigio:['grigio','grigia'],blu:['blu'],rosso:['rosso','rossa','arancione','zenzero'],crema:['crema','panna'],marrone:['marrone','cioccolato'],fulvo:['fulvo','fulva','sabbia']};
+function _normRazza(s){ return ' ' + String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z ]/g, ' ').replace(/\s+/g, ' ').trim() + ' '; }
+function trRazza(raw){
+  if (!raw) return '';
+  const s = _normRazza(raw);
+  const BR = LDB().breeds || {}, EN = LDBen().breeds || {};
+  const g = k => BR[k] || EN[k] || '';
+  const hit = w => s.indexOf(' ' + w + ' ') >= 0;
+  let breed = null;
+  for (const k of BREED_ORDER){ if (BREED_SYN[k].some(hit)){ breed = k; break; } }
+  // togli le parole della razza dal testo, così i colori contenuti nel nome razza (es. "blu di russia") non si ripetono
+  let s2 = s;
+  if (breed){ for (const w of BREED_SYN[breed]) s2 = s2.split(' ' + w + ' ').join(' '); s2 = ' ' + s2.replace(/^\s+|\s+$/g, '') + ' '; }
+  const hit2 = w => s2.indexOf(' ' + w + ' ') >= 0;
+  const cols = [];
+  for (const k of COLOR_ORDER){ if (cols.length < 2 && COLOR_SYN[k].some(hit2)) cols.push(k); }
+  let coat = null;
+  if (hit('pelo lungo') || hit('semilungo') || hit('pelolungo')) coat = 'lungo';
+  else if (hit('pelo corto') || hit('pelocorto')) coat = 'corto';
+  if (!breed && !cols.length && !coat) breed = 'comune';
+  const breedName = g('b_' + (breed || 'comune')) || 'Gatto comune';
+  const adjs = cols.map(c => g('c_' + c)).filter(Boolean);
+  if (coat) adjs.push(g('coat_' + coat));
+  const parts = RAZZA_ADJ_FIRST[LANG] ? adjs.concat([breedName]) : [breedName].concat(adjs);
+  const out = parts.join(' ').trim();
+  return out.charAt(0).toUpperCase() + out.slice(1);
+}
 function annText(entry, corner){
   const a = LDB().ann || LDBen().ann || {};
   const t = a[corner === 'blue' ? 'blue' : 'red'] || '{n} «{k}»';
@@ -1124,7 +1158,7 @@ function drawCard(card, art){
   // etichetta rarità (+ razza se nota)
   ctx.fillStyle = col; ctx.textAlign = 'center';
   ctx.font = card.razza ? 'bold 23px "Segoe UI", sans-serif' : 'bold 26px "Segoe UI", sans-serif';
-  ctx.fillText('◆ ' + trRarity(card.rarity.name).toUpperCase() + ' ◆' + (card.razza ? '  ·  ' + card.razza : ''), W/2, iy+ih+40);
+  ctx.fillText('◆ ' + trRarity(card.rarity.name).toUpperCase() + ' ◆' + (card.razza ? '  ·  ' + trRazza(card.razza) : ''), W/2, iy+ih+40);
   // statistiche 2 colonne
   const sy = iy+ih+66, rowH = 56, colW = (W-140)/2;
   card.stats.forEach((st, i) => {
@@ -1402,7 +1436,7 @@ function openCardModal(i){
     (c.rarity === 'Epica' || c.rarity === 'Leggendaria') ? 'holoWrap' : '';
   const bits = [];
   bits.push('🥊 «' + nickOf(c) + '»');
-  if (c.razza) bits.push('🐈 ' + c.razza);
+  if (c.razza) bits.push('🐈 ' + trRazza(c.razza));
   if (typeof c.potere === 'number') bits.push('🌟 ' + powerName(c.potere));
   bits.push('🎼 ' + (c.dna ? TSEC('instr', 'theme_line', {stile: c.dna.stile, ton: c.dna.tonalita, instr: trInstr(c.strum)}) : THEME_BANK[bankThemeIndex(c.serial)].name + (c.strum ? ' (' + trInstr(c.strum) + ')' : '')));
   const rl = recordLine(c.serial);
@@ -1803,7 +1837,7 @@ async function analyzeCat(img, key, serial){
   c.width = W; c.height = Math.round(img.height * W / img.width);
   c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
   const b64 = c.toDataURL('image/jpeg', 0.8).split(',')[1];
-  const prompt = 'Analizza la foto di questo gatto. Rispondi SOLO con JSON valido, senza markdown né altro testo: {"razza":"razza probabile, max 3 parole, in italiano","descr":"descrizione buffa e affettuosa del gatto, max 12 parole, in italiano","potere":N,"valuta":{"forza":1-10,"intelligenza":1-10,"destrezza":1-10,"velocita":1-10,"fascino":1-10,"indifferenza":1-10}}. Per "valuta" giudica DALLA FOTO: forza=stazza e muscolatura (un gatto grosso e robusto merita 8-10, un gattino esile 2-4), destrezza=agilità della posa, velocita=quanto snello e scattante sembra, intelligenza=quanto sveglia è l\'espressione, fascino=bellezza del manto e degli occhi, indifferenza=quanto se ne frega di tutto (un gatto che dorme beato merita 9-10). Usa TUTTA la scala 1-10, sii severo e vario. Per "potere", N è il più adatto al carattere: 1=Nove Vite (sopravvissuto tosto), 2=Agguato Perfetto (predatore all\'erta), 3=Fusa Rigeneranti (coccolone), 4=Doppia Zampata (iperattivo), 5=Modalità Liquido (contorsionista in pose assurde), 6=Sguardo Ipnotico (occhi magnetici), 7=Armatura di Pigrizia (dormiglione totale), 8=Caos Felino (combinaguai). Aggiungi anche al JSON: "soprannome": un soprannome da lottatore unico e divertente per QUESTO gatto (max 4 parole, in italiano, ispirato a ciò che vedi nella foto), "strumento": lo strumento più adatto al carattere, uno tra "pianoforte","tromba","chitarra","archi","organo","marimba", e "melodia": il tema d\'ingresso da lottatore, 12-16 note come array di oggetti {"n":"nota con ottava, es. C4, D#3, A4","d":durata in secondi, solo valori 0.15, 0.3, 0.45 o 0.6}. Componi una VERA melodia: scala pentatonica minore, motivo di 4 note ripetuto con variazione (struttura A-A\'-B-A), inizia e chiudi sulla tonica, durata totale 4-5 secondi.' + (serial ? musicHints(serial) : '');
+  const prompt = 'Analizza la foto di questo gatto. Rispondi SOLO con JSON valido, senza markdown né altro testo: {"razza":"razza probabile in italiano, scegli la più simile tra: europeo, soriano, tigrato, certosino, siamese, persiano, maine coon, ragdoll, sphynx, bengala, british, norvegese, angora, birmano, abissino, esotico, siberiano, scottish fold, rex, blu di russia, orientale, bombay; puoi aggiungere UN colore tra bianco, nero, grigio, blu, rosso, crema, marrone, tartarugato, tricolore, bicolore; max 3 parole","descr":"descrizione buffa e affettuosa del gatto, max 12 parole, in italiano","potere":N,"valuta":{"forza":1-10,"intelligenza":1-10,"destrezza":1-10,"velocita":1-10,"fascino":1-10,"indifferenza":1-10}}. Per "valuta" giudica DALLA FOTO: forza=stazza e muscolatura (un gatto grosso e robusto merita 8-10, un gattino esile 2-4), destrezza=agilità della posa, velocita=quanto snello e scattante sembra, intelligenza=quanto sveglia è l\'espressione, fascino=bellezza del manto e degli occhi, indifferenza=quanto se ne frega di tutto (un gatto che dorme beato merita 9-10). Usa TUTTA la scala 1-10, sii severo e vario. Per "potere", N è il più adatto al carattere: 1=Nove Vite (sopravvissuto tosto), 2=Agguato Perfetto (predatore all\'erta), 3=Fusa Rigeneranti (coccolone), 4=Doppia Zampata (iperattivo), 5=Modalità Liquido (contorsionista in pose assurde), 6=Sguardo Ipnotico (occhi magnetici), 7=Armatura di Pigrizia (dormiglione totale), 8=Caos Felino (combinaguai). Aggiungi anche al JSON: "soprannome": un soprannome da lottatore unico e divertente per QUESTO gatto (max 4 parole, in italiano, ispirato a ciò che vedi nella foto), "strumento": lo strumento più adatto al carattere, uno tra "pianoforte","tromba","chitarra","archi","organo","marimba", e "melodia": il tema d\'ingresso da lottatore, 12-16 note come array di oggetti {"n":"nota con ottava, es. C4, D#3, A4","d":durata in secondi, solo valori 0.15, 0.3, 0.45 o 0.6}. Componi una VERA melodia: scala pentatonica minore, motivo di 4 note ripetuto con variazione (struttura A-A\'-B-A), inizia e chiudi sulla tonica, durata totale 4-5 secondi.' + (serial ? musicHints(serial) : '');
   let lastErr = 'nessun modello disponibile';
   for (const model of TEXT_MODELS){
     try {
@@ -3650,7 +3684,7 @@ async function migrateMelodies(){
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
 /* ---------- versione e aggiornamento automatico ---------- */
-const APP_VERSION = '18.9';   // unica fonte di verità: aggiorna anche version.txt a ogni release
+const APP_VERSION = '19.0';   // unica fonte di verità: aggiorna anche version.txt a ogni release
 try { document.getElementById('appVer').textContent = 'v' + APP_VERSION; } catch(e){}
 function verNewer(a, b){   // a più recente di b? confronto numerico 11.10 > 11.9
   const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);
