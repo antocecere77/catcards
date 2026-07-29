@@ -15,11 +15,11 @@
 <script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs@master/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="lang-it.js?v=19.2"></script>
-<script src="lang-en.js?v=19.2"></script>
-<script src="lang-fr.js?v=19.2"></script>
-<script src="lang-es.js?v=19.2"></script>
-<script src="lang-de.js?v=19.2"></script>
+<script src="lang-it.js?v=19.5"></script>
+<script src="lang-en.js?v=19.5"></script>
+<script src="lang-fr.js?v=19.5"></script>
+<script src="lang-es.js?v=19.5"></script>
+<script src="lang-de.js?v=19.5"></script>
 <style>
   :root{
     --bg:#14121f; --panel:#1e1b2e; --panel2:#282440;
@@ -193,6 +193,7 @@
       <button class="tabBtn" data-tab="mercato" onclick="showTab('mercato')"><span data-i18n="tab_mercato">🔁 Mercato</span><span id="tradeTabDot" style="display:none; width:9px; height:9px; background:#e63946; border-radius:50%; margin-left:4px; vertical-align:middle;"></span></button>
     </div>
     <div style="display:flex; gap:8px;">
+      <button class="tabBtn" data-tab="award" onclick="showTab('award')"><span data-i18n="tab_award">🏆 Award</span></button>
       <button class="tabBtn" data-tab="sent" onclick="showTab('sent')"><span data-i18n="tab_sent">🗺️ Sentiero</span></button>
       <button class="tabBtn" data-tab="boss" onclick="showTab('boss')"><span data-i18n="tab_boss">🤖 Boss</span></button>
       <button class="tabBtn" data-tab="pal" onclick="showTab('pal')"><span data-i18n="tab_pal">🏋️ Palestra</span></button>
@@ -352,6 +353,9 @@
     <div class="panel" style="max-width:360px; margin-top:30px;" id="auctionModalBody"></div>
   </div>
 
+  <div id="tab-award" style="width:100%; max-width:440px; display:none;">
+    <div class="panel" id="awardBody" style="margin-top:20px;"></div>
+  </div>
   <div id="tab-sent" style="width:100%; max-width:440px; display:none;">
   <div class="panel" style="margin-top:20px;">
     <h2 data-i18n="sent_title">🗺️ Il Sentiero delle Nove Vite</h2>
@@ -1496,7 +1500,7 @@ function stepCard(d){
 const NEED_LOGIN_TABS = ['arena', 'mondo', 'mercato', 'boss', 'pal'];
 function showTab(t){
   const locked = NEED_LOGIN_TABS.indexOf(t) >= 0 && !(session && session.access_token);
-  ['crea', 'coll', 'arena', 'mondo', 'mercato', 'sent', 'boss', 'pal', 'med', 'reg', 'opz', 'locked'].forEach(k => {
+  ['crea', 'coll', 'arena', 'mondo', 'mercato', 'award', 'sent', 'boss', 'pal', 'med', 'reg', 'opz', 'locked'].forEach(k => {
     const el = document.getElementById('tab-' + k);
     if (el) el.style.display = (locked ? (k === 'locked') : (k === t)) ? 'block' : 'none';
   });
@@ -1507,6 +1511,7 @@ function showTab(t){
   if (t === 'mondo') openMondoNews();
   if (t === 'mercato'){ try { openMercato(); } catch(e){} }
   if (t === 'sent'){ try { renderSentiero(); } catch(e){} }
+  if (t === 'award'){ try { openAward(); } catch(e){} }
   if (t === 'med'){ try { renderMissions(); } catch(e){} }
   if (t === 'boss'){
     try {
@@ -1516,6 +1521,234 @@ function showTab(t){
   }
 }
 
+/* ---------- 🏆 Award del Sabato Sera: pagina "trailer TV" (tutto calcolato lato server) ---------- */
+let _awCloseTs = null, _awCdIv = null;
+function awH(){ return {apikey: SUPA_KEY, Authorization: 'Bearer ' + ((session && session.access_token) || SUPA_KEY), 'Content-Type': 'application/json'}; }
+function awEsc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function awMedal(r){ return r === 1 ? '🥇' : r === 2 ? '🥈' : '🥉'; }
+const AW_ICON = {mvp:'🏆', instancabile:'🥊', cecchino:'🎯', dominatore:'🔥'};
+const HOF_ICON = {striscia:'🔥', veterano:'⚔️', recordman:'💯', winrate:'🎯'};
+function awValue(key, value){
+  const v = Number(value);
+  if (key === 'cecchino' || key === 'winrate') return TSEC('award', 'val_' + key, {n: Math.round(v * 100)});
+  return TSEC('award', 'val_' + key, {n: (key === 'dominatore' || key === 'striscia') ? v : Math.round(v)});
+}
+async function awRpc(fn){ const r = await fetch(SUPA_URL + '/rest/v1/rpc/' + fn, {method: 'POST', headers: awH(), body: '{}'}); return r.ok ? JSON.parse(await r.text()) : null; }
+function openAward(){
+  const body = document.getElementById('awardBody');
+  if (!body) return;
+  body.innerHTML =
+    '<h2>' + TSEC('award', 'title') + '</h2>' +
+    '<p class="count">' + TSEC('award', 'subtitle') + '</p>' +
+    '<div id="awPromo" style="margin-top:12px; padding:16px; border:2px solid var(--accent); border-radius:14px; background:linear-gradient(135deg,#2a1f3d,#1c1830); text-align:center;"></div>' +
+    '<h3 style="margin-top:20px;">' + TSEC('award', 'noms_title') + '</h3>' +
+    '<p class="count" style="margin-top:2px;">' + TSEC('award', 'noms_sub') + '</p><div id="awNoms"></div>' +
+    '<h3 style="margin-top:20px;">' + TSEC('award', 'past_title') + '</h3><div id="awPast"></div>' +
+    '<h3 style="margin-top:20px;">' + TSEC('award', 'hall_title') + '</h3><div id="awHall"></div>';
+  renderAwardPromo();
+  loadAwardClose();
+  loadAwardNoms();
+  loadAwardPast();
+  loadAwardHall();
+  try { fetch(SUPA_URL + '/rest/v1/rpc/settle_due_weeks', {method: 'POST', headers: awH(), body: '{}'}); } catch(e){}   // idempotente: chiude eventuali settimane scadute
+}
+const POSTER_STYLES = [
+  {g:'linear-gradient(135deg,#3a1c71,#d76d77,#ffaf7b)', a:'#ffe08a', em:'🎩'},
+  {g:'linear-gradient(135deg,#0f0c29,#302b63,#24243e)', a:'#f5c542', em:'🌟'},
+  {g:'linear-gradient(135deg,#42275a,#734b6d)', a:'#ffd36e', em:'🎬'},
+  {g:'linear-gradient(135deg,#1e130c,#9a8478)', a:'#ffcf5c', em:'🏆'},
+  {g:'linear-gradient(135deg,#41295a,#2f0743)', a:'#ffcc70', em:'✨'},
+  {g:'linear-gradient(135deg,#4b1248,#f0c27b)', a:'#fff2b0', em:'🎤'},
+  {g:'linear-gradient(135deg,#20002c,#cbb4d4)', a:'#ffd86b', em:'🥂'},
+  {g:'linear-gradient(135deg,#232526,#414345)', a:'#ffd54a', em:'🎷'},
+  {g:'linear-gradient(135deg,#5f2c82,#49a09d)', a:'#ffe08a', em:'💫'},
+  {g:'linear-gradient(135deg,#870000,#190a05)', a:'#ffcf5c', em:'🎭'},
+];
+function awPosterIdx(){ const base = _awCloseTs || Date.now(); return Math.floor(base / 6048e5) % POSTER_STYLES.length; }   // cambia locandina ogni settimana
+function renderAwardPromo(){
+  const el = document.getElementById('awPromo');
+  if (!el) return;
+  const st = POSTER_STYLES[awPosterIdx()];
+  const slogan = TSEC('award', 'pl_' + (awPosterIdx() + 1));
+  el.style.background = st.g; el.style.borderColor = st.a;
+  el.innerHTML =
+    '<div style="letter-spacing:4px; font-size:.62rem; color:' + st.a + ';">★ ★ ★ ★ ★ ★ ★</div>' +
+    '<div style="width:96px; height:96px; margin:8px auto; border-radius:50%; border:3px solid ' + st.a + '; box-shadow:0 0 26px ' + st.a + '99; overflow:hidden; display:flex; align-items:center; justify-content:center; font-size:2.6rem; background:#0004; position:relative;">' +
+      st.em + '<img src="' + portraitUrl('char', 'gala') + '" onerror="this.remove()" style="position:absolute; inset:0; width:100%; height:100%; object-fit:cover;"></div>' +
+    '<div style="font-size:1.35rem; font-weight:900; letter-spacing:1px; color:#fff; text-shadow:0 2px 8px #000; line-height:1.1;">' + TSEC('award', 'cer_title') + '</div>' +
+    '<div style="font-size:.85rem; font-style:italic; color:' + st.a + '; margin:6px 12px 2px;">« ' + slogan + ' »</div>' +
+    '<div style="font-size:.72rem; color:#fff; opacity:.9; margin-top:8px;">' + TSEC('award', 'promo_line', {host: TSEC('award', 'host')}) + '</div>' +
+    '<div style="font-size:.6rem; letter-spacing:2px; color:' + st.a + '; margin-top:2px;">' + TSEC('award', 'promo_when') + '</div>' +
+    '<div id="awCd" style="font-size:1.5rem; font-weight:800; color:#fff; margin-top:4px; text-shadow:0 2px 8px #000;">—</div>' +
+    '<button class="btn secondary" style="margin-top:10px; width:auto; padding:8px 16px;" onclick="playAwardGala(true)">' + TSEC('award', 'btn_replay') + '</button>';
+  tickAwardCd();
+}
+async function loadAwardClose(){
+  try { const t = await awRpc('award_next_close'); if (t) _awCloseTs = new Date(t).getTime(); } catch(e){}
+  tickAwardCd();
+  clearInterval(_awCdIv); _awCdIv = setInterval(tickAwardCd, 20000);
+}
+function tickAwardCd(){
+  const el = document.getElementById('awCd'); if (!el || !_awCloseTs) return;
+  const ms = _awCloseTs - Date.now();
+  if (ms <= 0){ el.textContent = TSEC('award', 'promo_live'); return; }
+  const d = Math.floor(ms / 86400000), h = Math.floor(ms % 86400000 / 3600000), m = Math.floor(ms % 3600000 / 60000);
+  el.textContent = d > 0 ? TSEC('award', 'promo_cd', {d: d, h: h, m: m}) : TSEC('award', 'promo_soon', {h: h, m: m});
+}
+function awardBlocks(rows, order){
+  const by = {}; rows.forEach(x => { (by[x.award] = by[x.award] || []).push(x); });
+  let html = '';
+  order.forEach(k => {
+    const list = (by[k] || []).sort((a, b) => a.rank - b.rank);
+    if (!list.length) return;
+    html += '<div style="margin-top:12px; padding:10px 12px; background:var(--panel2); border-radius:12px;">' +
+      '<div style="font-weight:800; color:var(--accent);">' + (AW_ICON[k] || '🏆') + ' ' + TSEC('award', 'aw_' + k) + '</div>' +
+      '<div style="font-size:.7rem; color:var(--muted); margin-bottom:4px;">' + TSEC('award', 'd_' + k) + '</div>';
+    list.forEach(x => {
+      html += '<div style="display:flex; align-items:center; gap:8px; padding:3px 0; cursor:pointer;" onclick="showCardBySerial(\'' + x.serial + '\')">' +
+        '<span style="font-size:1.05rem;">' + awMedal(x.rank) + '</span>' +
+        '<span style="flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"><strong>' + awEsc(x.name || '?') + '</strong> <span style="color:var(--muted); font-size:.78rem;">' + TSEC('award', 'by') + ' ' + awEsc(x.owner || '?') + '</span></span>' +
+        '<span style="font-size:.75rem; color:var(--muted); flex-shrink:0;">' + awValue(k, x.value) + '</span>' +
+        '<span style="font-weight:800; color:var(--accent); font-size:.78rem; flex-shrink:0;">' + TSEC('award', 'pts', {p: x.points}) + '</span>' +
+        '</div>';
+    });
+    html += '</div>';
+  });
+  return html;
+}
+async function loadAwardNoms(){
+  const box = document.getElementById('awNoms'); if (!box) return;
+  try {
+    const rows = await awRpc('award_standings_current');
+    if (!rows || !rows.length){ box.innerHTML = '<p class="count">' + TSEC('award', 'noms_empty') + '</p>'; return; }
+    box.innerHTML = awardBlocks(rows, ['mvp', 'instancabile', 'cecchino', 'dominatore']);
+  } catch(e){ box.innerHTML = '<p class="count">—</p>'; }
+}
+async function loadAwardPast(){
+  const box = document.getElementById('awPast'); if (!box) return;
+  try {
+    const r = await fetch(SUPA_URL + '/rest/v1/awards?select=week_id,award,rank,serial,name,owner,value,points&order=week_id.desc,award.asc,rank.asc&limit=200', {headers: awH()});
+    const rows = r.ok ? await r.json() : [];
+    if (!rows.length){ box.innerHTML = '<p class="count">' + TSEC('award', 'past_empty') + '</p>'; return; }
+    const map = {}, weeks = [];
+    rows.forEach(x => { if (!map[x.week_id]){ map[x.week_id] = []; weeks.push(x.week_id); } map[x.week_id].push(x); });
+    let html = '';
+    weeks.slice(0, 10).forEach(w => {
+      let d = w; try { d = new Date(w + 'T00:00:00').toLocaleDateString(LANG, {day: 'numeric', month: 'long'}); } catch(e){}
+      html += '<details style="margin-top:8px; background:var(--panel2); border-radius:10px; padding:8px 10px;">' +
+        '<summary style="cursor:pointer; font-weight:700;">' + TSEC('award', 'week_of', {d: d}) + '</summary>' +
+        awardBlocks(map[w], ['mvp', 'instancabile', 'cecchino', 'dominatore']) + '</details>';
+    });
+    box.innerHTML = html;
+  } catch(e){ box.innerHTML = '<p class="count">—</p>'; }
+}
+async function loadAwardHall(){
+  const box = document.getElementById('awHall'); if (!box) return;
+  try {
+    const rows = await awRpc('hall_of_fame');
+    if (!rows || !rows.length){ box.innerHTML = '<p class="count">' + TSEC('award', 'hall_empty') + '</p>'; return; }
+    const by = {}; rows.forEach(x => by[x.award] = x);
+    let html = '';
+    ['striscia', 'veterano', 'recordman', 'winrate'].forEach(k => {
+      const x = by[k]; if (!x) return;
+      html += '<div style="display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid #2a2540; cursor:pointer;" onclick="showCardBySerial(\'' + x.serial + '\')">' +
+        '<span style="font-size:1.3rem;">' + (HOF_ICON[k] || '🏛️') + '</span>' +
+        '<span style="flex:1; min-width:0;"><strong>' + TSEC('award', 'hof_' + k) + '</strong><br><span style="font-size:.78rem; color:var(--muted);">' + awEsc(x.name || '?') + ' ' + TSEC('award', 'by') + ' ' + awEsc(x.owner || '?') + '</span></span>' +
+        '<span style="font-weight:800; color:var(--accent); flex-shrink:0;">' + awValue(k, x.value) + '</span>' +
+        '</div>';
+    });
+    box.innerHTML = html;
+  } catch(e){ box.innerHTML = '<p class="count">—</p>'; }
+}
+/* ---------- 🎬 La cerimonia del Sabato Sera (tutto client; i vincitori sono già decisi dal server) ---------- */
+let _gala = null;
+async function awLatestEdition(){
+  try { const r = await fetch(SUPA_URL + '/rest/v1/awards?select=week_id&order=week_id.desc&limit=1', {headers: awH()}); const j = r.ok ? await r.json() : []; return j.length ? j[0].week_id : null; } catch(e){ return null; }
+}
+async function checkAwardEdition(){
+  const wid = await awLatestEdition(); if (!wid) return;
+  let seen = null; try { seen = localStorage.getItem('catcards_aw_seen'); } catch(e){}
+  if (wid !== seen) playAwardGala(false);   // nuova edizione mai vista: parte la serata
+}
+async function playAwardGala(replay){
+  let rows = null, preview = false;
+  const wid = await awLatestEdition();
+  if (wid){ try { const r = await fetch(SUPA_URL + '/rest/v1/awards?select=award,rank,serial,name,owner,value,points&week_id=eq.' + encodeURIComponent(wid) + '&order=award.asc,rank.asc', {headers: awH()}); rows = r.ok ? await r.json() : null; } catch(e){} }
+  if (!rows || !rows.length){ rows = await awRpc('award_standings_current'); preview = true; }   // nessuna edizione ancora: anteprima con la classifica viva
+  if (!rows || !rows.length){ try { toast(TSEC('award', 'cer_none')); } catch(e){} return; }
+  if (wid){ try { localStorage.setItem('catcards_aw_seen', wid); } catch(e){} }
+  runGala(rows, preview);
+}
+async function runGala(rows, preview){
+  const serials = [...new Set(rows.map(r => r.serial).filter(Boolean))];
+  const imgs = {};
+  try { const r = await fetch(SUPA_URL + '/rest/v1/cards?select=serial,img&serial=in.(' + serials.join(',') + ')', {headers: awH()}); if (r.ok) (await r.json()).forEach(c => imgs[c.serial] = c.img); } catch(e){}
+  const by = {}; rows.forEach(x => { (by[x.award] = by[x.award] || []).push(x); });
+  Object.values(by).forEach(l => l.sort((a, b) => a.rank - b.rank));
+  const scenes = [{type: 'say', text: TSEC('award', 'cer_open', {host: TSEC('award', 'host')}), fx: 'crowd'}];
+  ['instancabile', 'cecchino', 'dominatore', 'mvp'].forEach(k => {   // MVP per ultimo: gran finale
+    const list = by[k]; if (!list || !list.length) return;
+    scenes.push({type: 'title', award: k, quip: TSEC('award', 'cer_q_' + k), finale: k === 'mvp'});
+    scenes.push({type: 'drum'});
+    list.forEach(w => {
+      const key = w.rank === 1 ? 'cer_gold' : w.rank === 2 ? 'cer_silver' : 'cer_bronze';
+      scenes.push({type: 'reveal', w: w, img: imgs[w.serial], line: TSEC('award', key, {name: w.name || '?', owner: w.owner || '?'}), gold: w.rank === 1});
+    });
+  });
+  scenes.push({type: 'say', text: TSEC('award', 'cer_close'), fx: 'win'});
+  showGalaOverlay(scenes, preview);
+}
+function showGalaOverlay(scenes, preview){
+  closeGala();
+  if (!document.getElementById('galaCss')){ const st = document.createElement('style'); st.id = 'galaCss'; st.textContent = '@keyframes galaFall{to{transform:translateY(108vh) rotate(720deg);}}@keyframes galaPop{0%{transform:scale(.6);opacity:0}60%{transform:scale(1.08)}100%{transform:scale(1);opacity:1}}'; document.head.appendChild(st); }
+  const ov = document.createElement('div'); ov.id = 'galaOverlay';
+  ov.style.cssText = 'position:fixed; inset:0; z-index:100000; background:radial-gradient(circle at 50% 18%, #2a1550, #0a0713 72%); color:#fff; display:flex; align-items:center; justify-content:center; text-align:center; overflow:hidden;';
+  ov.innerHTML =
+    '<div id="galaConfetti" style="position:absolute; inset:0; pointer-events:none;"></div>' +
+    (preview ? '<div style="position:absolute; top:12px; left:0; right:0; font-size:.62rem; letter-spacing:2px; color:#ffd36e;">' + TSEC('award', 'cer_preview') + '</div>' : '') +
+    '<div id="galaStage" style="width:100%; max-width:440px; padding:20px; z-index:2;"></div>' +
+    '<div style="position:absolute; left:12px; bottom:12px; width:64px; height:64px; border-radius:50%; border:2px solid #ffd36e; overflow:hidden; display:flex; align-items:center; justify-content:center; font-size:1.8rem; background:#0006; z-index:3;">🎩<img src="' + portraitUrl('char', 'gala') + '" onerror="this.remove()" style="position:absolute; inset:0; width:100%; height:100%; object-fit:cover;"></div>' +
+    '<button class="btn secondary" style="position:absolute; top:10px; right:10px; width:auto; padding:6px 12px; z-index:4;" onclick="event.stopPropagation(); closeGala();">' + TSEC('award', 'btn_skip') + '</button>';
+  document.body.appendChild(ov);
+  ov.addEventListener('click', galaNext);
+  _gala = {scenes: scenes, i: -1, t: null};
+  galaNext();
+}
+function closeGala(){ if (_gala && _gala.t) clearTimeout(_gala.t); _gala = null; const o = document.getElementById('galaOverlay'); if (o) o.remove(); }
+function galaNext(){
+  if (!_gala) return;
+  if (_gala.t){ clearTimeout(_gala.t); _gala.t = null; }
+  _gala.i++;
+  if (_gala.i >= _gala.scenes.length){ closeGala(); try { if (window._curTab === 'award') openAward(); } catch(e){} return; }
+  const s = _gala.scenes[_gala.i], stage = document.getElementById('galaStage'); if (!stage) return;
+  let dwell = 2800;
+  if (s.type === 'say'){ stage.innerHTML = '<div style="font-size:1.15rem; line-height:1.5; background:#ffffff12; border:1px solid #ffffff33; border-radius:16px; padding:16px 18px; animation:galaPop .4s;">' + s.text + '</div>'; if (s.fx) try { sfx(s.fx); } catch(e){} }
+  else if (s.type === 'title'){ stage.innerHTML = (s.finale ? '<div style="font-size:.72rem; letter-spacing:2px; color:#ffd36e;">' + TSEC('award', 'cer_mvp_finale') + '</div>' : '') + '<div style="font-size:1.7rem; font-weight:900; margin-top:6px; animation:galaPop .4s;">' + (AW_ICON[s.award] || '🏆') + ' ' + TSEC('award', 'aw_' + s.award) + '</div><div style="color:#ffd36e; margin-top:4px; font-size:.95rem; font-weight:700;">' + TSEC('award', 'd_' + s.award) + '</div><div style="opacity:.7; margin-top:2px; font-size:.82rem; font-style:italic;">' + s.quip + '</div>'; try { sfx('bell'); } catch(e){} dwell = 2100; }
+  else if (s.type === 'drum'){ stage.innerHTML = '<div style="font-size:1.3rem; animation:galaPop .3s;">' + TSEC('award', 'cer_drumroll') + '</div>'; try { sfx('miss'); } catch(e){} dwell = 1200; }
+  else if (s.type === 'reveal'){
+    const w = s.w;
+    const av = s.img ? '<img src="' + s.img + '" style="width:120px; border-radius:12px; box-shadow:0 6px 24px #000;">' : '<div style="font-size:3rem;">🐱</div>';
+    stage.innerHTML = '<div style="animation:galaPop .5s;">' + av +
+      '<div style="font-size:.8rem; letter-spacing:1px; color:#ffd36e; margin-top:8px;">' + TSEC('award', 'place_' + w.rank) + '</div>' +
+      '<div style="font-size:1.4rem; font-weight:900; margin-top:2px;">' + awMedal(w.rank) + ' ' + awEsc(w.name || '?') + '</div>' +
+      '<div style="opacity:.85;">' + TSEC('award', 'by') + ' ' + awEsc(w.owner || '?') + '</div>' +
+      '<div style="opacity:.95; margin-top:5px; font-size:1rem;">' + (AW_ICON[w.award] || '🏆') + ' ' + awValue(w.award, w.value) + '</div>' +
+      '<div style="font-size:1.5rem; font-weight:900; color:#ffd36e; margin-top:6px; text-shadow:0 2px 8px #000;">' + TSEC('award', 'cer_pts', {p: w.points}) + '</div></div>';
+    try { sfx(s.gold ? 'crit' : 'hit'); } catch(e){}
+    if (s.gold) galaConfetti();
+    dwell = 3000;
+  }
+  _gala.t = setTimeout(galaNext, dwell);
+}
+function galaConfetti(){
+  const box = document.getElementById('galaConfetti'); if (!box) return;
+  const cols = ['#ffd36e', '#ff6b6b', '#4dd2ff', '#8affc1', '#c792ea', '#fff'];
+  for (let i = 0; i < 40; i++){
+    const d = document.createElement('div'), dur = 2 + Math.random() * 2, delay = Math.random() * 0.3;
+    d.style.cssText = 'position:absolute; top:-14px; left:' + (Math.random() * 100) + '%; width:8px; height:13px; background:' + cols[i % cols.length] + '; opacity:.92; transform:rotate(' + (Math.random() * 360) + 'deg); animation:galaFall ' + dur + 's linear ' + delay + 's forwards;';
+    box.appendChild(d); setTimeout(() => d.remove(), (dur + delay) * 1000 + 300);
+  }
+}
 /* ---------- notiziario: cosa è successo alle tue carte mentre eri via ---------- */
 async function checkWorldNews(){
   if (!collection.length) return;
@@ -3688,7 +3921,7 @@ async function migrateMelodies(){
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
 /* ---------- versione e aggiornamento automatico ---------- */
-const APP_VERSION = '19.2';   // unica fonte di verità: aggiorna anche version.txt a ogni release
+const APP_VERSION = '19.5';   // unica fonte di verità: aggiorna anche version.txt a ogni release
 try { document.getElementById('appVer').textContent = 'v' + APP_VERSION; } catch(e){}
 function verNewer(a, b){   // a più recente di b? confronto numerico 11.10 > 11.9
   const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);
@@ -5597,6 +5830,7 @@ const ADVISORS = [
   {id: 'baffo', prompt: 'Cartoon portrait of a wise old grey cat gym coach: red headband, silver whistle around his neck, big mustache-like whiskers, one scarred ear, proud expression. Flat cel shading, bold outlines, warm colors, dark purple background. Square portrait, bust only.'},
   {id: 'baratto', prompt: 'Comic book style portrait of a CAT (full feline face clearly visible): a sly charming bazaar-merchant cat with a cunning wide grin, a golden hoop earring, a small tilted red fez, holding shiny gold coins in his paw, colorful oriental market stall behind him. Slippery salesman vibes. Bold ink outlines, flat cel shading, warm colors, dark purple background. Square bust portrait.'},
   {id: 'incanto', prompt: 'Comic book style portrait of a CAT (full feline face clearly visible): an energetic auctioneer cat mid-shout, one paw raised holding a wooden auction gavel, monocle, elegant bow tie, wide theatrical grin, excited wide eyes. Lively showman vibes. Bold ink outlines, flat cel shading, warm colors, dark purple background. Square bust portrait.'},
+  {id: 'gala', prompt: 'Comic book style portrait of a CAT (full feline face clearly visible): a suave Saturday-night TV showman crooner cat in a black tuxedo with a shiny bow tie, slicked-back fur, wearing dark sunglasses at night, holding a vintage microphone up to his mouth mid-announcement, confident charismatic grin, golden stage spotlight and red curtain behind him. Glamorous gala host vibes. Bold ink outlines, flat cel shading, warm colors, dark purple background. Square bust portrait.'},
 ];
 // carica un ritratto condiviso dentro un <img>; se non c'è ancora sullo Storage, resta l'emoji
 function loadAdvisor(imgId, emojiId, id){
@@ -6906,6 +7140,10 @@ async function onQrFound(data, mine){
   renderStats();
   renderWallet();
   showTab(collection.length ? 'coll' : 'crea');   // apertura intelligente: carte se ne hai, foto se no
+  setTimeout(async () => {   // sabato: chiude la settimana (anche senza aprire la scheda) e, se c'è una serata nuova, la fa partire una volta
+    try { await fetch(SUPA_URL + '/rest/v1/rpc/settle_due_weeks', {method: 'POST', headers: awH(), body: '{}'}); } catch(e){}
+    try { checkAwardEdition(); } catch(e){}
+  }, 5000);
   renderMedals();
   try { renderMissions(); } catch(e){}
   checkAchievements();
