@@ -15,11 +15,11 @@
 <script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs@master/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="lang-it.js?v=21.1"></script>
-<script src="lang-en.js?v=21.1"></script>
-<script src="lang-fr.js?v=21.1"></script>
-<script src="lang-es.js?v=21.1"></script>
-<script src="lang-de.js?v=21.1"></script>
+<script src="lang-it.js?v=21.2"></script>
+<script src="lang-en.js?v=21.2"></script>
+<script src="lang-fr.js?v=21.2"></script>
+<script src="lang-es.js?v=21.2"></script>
+<script src="lang-de.js?v=21.2"></script>
 <style>
   :root{
     --bg:#14121f; --panel:#1e1b2e; --panel2:#282440;
@@ -547,6 +547,11 @@
   </div>
 
   <div class="battle" id="battleScreen">
+    <div id="teamHud" style="display:none; width:100%; max-width:440px; margin:0 auto 6px;">
+      <div id="teamHudA" style="display:flex; gap:6px; justify-content:center; align-items:flex-end; min-height:58px;"></div>
+      <div style="text-align:center; font-size:.7rem; color:var(--muted); letter-spacing:2px; margin:2px 0;">VS</div>
+      <div id="teamHudB" style="display:flex; gap:6px; justify-content:center; align-items:flex-start; min-height:58px;"></div>
+    </div>
     <div class="fighters">
       <div class="fighter" id="fA"></div>
       <div class="fighter" id="fB"></div>
@@ -3355,6 +3360,7 @@ function closeBattle(){
   battleOn = false;
   currentBet = null;   // battaglia interrotta = scommessa annullata (nessuna perdita)
   document.getElementById('battleScreen').style.display = 'none';
+  { const th = document.getElementById('teamHud'); if (th) th.style.display = 'none'; }
   document.getElementById('bracket').style.display = 'none';
   document.getElementById('bracketBtn').style.display = 'none';
   try { if (window._curTab === 'boss') renderBosses(); } catch(e){}   // rientro nel menu boss sempre aggiornato
@@ -3650,29 +3656,54 @@ async function runBattle(ea, eb, title){
   window._lastBout = {winSerial: w.serial, winHp: w.hp, winMax: w.maxHp, loseSerial: loser.serial};   // per il motore a squadre (HP residui del vincitore)
   return w === a ? ea : eb;
 }
-/* ---------- 🛡️ Motore a squadre (NvN) sopra runBattle — Fase 1: staffetta ---------- */
+/* ---------- 🛡️ Motore a squadre (NvN) sopra runBattle — staffetta + plancia ---------- */
+function teamHudCard(c, st){
+  const active = st === 'active';
+  const w = active ? 54 : 46, h = active ? 60 : 52;
+  const border = active ? '2px solid #ffd36e' : '1px solid #ffffff33';
+  const glow = active ? 'box-shadow:0 0 14px #ffd36eaa;' : '';
+  const dim = st === 'ko' ? 'filter:grayscale(1); opacity:.4;' : (st === 'wait' ? 'opacity:.8;' : '');
+  const img = c.img ? '<img src="' + c.img + '" style="width:100%;height:100%;object-fit:cover;">' : '<div style="font-size:1.4rem;">🐱</div>';
+  const ko = st === 'ko' ? '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:1.3rem;">❌</div>' : '';
+  return '<div data-serial="' + c.serial + '" style="width:' + w + 'px;height:' + h + 'px;border-radius:8px;border:' + border + ';overflow:hidden;position:relative;background:#0004;display:flex;align-items:center;justify-content:center;flex:0 0 auto;transition:width .3s,height .3s,box-shadow .3s,filter .3s,opacity .3s,border-color .3s;' + glow + dim + '">' + img + ko + '</div>';
+}
+function renderTeamHud(row, team, activeIdx){
+  if (!row) return;
+  const old = {}; [...row.children].forEach(el => { old[el.dataset.serial] = el.getBoundingClientRect(); });
+  const st = i => i < activeIdx ? 'ko' : (i === activeIdx ? 'active' : 'wait');
+  const items = team.map((c, i) => ({c: c, s: st(i)}));
+  items.sort((a, b) => (a.s === 'ko' ? 1 : 0) - (b.s === 'ko' ? 1 : 0));   // le KO scivolano in fondo
+  row.innerHTML = items.map(it => teamHudCard(it.c, it.s)).join('');
+  [...row.children].forEach(el => {   // FLIP: anima lo spostamento
+    const o = old[el.dataset.serial]; if (!o) return;
+    const n = el.getBoundingClientRect(), dx = o.left - n.left, dy = o.top - n.top;
+    if (dx || dy){ el.style.transition = 'none'; el.style.transform = 'translate(' + dx + 'px,' + dy + 'px)'; requestAnimationFrame(() => { el.style.transition = 'transform .45s ease'; el.style.transform = ''; }); }
+  });
+}
 async function runTeamBattle(teamA, teamB, opts){
   opts = opts || {};
   const label = opts.label || 'GUERRA';
   const prevAuto = window._autoSkip; window._autoSkip = true;   // ingressi rapidi tra un bout e l'altro
+  const hud = document.getElementById('teamHud'), hudA = document.getElementById('teamHudA'), hudB = document.getElementById('teamHudB');
+  document.getElementById('battleScreen').style.display = 'flex';
+  if (hud) hud.style.display = 'block';
   let iA = 0, iB = 0; const hp = {}; const bouts = [];
+  renderTeamHud(hudA, teamA, iA); renderTeamHud(hudB, teamB, iB);
   while (iA < teamA.length && iB < teamB.length){
     const A = teamA[iA], B = teamB[iB];
     const a = Object.assign({}, A); if (hp[A.serial] != null) a._startHp = hp[A.serial];
     const b = Object.assign({}, B); if (hp[B.serial] != null) b._startHp = hp[B.serial];
-    document.getElementById('battleScreen').style.display = 'flex';
     const res = await runBattle(a, b, label);
-    if (!res || !window._lastBout){ window._autoSkip = prevAuto; return null; }   // guerra interrotta
+    if (!res || !window._lastBout){ window._autoSkip = prevAuto; if (hud) hud.style.display = 'none'; return null; }   // guerra interrotta
     const lb = window._lastBout;
     const aWon = lb.winSerial === A.serial;
     if (aWon){ hp[A.serial] = lb.winHp; iB++; } else { hp[B.serial] = lb.winHp; iA++; }
     bouts.push({winSerial: lb.winSerial, loseSerial: lb.loseSerial, winHp: lb.winHp});
-    if (iA < teamA.length && iB < teamB.length){
-      try { toast(TB ? '🥊 ' + (aWon ? A.name : B.name) + ' resta in campo!' : ''); } catch(e){}
-      await new Promise(r => setTimeout(r, 1400));
-    }
+    renderTeamHud(hudA, teamA, iA); renderTeamHud(hudB, teamB, iB);   // la sconfitta scende ❌, la prossima sale in attivo
+    if (iA < teamA.length && iB < teamB.length) await new Promise(r => setTimeout(r, 1600));
   }
   window._autoSkip = prevAuto;
+  if (hud) hud.style.display = 'none';
   const winner = iB >= teamB.length ? 'A' : 'B';
   return {winner: winner, bouts: bouts, survivorsA: teamA.length - iA, survivorsB: teamB.length - iB};
 }
@@ -4109,7 +4140,7 @@ async function migrateMelodies(){
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
 /* ---------- versione e aggiornamento automatico ---------- */
-const APP_VERSION = '21.1';   // unica fonte di verità: aggiorna anche version.txt a ogni release
+const APP_VERSION = '21.2';   // unica fonte di verità: aggiorna anche version.txt a ogni release
 try { document.getElementById('appVer').textContent = 'v' + APP_VERSION; } catch(e){}
 function verNewer(a, b){   // a più recente di b? confronto numerico 11.10 > 11.9
   const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);
