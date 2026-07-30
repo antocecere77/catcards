@@ -1494,6 +1494,9 @@
     "cer_hall_intro": "🏛️ Et maintenant… les Records de Tous les Temps !",
     "cer_hall_hold": "Ce record tient bon. Quel champion !",
     "cer_record_broken": "Nouveau record ! {name} entre dans la légende !",
-    "rec_new": "NOUVEAU RECORD !"
+    "rec_new": "NOUVEAU RECORD !",
+    "aw_inlizza": "en lice",
+    "cont_title": "Les poursuivants",
+    "cer_contenders": "Et attention à eux : à une moustache du podium !"
   }
 };

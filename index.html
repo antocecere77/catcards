@@ -15,11 +15,11 @@
 <script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs@master/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="lang-it.js?v=20.1"></script>
-<script src="lang-en.js?v=20.1"></script>
-<script src="lang-fr.js?v=20.1"></script>
-<script src="lang-es.js?v=20.1"></script>
-<script src="lang-de.js?v=20.1"></script>
+<script src="lang-it.js?v=20.2"></script>
+<script src="lang-en.js?v=20.2"></script>
+<script src="lang-fr.js?v=20.2"></script>
+<script src="lang-es.js?v=20.2"></script>
+<script src="lang-de.js?v=20.2"></script>
 <style>
   :root{
     --bg:#14121f; --panel:#1e1b2e; --panel2:#282440;
@@ -1608,11 +1608,15 @@ function awardBlocks(rows, order){
       '<div style="font-weight:800; color:var(--accent);">' + (AW_ICON[k] || '🏆') + ' ' + TSEC('award', 'aw_' + k) + '</div>' +
       '<div style="font-size:.72rem; color:var(--muted); margin-bottom:4px; line-height:1.4;">' + TSEC('award', 'full_' + k) + '</div>';
     list.forEach(x => {
+      const place = x.rank <= 3 ? awMedal(x.rank) : '<span style="color:var(--muted); font-weight:700;">#' + x.rank + '</span>';
+      const ptsCell = x.points > 0
+        ? '<span style="font-weight:800; color:var(--accent); font-size:.78rem; flex-shrink:0;">' + TSEC('award', 'pts', {p: x.points}) + '</span>'
+        : '<span style="font-size:.72rem; color:var(--muted); flex-shrink:0; font-style:italic;">' + TSEC('award', 'aw_inlizza') + '</span>';
       html += '<div style="display:flex; align-items:center; gap:8px; padding:3px 0; cursor:pointer;" onclick="showCardBySerial(\'' + x.serial + '\')">' +
-        '<span style="font-size:1.05rem;">' + awMedal(x.rank) + '</span>' +
+        '<span style="font-size:1.05rem;">' + place + '</span>' +
         '<span style="flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"><strong>' + awEsc(x.name || '?') + '</strong> <span style="color:var(--muted); font-size:.78rem;">' + TSEC('award', 'by') + ' ' + awEsc(x.owner || '?') + '</span></span>' +
         '<span style="font-size:.75rem; color:var(--muted); flex-shrink:0;">' + awValue(k, x.value) + '</span>' +
-        '<span style="font-weight:800; color:var(--accent); font-size:.78rem; flex-shrink:0;">' + TSEC('award', 'pts', {p: x.points}) + '</span>' +
+        ptsCell +
         '</div>';
     });
     html += '</div>';
@@ -1698,13 +1702,16 @@ async function runGala(rows, preview){
     const list = by[k]; if (!list || !list.length) return;
     scenes.push({type: 'title', award: k, quip: TSEC('award', 'cer_q_' + k), finale: k === 'mvp'});
     scenes.push({type: 'drum'});
-    const ordered = list.slice().sort((a, b) => b.rank - a.rank);   // dal bronzo verso l'oro: crescendo
+    const podium = list.filter(w => w.rank <= 3);
+    const ordered = podium.slice().sort((a, b) => b.rank - a.rank);   // dal bronzo verso l'oro: crescendo
     ordered.forEach(w => {
       if (w.rank === 1 && ordered.length > 1) scenes.push({type: 'susp'});   // "…e il vincitore è…" prima dell'oro
       const key = w.rank === 1 ? 'cer_gold' : w.rank === 2 ? 'cer_silver' : 'cer_bronze';
       scenes.push({type: 'reveal', w: w, img: imgs[w.serial], line: TSEC('award', key, {name: w.name || '?', owner: w.owner || '?'}), gold: w.rank === 1});
     });
-    if (list.length >= 2) scenes.push({type: 'podium', award: k, list: list.slice().sort((a, b) => a.rank - b.rank)});
+    if (podium.length >= 2) scenes.push({type: 'podium', award: k, list: podium.slice().sort((a, b) => a.rank - b.rank)});
+    const contenders = list.filter(w => w.rank > 3);
+    if (contenders.length) scenes.push({type: 'contenders', award: k, list: contenders});   // gli inseguitori: "vicini al podio"
   });
   // 🏛️ segmento Hall of Fame finale: i record di sempre + "è caduto un record!"
   if (hall.length){
@@ -1761,6 +1768,8 @@ function showGalaOverlay(scenes, preview){
 function closeGala(){ if (_gala && _gala.t) clearTimeout(_gala.t); _gala = null; const o = document.getElementById('galaOverlay'); if (o) o.remove(); try { document.body.style.overflow = ''; } catch(e){} }
 function galaSay(txt){ const b = document.getElementById('galaBubbleTxt'); if (b) b.textContent = txt; }
 function galaFlash(n){ const ov = document.getElementById('galaOverlay'); if (!ov) return; for (let i = 0; i < n; i++){ const f = document.createElement('div'); f.style.cssText = 'position:absolute; inset:0; background:#fff; z-index:7; pointer-events:none; opacity:0; animation:galaFlash .5s ' + (i * 0.42) + 's;'; ov.appendChild(f); setTimeout(() => f.remove(), 600 + i * 420); } }
+function galaSpotOn(){ const ov = document.getElementById('galaOverlay'); if (!ov || document.getElementById('galaSpot')) return; const d = document.createElement('div'); d.id = 'galaSpot'; d.style.cssText = 'position:absolute; inset:0; z-index:2; pointer-events:none; background:radial-gradient(circle at 50% 40%, transparent 0, transparent 27%, rgba(0,0,0,.84) 62%); animation:galaPop .5s;'; ov.appendChild(d); }
+function galaSpotOff(){ const d = document.getElementById('galaSpot'); if (d) d.remove(); }
 function galaCountUp(id, target, dur){ const el = document.getElementById(id); if (!el) return; const t0 = performance.now(); (function step(t){ const p = Math.min(1, (t - t0) / dur); el.textContent = Math.round(target * p); if (p < 1 && document.getElementById(id) === el) requestAnimationFrame(step); })(performance.now()); }
 function galaPodCol(w, h){ if (!w) return ''; const bar = w.rank === 1 ? 'linear-gradient(#ffe08a,#b8860b)' : w.rank === 2 ? 'linear-gradient(#eef2f7,#9aa4b0)' : 'linear-gradient(#e0a878,#9c6b3f)'; return '<div style="display:flex; flex-direction:column; align-items:center; width:96px;"><div style="font-size:1.5rem;">' + awMedal(w.rank) + '</div><div style="font-size:.78rem; font-weight:800; max-width:96px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">' + awEsc(w.name || '?') + '</div><div style="width:100%; height:' + h + 'px; margin-top:4px; border-radius:7px 7px 0 0; background:' + bar + ';"></div></div>'; }
 function galaNext(){
@@ -1775,6 +1784,7 @@ function galaNext(){
     return;
   }
   const s = _gala.scenes[_gala.i], stage = document.getElementById('galaStage'); if (!stage) return;
+  galaSpotOff();   // il riflettore/buio resta solo durante la scena che lo accende
   let dwell = 3600;
   if (s.type === 'say'){ stage.innerHTML = '<div style="font-size:4rem; animation:galaPop .4s;">' + (s.icon || '🎬') + '</div>'; galaSay(s.text); if (s.fx) try { sfx(s.fx); } catch(e){} }
   else if (s.type === 'title'){
@@ -1791,6 +1801,27 @@ function galaNext(){
     const by = {}; s.list.forEach(w => by[w.rank] = w);
     stage.innerHTML = '<div style="animation:galaPop .4s;"><div style="display:flex; align-items:flex-end; justify-content:center; gap:8px;">' + galaPodCol(by[2], 66) + galaPodCol(by[1], 94) + galaPodCol(by[3], 50) + '</div><div style="margin-top:10px; font-weight:800; color:#ffd36e;">' + (AW_ICON[s.award] || '🏆') + ' ' + TSEC('award', 'aw_' + s.award) + '</div></div>';
     galaSay(TSEC('award', 'cer_podium')); try { sfx('bell'); } catch(e){} dwell = 3400;
+  }
+  else if (s.type === 'contenders'){
+    let h = '<div style="animation:galaPop .4s;"><div style="font-size:1.15rem; font-weight:800; color:#ffd36e;">' + (AW_ICON[s.award] || '🏆') + ' ' + TSEC('award', 'cont_title') + '</div>';
+    s.list.slice().sort((a, b) => a.rank - b.rank).forEach(w => { h += '<div style="margin-top:8px; font-size:1.05rem; cursor:pointer;" onclick="showCardBySerial(\'' + w.serial + '\')">#' + w.rank + ' <strong>' + awEsc(w.name || '?') + '</strong> <span style="opacity:.75; font-size:.82rem;">' + TSEC('award', 'by') + ' ' + awEsc(w.owner || '?') + ' · ' + awValue(w.award, w.value) + '</span></div>'; });
+    stage.innerHTML = h + '</div>';
+    galaSay(TSEC('award', 'cer_contenders')); try { sfx('bell'); } catch(e){} dwell = 3600;
+  }
+  else if (s.type === 'hofreveal'){
+    const x = s.x, broke = s.broke;
+    const av = x.img ? '<img src="' + x.img + '" style="max-height:26vh; max-width:58%; border-radius:12px; box-shadow:0 6px 20px #000;">' : '<div style="font-size:2.6rem;">🐱</div>';
+    stage.innerHTML = '<div style="animation:galaPop .5s;">' +
+      (broke ? '<div style="font-size:1.1rem; font-weight:900; letter-spacing:2px; color:#ffd36e; margin-bottom:6px; text-shadow:0 0 12px #ffd36e;">' + TSEC('award', 'rec_new') + '</div>' : '') +
+      '<div style="font-size:1.9rem;">' + (HOF_ICON[x.award] || '🏛️') + '</div>' +
+      '<div style="font-size:1.2rem; font-weight:800; color:#ffd36e;">' + TSEC('award', 'hof_' + x.award) + '</div>' +
+      '<div style="margin-top:6px;">' + av + '</div>' +
+      '<div style="font-size:1.3rem; font-weight:900; margin-top:6px;">' + awEsc(x.name || '?') + '</div>' +
+      '<div style="opacity:.85; font-size:.88rem;">' + TSEC('award', 'by') + ' ' + awEsc(x.owner || '?') + '</div>' +
+      '<div style="margin-top:4px; color:#ffd36e; font-weight:700;">' + awValue(x.award, x.value) + '</div></div>';
+    galaSay(broke ? TSEC('award', 'cer_record_broken', {name: x.name || '?'}) : TSEC('award', 'cer_hall_hold'));
+    if (broke){ try { sfx('crit'); } catch(e){} try { sfx('crowd'); } catch(e){} galaConfetti(); setTimeout(() => { try { sfx('win'); } catch(e){} }, 400); galaFlash(2); galaSpotOn(); dwell = 4800; }
+    else { try { sfx('bell'); } catch(e){} dwell = 3300; }
   }
   else if (s.type === 'reveal'){
     const w = s.w, gold = s.gold;
@@ -1814,7 +1845,7 @@ function galaNext(){
       try { sfx('crowd'); } catch(e){}
       galaConfetti(); setTimeout(galaConfetti, 700);
       setTimeout(() => { try { sfx('win'); } catch(e){} }, 450);
-      galaFlash(3);
+      galaFlash(3); galaSpotOn();   // buio + riflettore sul vincitore
       dwell = 5600;
     } else { try { sfx('hit'); } catch(e){} dwell = 4000; }
   }
@@ -4001,7 +4032,7 @@ async function migrateMelodies(){
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
 /* ---------- versione e aggiornamento automatico ---------- */
-const APP_VERSION = '20.1';   // unica fonte di verità: aggiorna anche version.txt a ogni release
+const APP_VERSION = '20.2';   // unica fonte di verità: aggiorna anche version.txt a ogni release
 try { document.getElementById('appVer').textContent = 'v' + APP_VERSION; } catch(e){}
 function verNewer(a, b){   // a più recente di b? confronto numerico 11.10 > 11.9
   const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);

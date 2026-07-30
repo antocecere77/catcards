@@ -1494,6 +1494,9 @@
     "cer_hall_intro": "🏛️ Y ahora… ¡los Récords de Siempre!",
     "cer_hall_hold": "Este récord sigue en pie. ¡Qué campeón!",
     "cer_record_broken": "¡Nuevo récord! ¡{name} entra en la leyenda!",
-    "rec_new": "¡NUEVO RÉCORD!"
+    "rec_new": "¡NUEVO RÉCORD!",
+    "aw_inlizza": "en liza",
+    "cont_title": "Los perseguidores",
+    "cer_contenders": "Y ojo con estos: ¡a un bigote del podio!"
   }
 };

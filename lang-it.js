@@ -1494,6 +1494,9 @@
     "cer_hall_intro": "🏛️ E ora… i Record di Sempre!",
     "cer_hall_hold": "Questo record resta saldo. Che campione!",
     "cer_record_broken": "Nuovo record! {name} entra nella leggenda!",
-    "rec_new": "NUOVO RECORD!"
+    "rec_new": "NUOVO RECORD!",
+    "aw_inlizza": "in lizza",
+    "cont_title": "Gli inseguitori",
+    "cer_contenders": "E occhio a questi: erano a un soffio dal podio!"
   }
 };

@@ -1494,6 +1494,9 @@
     "cer_hall_intro": "🏛️ Und nun… die Rekorde aller Zeiten!",
     "cer_hall_hold": "Dieser Rekord hält. Was für ein Champion!",
     "cer_record_broken": "Neuer Rekord! {name} wird zur Legende!",
-    "rec_new": "NEUER REKORD!"
+    "rec_new": "NEUER REKORD!",
+    "aw_inlizza": "im Rennen",
+    "cont_title": "Die Verfolger",
+    "cer_contenders": "Und Achtung: nur ein Schnurrhaar vom Podium entfernt!"
   }
 };

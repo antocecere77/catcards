@@ -1494,6 +1494,9 @@
     "cer_hall_intro": "🏛️ And now… the All-Time Records!",
     "cer_hall_hold": "This record still stands. What a champion!",
     "cer_record_broken": "New record! {name} enters legend!",
-    "rec_new": "NEW RECORD!"
+    "rec_new": "NEW RECORD!",
+    "aw_inlizza": "in the running",
+    "cont_title": "The chasers",
+    "cer_contenders": "And watch these: a whisker from the podium!"
   }
 };
