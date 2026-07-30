@@ -15,11 +15,11 @@
 <script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs@master/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="lang-it.js?v=20.7"></script>
-<script src="lang-en.js?v=20.7"></script>
-<script src="lang-fr.js?v=20.7"></script>
-<script src="lang-es.js?v=20.7"></script>
-<script src="lang-de.js?v=20.7"></script>
+<script src="lang-it.js?v=20.8"></script>
+<script src="lang-en.js?v=20.8"></script>
+<script src="lang-fr.js?v=20.8"></script>
+<script src="lang-es.js?v=20.8"></script>
+<script src="lang-de.js?v=20.8"></script>
 <style>
   :root{
     --bg:#14121f; --panel:#1e1b2e; --panel2:#282440;
@@ -4062,7 +4062,7 @@ async function migrateMelodies(){
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
 /* ---------- versione e aggiornamento automatico ---------- */
-const APP_VERSION = '20.7';   // unica fonte di verità: aggiorna anche version.txt a ogni release
+const APP_VERSION = '20.8';   // unica fonte di verità: aggiorna anche version.txt a ogni release
 try { document.getElementById('appVer').textContent = 'v' + APP_VERSION; } catch(e){}
 function verNewer(a, b){   // a più recente di b? confronto numerico 11.10 > 11.9
   const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);
@@ -5920,6 +5920,15 @@ let sentProg = {}, sentAlbum = {};
 try { sentProg = JSON.parse(localStorage.getItem('catcards_sentprog') || '{}'); } catch(e){}
 try { sentAlbum = JSON.parse(localStorage.getItem('catcards_sentalbum') || '{}'); } catch(e){}
 function saveSent(){ try { localStorage.setItem('catcards_sentprog', JSON.stringify(sentProg)); localStorage.setItem('catcards_sentalbum', JSON.stringify(sentAlbum)); } catch(e){} try { saveSentServer(); } catch(e){} }
+async function recordSentDone(c){   // registra (una volta) la carta che ha completato il Sentiero → record "Le Nove Vite"
+  if (!c || !session || !session.access_token) return;
+  try {
+    await fetch(SUPA_URL + '/rest/v1/sentiero_done', {
+      method: 'POST', headers: supaHeaders({Prefer: 'resolution=ignore-duplicates'}),
+      body: JSON.stringify({serial: c.serial, user_id: session.user_id, name: c.name, owner: (playerNameEl.value.trim() || serverOwner || 'anonimo'), done_at: new Date().toISOString()})
+    });
+  } catch(e){}
+}
 // progresso del Sentiero sul server (opzionale): segue l'account tra dispositivi. Locale resta la fonte primaria; il server è una copia sincronizzata.
 let _sentSaveT = null;
 function saveSentServer(){
@@ -6220,6 +6229,7 @@ async function fightSentiero(stage){
     const firstFig = !sentAlbum[s.id];
     sentAlbum[s.id] = Date.now();
     saveSent();
+    if (Math.max(cleared, stage) >= SENT_MAX) recordSentDone(mine);   // Le Nove Vite: carta che ha finito tutto il Sentiero
     if (stage % 10 === 0){   // guardiano battuto = zona completata: premio crescente per zona
       const reward = 20 + (s.zone - 1) * 10;   // Vicoli 20 → Cosmo 110
       points += reward;
