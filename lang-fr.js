@@ -1497,6 +1497,8 @@
     "rec_new": "NOUVEAU RECORD !",
     "aw_inlizza": "en lice",
     "cont_title": "Les poursuivants",
-    "cer_contenders": "Et attention à eux : à une moustache du podium !"
+    "cer_contenders": "Et attention à eux : à une moustache du podium !",
+    "notif_win": "🏆 Tu as gagné {list} ! +{pts} points ajoutés.",
+    "notif_more": "et {n} de plus"
   }
 };

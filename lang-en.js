@@ -1497,6 +1497,8 @@
     "rec_new": "NEW RECORD!",
     "aw_inlizza": "in the running",
     "cont_title": "The chasers",
-    "cer_contenders": "And watch these: a whisker from the podium!"
+    "cer_contenders": "And watch these: a whisker from the podium!",
+    "notif_win": "🏆 You won {list}! +{pts} points added.",
+    "notif_more": "and {n} more"
   }
 };

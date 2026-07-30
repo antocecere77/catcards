@@ -1497,6 +1497,8 @@
     "rec_new": "NEUER REKORD!",
     "aw_inlizza": "im Rennen",
     "cont_title": "Die Verfolger",
-    "cer_contenders": "Und Achtung: nur ein Schnurrhaar vom Podium entfernt!"
+    "cer_contenders": "Und Achtung: nur ein Schnurrhaar vom Podium entfernt!",
+    "notif_win": "🏆 Du hast {list} gewonnen! +{pts} Punkte gutgeschrieben.",
+    "notif_more": "und {n} weitere"
   }
 };

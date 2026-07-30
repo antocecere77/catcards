@@ -1497,6 +1497,8 @@
     "rec_new": "NUOVO RECORD!",
     "aw_inlizza": "in lizza",
     "cont_title": "Gli inseguitori",
-    "cer_contenders": "E occhio a questi: erano a un soffio dal podio!"
+    "cer_contenders": "E occhio a questi: erano a un soffio dal podio!",
+    "notif_win": "🏆 Hai vinto {list}! +{pts} punti sul tuo saldo.",
+    "notif_more": "e altri {n}"
   }
 };

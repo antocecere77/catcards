@@ -15,11 +15,11 @@
 <script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs@master/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="lang-it.js?v=20.4"></script>
-<script src="lang-en.js?v=20.4"></script>
-<script src="lang-fr.js?v=20.4"></script>
-<script src="lang-es.js?v=20.4"></script>
-<script src="lang-de.js?v=20.4"></script>
+<script src="lang-it.js?v=20.6"></script>
+<script src="lang-en.js?v=20.6"></script>
+<script src="lang-fr.js?v=20.6"></script>
+<script src="lang-es.js?v=20.6"></script>
+<script src="lang-de.js?v=20.6"></script>
 <style>
   :root{
     --bg:#14121f; --panel:#1e1b2e; --panel2:#282440;
@@ -199,7 +199,7 @@
     </div>
     <div style="display:flex; gap:8px;">
       <button class="tabBtn" data-tab="med" onclick="showTab('med')"><span data-i18n="tab_med">🏅 Medagliere</span></button>
-      <button class="tabBtn" data-tab="award" onclick="showTab('award')"><span data-i18n="tab_award">🏆 Award</span></button>
+      <button class="tabBtn" data-tab="award" onclick="showTab('award')"><span data-i18n="tab_award">🏆 Award</span><span id="awardDot" style="display:none; width:9px; height:9px; background:#e63946; border-radius:50%; margin-left:5px; vertical-align:middle;"></span></button>
       <button class="tabBtn" data-tab="reg" onclick="showTab('reg')"><span data-i18n="tab_reg">📖 Regole</span></button>
       <button class="tabBtn" data-tab="opz" onclick="showTab('opz')">⚙️</button>
     </div>
@@ -1553,6 +1553,7 @@ function openAward(){
   loadAwardPast();
   loadAwardHall();
   try { fetch(SUPA_URL + '/rest/v1/rpc/settle_due_weeks', {method: 'POST', headers: awH(), body: '{}'}); } catch(e){}   // idempotente: chiude eventuali settimane scadute
+  awClearDot();   // aperta la scheda: via il pallino rosso
 }
 const POSTER_STYLES = [
   {g:'linear-gradient(135deg,#3a1c71,#d76d77,#ffaf7b)', a:'#ffe08a', em:'🎩'},
@@ -1683,6 +1684,31 @@ async function checkAwardEdition(){
   let seen = null; try { seen = localStorage.getItem('catcards_aw_seen'); } catch(e){}
   if (wid !== seen) playAwardGala(false);   // nuova edizione mai vista: parte la serata
 }
+async function awCheckWinnings(){
+  const wid = await awLatestEdition(); if (!wid) return;
+  // pallino rosso sulla scheda finché non la apri
+  try { if (localStorage.getItem('catcards_aw_dot') !== wid){ const d = document.getElementById('awardDot'); if (d) d.style.display = 'inline-block'; } } catch(e){}
+  // notifica delle vincite: una sola volta per edizione, solo se una TUA carta ha vinto punti
+  let notif = null; try { notif = localStorage.getItem('catcards_aw_notif'); } catch(e){}
+  if (notif === wid || !collection.length) return;
+  const mine = new Set(collection.map(c => c.serial));
+  try {
+    const r = await fetch(SUPA_URL + '/rest/v1/awards?select=award,serial,points&week_id=eq.' + encodeURIComponent(wid) + '&points=gt.0', {headers: awH()});
+    const rows = r.ok ? await r.json() : [];
+    const won = rows.filter(x => mine.has(x.serial));
+    if (won.length){
+      const total = won.reduce((s, x) => s + (x.points || 0), 0);
+      const uniq = won.map(x => TSEC('award', 'aw_' + x.award)).filter((v, i, a) => a.indexOf(v) === i);
+      let names = uniq.slice(0, 3).join(', ');
+      if (uniq.length > 3) names += ' ' + TSEC('award', 'notif_more', {n: uniq.length - 3});
+      try { toast(TSEC('award', 'notif_win', {list: names, pts: total})); } catch(e){}
+      try { sfx('bell'); } catch(e){}
+      try { pullWallet(); } catch(e){}
+    }
+    try { localStorage.setItem('catcards_aw_notif', wid); } catch(e){}
+  } catch(e){}
+}
+function awClearDot(){ awLatestEdition().then(wid => { if (wid){ try { localStorage.setItem('catcards_aw_dot', wid); } catch(e){} } const d = document.getElementById('awardDot'); if (d) d.style.display = 'none'; }); }
 async function playAwardGala(replay){
   let rows = null, preview = false;
   const wid = await awLatestEdition();
@@ -4036,7 +4062,7 @@ async function migrateMelodies(){
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
 /* ---------- versione e aggiornamento automatico ---------- */
-const APP_VERSION = '20.4';   // unica fonte di verità: aggiorna anche version.txt a ogni release
+const APP_VERSION = '20.6';   // unica fonte di verità: aggiorna anche version.txt a ogni release
 try { document.getElementById('appVer').textContent = 'v' + APP_VERSION; } catch(e){}
 function verNewer(a, b){   // a più recente di b? confronto numerico 11.10 > 11.9
   const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);
@@ -7258,6 +7284,7 @@ async function onQrFound(data, mine){
   setTimeout(async () => {   // sabato: chiude la settimana (anche senza aprire la scheda) e, se c'è una serata nuova, la fa partire una volta
     try { await fetch(SUPA_URL + '/rest/v1/rpc/settle_due_weeks', {method: 'POST', headers: awH(), body: '{}'}); } catch(e){}
     try { checkAwardEdition(); } catch(e){}
+    try { awCheckWinnings(); } catch(e){}   // notifica vincite + pallino sulla scheda Award
   }, 5000);
   renderMedals();
   try { renderMissions(); } catch(e){}

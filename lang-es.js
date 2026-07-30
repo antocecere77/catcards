@@ -1497,6 +1497,8 @@
     "rec_new": "¡NUEVO RÉCORD!",
     "aw_inlizza": "en liza",
     "cont_title": "Los perseguidores",
-    "cer_contenders": "Y ojo con estos: ¡a un bigote del podio!"
+    "cer_contenders": "Y ojo con estos: ¡a un bigote del podio!",
+    "notif_win": "🏆 ¡Ganaste {list}! +{pts} puntos añadidos.",
+    "notif_more": "y {n} más"
   }
 };
