@@ -15,11 +15,11 @@
 <script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs@master/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="lang-it.js?v=20.3"></script>
-<script src="lang-en.js?v=20.3"></script>
-<script src="lang-fr.js?v=20.3"></script>
-<script src="lang-es.js?v=20.3"></script>
-<script src="lang-de.js?v=20.3"></script>
+<script src="lang-it.js?v=20.4"></script>
+<script src="lang-en.js?v=20.4"></script>
+<script src="lang-fr.js?v=20.4"></script>
+<script src="lang-es.js?v=20.4"></script>
+<script src="lang-de.js?v=20.4"></script>
 <style>
   :root{
     --bg:#14121f; --panel:#1e1b2e; --panel2:#282440;
@@ -1655,12 +1655,17 @@ async function loadAwardHall(){
   try {
     const rows = await awRpc('hall_of_fame');
     if (!rows || !rows.length){ box.innerHTML = '<p class="count">' + TSEC('award', 'hall_empty') + '</p>'; return; }
+    const serials = [...new Set(rows.map(r => r.serial).filter(Boolean))];
+    const imgs = {};
+    if (serials.length){ try { const cr = await fetch(SUPA_URL + '/rest/v1/cards?select=serial,img&serial=in.(' + serials.join(',') + ')', {headers: awH()}); if (cr.ok) (await cr.json()).forEach(c => imgs[c.serial] = c.img); } catch(e){} }
     const by = {}; rows.forEach(x => by[x.award] = x);
     let html = '';
     ['striscia', 'veterano', 'recordman', 'winrate'].forEach(k => {
       const x = by[k]; if (!x) return;
+      const av = imgs[x.serial] ? '<img src="' + imgs[x.serial] + '" style="width:46px; border-radius:7px; flex-shrink:0; box-shadow:0 2px 8px #0007;">' : '<span style="font-size:1.6rem; flex-shrink:0;">🐱</span>';
       html += '<div style="display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid #2a2540; cursor:pointer;" onclick="showCardBySerial(\'' + x.serial + '\')">' +
-        '<span style="font-size:1.3rem;">' + (HOF_ICON[k] || '🏛️') + '</span>' +
+        '<span style="font-size:1.3rem; flex-shrink:0;">' + (HOF_ICON[k] || '🏛️') + '</span>' +
+        av +
         '<span style="flex:1; min-width:0;"><strong>' + TSEC('award', 'hof_' + k) + '</strong><br><span style="font-size:.78rem; color:var(--muted);">' + awEsc(x.name || '?') + ' ' + TSEC('award', 'by') + ' ' + awEsc(x.owner || '?') + '</span></span>' +
         '<span style="font-weight:800; color:var(--accent); flex-shrink:0;">' + awValue(k, x.value) + '</span>' +
         '</div>';
@@ -4031,7 +4036,7 @@ async function migrateMelodies(){
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
 /* ---------- versione e aggiornamento automatico ---------- */
-const APP_VERSION = '20.3';   // unica fonte di verità: aggiorna anche version.txt a ogni release
+const APP_VERSION = '20.4';   // unica fonte di verità: aggiorna anche version.txt a ogni release
 try { document.getElementById('appVer').textContent = 'v' + APP_VERSION; } catch(e){}
 function verNewer(a, b){   // a più recente di b? confronto numerico 11.10 > 11.9
   const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);
