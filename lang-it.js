@@ -1524,6 +1524,16 @@
     "d_pantofolaio": "ha combattuto meno",
     "full_pantofolaio": "Il premio-scherzo: tra chi è sceso in campo, ha combattuto pochissimo.",
     "cer_q_pantofolaio": "Il divano lo chiama!",
-    "val_pantofolaio": "solo {n} incontri"
+    "val_pantofolaio": "solo {n} incontri",
+    "hof_piccoelo": "Picco Elo",
+    "val_piccoelo": "{n} Elo",
+    "hof_regno": "Regno più lungo",
+    "val_regno": "{n} giorni",
+    "hof_muro": "Il Muro",
+    "val_muro": "{n} difese",
+    "hof_pluricampione": "Pluricampione",
+    "val_pluricampione": "{n} titoli",
+    "hof_novevite": "Le Nove Vite",
+    "val_novevite": "Sentiero completo"
   }
 };

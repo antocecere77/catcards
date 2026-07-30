@@ -1524,6 +1524,16 @@
     "d_pantofolaio": "hat am wenigsten gekämpft",
     "full_pantofolaio": "Der Spaßpreis: unter den Kämpfern der Faulste.",
     "cer_q_pantofolaio": "Das Sofa ruft!",
-    "val_pantofolaio": "nur {n} Kämpfe"
+    "val_pantofolaio": "nur {n} Kämpfe",
+    "hof_piccoelo": "Elo-Höchststand",
+    "val_piccoelo": "{n} Elo",
+    "hof_regno": "Längste Regentschaft",
+    "val_regno": "{n} Tage",
+    "hof_muro": "Die Mauer",
+    "val_muro": "{n} Titelverteidigungen",
+    "hof_pluricampione": "Mehrfachchampion",
+    "val_pluricampione": "{n} Titel",
+    "hof_novevite": "Die Neun Leben",
+    "val_novevite": "Pfad komplett"
   }
 };

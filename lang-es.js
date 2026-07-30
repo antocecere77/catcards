@@ -1524,6 +1524,16 @@
     "d_pantofolaio": "el que menos luchó",
     "full_pantofolaio": "El premio en broma: entre los que lucharon, el menos activo.",
     "cer_q_pantofolaio": "¡El sofá lo llama!",
-    "val_pantofolaio": "solo {n} combates"
+    "val_pantofolaio": "solo {n} combates",
+    "hof_piccoelo": "Pico de Elo",
+    "val_piccoelo": "{n} Elo",
+    "hof_regno": "Reinado más largo",
+    "val_regno": "{n} días",
+    "hof_muro": "El Muro",
+    "val_muro": "{n} defensas",
+    "hof_pluricampione": "Multicampeón",
+    "val_pluricampione": "{n} títulos",
+    "hof_novevite": "Las Nueve Vidas",
+    "val_novevite": "Sendero completo"
   }
 };

@@ -1524,6 +1524,16 @@
     "d_pantofolaio": "fought the least",
     "full_pantofolaio": "The joke prize: among those who fought, did the least.",
     "cer_q_pantofolaio": "The couch is calling!",
-    "val_pantofolaio": "only {n} matches"
+    "val_pantofolaio": "only {n} matches",
+    "hof_piccoelo": "Elo Peak",
+    "val_piccoelo": "{n} Elo",
+    "hof_regno": "Longest Reign",
+    "val_regno": "{n} days",
+    "hof_muro": "The Wall",
+    "val_muro": "{n} defenses",
+    "hof_pluricampione": "Multi-Champion",
+    "val_pluricampione": "{n} titles",
+    "hof_novevite": "The Nine Lives",
+    "val_novevite": "Path complete"
   }
 };

@@ -1524,6 +1524,16 @@
     "d_pantofolaio": "a le moins combattu",
     "full_pantofolaio": "Le prix pour rire : parmi ceux qui ont combattu, le moins actif.",
     "cer_q_pantofolaio": "Le canapé l’appelle !",
-    "val_pantofolaio": "seulement {n} combats"
+    "val_pantofolaio": "seulement {n} combats",
+    "hof_piccoelo": "Pic d’Elo",
+    "val_piccoelo": "{n} Elo",
+    "hof_regno": "Plus long règne",
+    "val_regno": "{n} jours",
+    "hof_muro": "Le Mur",
+    "val_muro": "{n} défenses",
+    "hof_pluricampione": "Multi-champion",
+    "val_pluricampione": "{n} titres",
+    "hof_novevite": "Les Neuf Vies",
+    "val_novevite": "Sentier terminé"
   }
 };
