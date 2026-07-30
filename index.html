@@ -15,11 +15,11 @@
 <script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs@master/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="lang-it.js?v=21.0"></script>
-<script src="lang-en.js?v=21.0"></script>
-<script src="lang-fr.js?v=21.0"></script>
-<script src="lang-es.js?v=21.0"></script>
-<script src="lang-de.js?v=21.0"></script>
+<script src="lang-it.js?v=21.1"></script>
+<script src="lang-en.js?v=21.1"></script>
+<script src="lang-fr.js?v=21.1"></script>
+<script src="lang-es.js?v=21.1"></script>
+<script src="lang-de.js?v=21.1"></script>
 <style>
   :root{
     --bg:#14121f; --panel:#1e1b2e; --panel2:#282440;
@@ -536,6 +536,9 @@
       <button class="btn secondary" onclick="genPortraits()" id="portGenBtn" style="margin-top:8px;">🎨 Genera ritratti condivisi</button>
       <p class="count" style="margin-top:8px;">Oppure carica su Storage i ritratti che <strong>hai già in locale</strong> (personaggi + boss incontrati), senza rigenerarli né spendere. I gatti del Sentiero non sono in locale: quelli vanno generati.</p>
       <button class="btn secondary" onclick="uploadLocalPortraits()" id="portUpBtn" style="margin-top:8px;">⬆️ Carica i ritratti locali</button>
+      <label class="small" style="margin-top:14px; display:block;">🛡️ Admin: motore a squadre (Fase 1)</label>
+      <p class="count" style="margin-top:4px;">Prova una guerra 3v3 a staffetta (il vincitore resta ferito). Solo esibizione: nessun effetto su Mondo, punti o riposo.</p>
+      <button class="btn secondary" onclick="demoClanWar()" style="margin-top:8px;">🛡️ Demo Guerra 3v3</button>
     </div>
     <label class="small" style="margin-top:18px;" data-i18n="opt_av_label">Audio e presentazioni</label>
     <button class="btn secondary" data-snd onclick="toggleSound(this)" style="margin-top:4px;">🔊 Suoni: ON</button>
@@ -2432,7 +2435,8 @@ function makeFighter(e){
     ? e.potere : (parseInt(e.serial, 16) >>> 0) % POWERS.length;
   const lvl = cardLevel(e.serial);
   const hpTot = card.hp + (lvl - 1) * 4;   // +4 HP per livello
-  return { name: card.name, serial: e.serial, img: e.img || null, hp: hpTot, maxHp: hpTot, lvl: lvl,
+  const startHp = (typeof e._startHp === 'number') ? Math.max(1, Math.min(e._startHp, hpTot)) : hpTot;   // staffetta: rientra con gli HP rimasti
+  return { name: card.name, serial: e.serial, img: e.img || null, hp: startHp, maxHp: hpTot, lvl: lvl,
     melody: e.melody || null, strum: e.strum || null, nick: nickOf(e), nid: e.nid,
     dna: e.dna || null, annuncio: e.annuncio || null, voce: e.voce || null,
     forza: g('Forza'), intel: g('Intelligenza'), destr: g('Destrezza'),
@@ -3643,7 +3647,46 @@ async function runBattle(ea, eb, title){
   window._evOn = false;
   battleOn = false;
   try { missionEvent('any_fight'); } catch(e){}
+  window._lastBout = {winSerial: w.serial, winHp: w.hp, winMax: w.maxHp, loseSerial: loser.serial};   // per il motore a squadre (HP residui del vincitore)
   return w === a ? ea : eb;
+}
+/* ---------- 🛡️ Motore a squadre (NvN) sopra runBattle — Fase 1: staffetta ---------- */
+async function runTeamBattle(teamA, teamB, opts){
+  opts = opts || {};
+  const label = opts.label || 'GUERRA';
+  const prevAuto = window._autoSkip; window._autoSkip = true;   // ingressi rapidi tra un bout e l'altro
+  let iA = 0, iB = 0; const hp = {}; const bouts = [];
+  while (iA < teamA.length && iB < teamB.length){
+    const A = teamA[iA], B = teamB[iB];
+    const a = Object.assign({}, A); if (hp[A.serial] != null) a._startHp = hp[A.serial];
+    const b = Object.assign({}, B); if (hp[B.serial] != null) b._startHp = hp[B.serial];
+    document.getElementById('battleScreen').style.display = 'flex';
+    const res = await runBattle(a, b, label);
+    if (!res || !window._lastBout){ window._autoSkip = prevAuto; return null; }   // guerra interrotta
+    const lb = window._lastBout;
+    const aWon = lb.winSerial === A.serial;
+    if (aWon){ hp[A.serial] = lb.winHp; iB++; } else { hp[B.serial] = lb.winHp; iA++; }
+    bouts.push({winSerial: lb.winSerial, loseSerial: lb.loseSerial, winHp: lb.winHp});
+    if (iA < teamA.length && iB < teamB.length){
+      try { toast(TB ? '🥊 ' + (aWon ? A.name : B.name) + ' resta in campo!' : ''); } catch(e){}
+      await new Promise(r => setTimeout(r, 1400));
+    }
+  }
+  window._autoSkip = prevAuto;
+  const winner = iB >= teamB.length ? 'A' : 'B';
+  return {winner: winner, bouts: bouts, survivorsA: teamA.length - iA, survivorsB: teamB.length - iB};
+}
+async function demoClanWar(){   // Fase 1: prova al volo una guerra 3v3 a staffetta (solo esibizione)
+  if (!collection || collection.length < 2){ try { toast('Servono almeno 2 carte per la demo.'); } catch(e){} return; }
+  const teamA = collection.slice(0, 3);
+  let pool = (worldAll || []).filter(c => !collection.some(m => m.serial === c.serial));
+  let teamB = pool.slice(0, 3);
+  if (teamB.length < teamA.length) teamB = teamB.concat(collection.slice(3, 3 + (teamA.length - teamB.length)));
+  if (!teamB.length) teamB = collection.slice(0, 3).map(c => Object.assign({}, c, {name: c.name + ' (B)'}));
+  const n = Math.min(teamA.length, teamB.length);   // guerra sempre pari
+  const res = await runTeamBattle(teamA.slice(0, n), teamB.slice(0, n), {label: 'GUERRA ' + n + 'v' + n + ' (demo)'});
+  try { closeBattle(); } catch(e){}
+  if (res){ const survivors = res.winner === 'A' ? res.survivorsA : res.survivorsB; try { toast('🏁 Vince la Squadra ' + (res.winner === 'A' ? 'A (tua)' : 'B') + ' — ' + survivors + ' superstiti'); } catch(e){} }
 }
 try { renderStats(); } catch(e){}
 
@@ -4066,7 +4109,7 @@ async function migrateMelodies(){
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
 /* ---------- versione e aggiornamento automatico ---------- */
-const APP_VERSION = '21.0';   // unica fonte di verità: aggiorna anche version.txt a ogni release
+const APP_VERSION = '21.1';   // unica fonte di verità: aggiorna anche version.txt a ogni release
 try { document.getElementById('appVer').textContent = 'v' + APP_VERSION; } catch(e){}
 function verNewer(a, b){   // a più recente di b? confronto numerico 11.10 > 11.9
   const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);
