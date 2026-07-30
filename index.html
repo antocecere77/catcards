@@ -15,11 +15,11 @@
 <script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs@master/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="lang-it.js?v=20.6"></script>
-<script src="lang-en.js?v=20.6"></script>
-<script src="lang-fr.js?v=20.6"></script>
-<script src="lang-es.js?v=20.6"></script>
-<script src="lang-de.js?v=20.6"></script>
+<script src="lang-it.js?v=20.7"></script>
+<script src="lang-en.js?v=20.7"></script>
+<script src="lang-fr.js?v=20.7"></script>
+<script src="lang-es.js?v=20.7"></script>
+<script src="lang-de.js?v=20.7"></script>
 <style>
   :root{
     --bg:#14121f; --panel:#1e1b2e; --panel2:#282440;
@@ -4062,7 +4062,7 @@ async function migrateMelodies(){
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
 /* ---------- versione e aggiornamento automatico ---------- */
-const APP_VERSION = '20.6';   // unica fonte di verità: aggiorna anche version.txt a ogni release
+const APP_VERSION = '20.7';   // unica fonte di verità: aggiorna anche version.txt a ogni release
 try { document.getElementById('appVer').textContent = 'v' + APP_VERSION; } catch(e){}
 function verNewer(a, b){   // a più recente di b? confronto numerico 11.10 > 11.9
   const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);
@@ -5257,6 +5257,8 @@ async function fightWorld(i){
   try {
     const me = playerNameEl.value.trim() || 'anonimo';
     const won = (w.serial === mineEntry.serial);
+    const myElo = ((worldAll.find(c => c.serial === mineEntry.serial) || {}).elo) || mineEntry.elo || 1000;   // Elo pre-match
+    const oppElo = (remote && remote.elo) || 1000;
     window._justFought = new Set([winSerial, loseSerial]); window._justFoughtTs = Date.now();   // niente auto-notifica
     await fetch(SUPA_URL + '/rest/v1/matches', {
       method: 'POST', headers: supaHeaders(),
@@ -5266,7 +5268,10 @@ async function fightWorld(i){
         winner_owner: won ? me : (remote.owner || 'anonimo'),
         loser_serial: loseSerial,
         loser_name: won ? remote.name : mineEntry.name,
-        loser_owner: won ? (remote.owner || 'anonimo') : me
+        loser_owner: won ? (remote.owner || 'anonimo') : me,
+        winner_elo: won ? myElo : oppElo,
+        loser_elo: won ? oppElo : myElo,
+        challenger_serial: mineEntry.serial   // in una sfida mondiale il locale è lo sfidante
       })
     });
   } catch(err){}
@@ -7235,9 +7240,11 @@ async function onQrFound(data, mine){
       const me = playerNameEl.value.trim() || 'anonimo';
       const won = (w.serial === mine.serial);
       window._justFought = new Set([winSerial, loseSerial]); window._justFoughtTs = Date.now();   // niente auto-notifica
+      const myElo = (mine.elo) || 1000, oppElo = (entry.elo) || 1000;
       await fetch(SUPA_URL + '/rest/v1/matches', {method: 'POST', headers: supaHeaders(), body: JSON.stringify({
         winner_serial: winSerial, winner_name: won ? mine.name : entry.name, winner_owner: won ? me : (ownerNm || 'dal vivo'),
-        loser_serial: loseSerial, loser_name: won ? entry.name : mine.name, loser_owner: won ? (ownerNm || 'dal vivo') : me
+        loser_serial: loseSerial, loser_name: won ? entry.name : mine.name, loser_owner: won ? (ownerNm || 'dal vivo') : me,
+        winner_elo: won ? myElo : oppElo, loser_elo: won ? oppElo : myElo, challenger_serial: mine.serial
       })});
       blog(TB('world_ok'));
       syncWorldBase();
