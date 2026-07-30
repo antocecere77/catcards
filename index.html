@@ -15,11 +15,11 @@
 <script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs@master/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="lang-it.js?v=20.2"></script>
-<script src="lang-en.js?v=20.2"></script>
-<script src="lang-fr.js?v=20.2"></script>
-<script src="lang-es.js?v=20.2"></script>
-<script src="lang-de.js?v=20.2"></script>
+<script src="lang-it.js?v=20.3"></script>
+<script src="lang-en.js?v=20.3"></script>
+<script src="lang-fr.js?v=20.3"></script>
+<script src="lang-es.js?v=20.3"></script>
+<script src="lang-de.js?v=20.3"></script>
 <style>
   :root{
     --bg:#14121f; --panel:#1e1b2e; --panel2:#282440;
@@ -1702,16 +1702,15 @@ async function runGala(rows, preview){
     const list = by[k]; if (!list || !list.length) return;
     scenes.push({type: 'title', award: k, quip: TSEC('award', 'cer_q_' + k), finale: k === 'mvp'});
     scenes.push({type: 'drum'});
-    const podium = list.filter(w => w.rank <= 3);
+    const revealMax = k === 'dominatore' ? 1 : 3;   // Dominatore è a solo oro
+    const podium = list.filter(w => w.rank <= revealMax);
     const ordered = podium.slice().sort((a, b) => b.rank - a.rank);   // dal bronzo verso l'oro: crescendo
     ordered.forEach(w => {
       if (w.rank === 1 && ordered.length > 1) scenes.push({type: 'susp'});   // "…e il vincitore è…" prima dell'oro
       const key = w.rank === 1 ? 'cer_gold' : w.rank === 2 ? 'cer_silver' : 'cer_bronze';
       scenes.push({type: 'reveal', w: w, img: imgs[w.serial], line: TSEC('award', key, {name: w.name || '?', owner: w.owner || '?'}), gold: w.rank === 1});
     });
-    if (podium.length >= 2) scenes.push({type: 'podium', award: k, list: podium.slice().sort((a, b) => a.rank - b.rank)});
-    const contenders = list.filter(w => w.rank > 3);
-    if (contenders.length) scenes.push({type: 'contenders', award: k, list: contenders});   // gli inseguitori: "vicini al podio"
+    if (k !== 'dominatore' && podium.length >= 2) scenes.push({type: 'podium', award: k, list: podium.slice().sort((a, b) => a.rank - b.rank).map(w => Object.assign({}, w, {img: imgs[w.serial]}))});
   });
   // 🏛️ segmento Hall of Fame finale: i record di sempre + "è caduto un record!"
   if (hall.length){
@@ -1771,7 +1770,7 @@ function galaFlash(n){ const ov = document.getElementById('galaOverlay'); if (!o
 function galaSpotOn(){ const ov = document.getElementById('galaOverlay'); if (!ov || document.getElementById('galaSpot')) return; const d = document.createElement('div'); d.id = 'galaSpot'; d.style.cssText = 'position:absolute; inset:0; z-index:2; pointer-events:none; background:radial-gradient(circle at 50% 40%, transparent 0, transparent 27%, rgba(0,0,0,.84) 62%); animation:galaPop .5s;'; ov.appendChild(d); }
 function galaSpotOff(){ const d = document.getElementById('galaSpot'); if (d) d.remove(); }
 function galaCountUp(id, target, dur){ const el = document.getElementById(id); if (!el) return; const t0 = performance.now(); (function step(t){ const p = Math.min(1, (t - t0) / dur); el.textContent = Math.round(target * p); if (p < 1 && document.getElementById(id) === el) requestAnimationFrame(step); })(performance.now()); }
-function galaPodCol(w, h){ if (!w) return ''; const bar = w.rank === 1 ? 'linear-gradient(#ffe08a,#b8860b)' : w.rank === 2 ? 'linear-gradient(#eef2f7,#9aa4b0)' : 'linear-gradient(#e0a878,#9c6b3f)'; return '<div style="display:flex; flex-direction:column; align-items:center; width:96px;"><div style="font-size:1.5rem;">' + awMedal(w.rank) + '</div><div style="font-size:.78rem; font-weight:800; max-width:96px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">' + awEsc(w.name || '?') + '</div><div style="width:100%; height:' + h + 'px; margin-top:4px; border-radius:7px 7px 0 0; background:' + bar + ';"></div></div>'; }
+function galaPodCol(w, h){ if (!w) return ''; const bar = w.rank === 1 ? 'linear-gradient(#ffe08a,#b8860b)' : w.rank === 2 ? 'linear-gradient(#eef2f7,#9aa4b0)' : 'linear-gradient(#e0a878,#9c6b3f)'; const av = w.img ? '<img src="' + w.img + '" style="width:' + (w.rank === 1 ? 62 : 50) + 'px; border-radius:6px; box-shadow:0 3px 10px #000; margin-bottom:3px;' + (w.rank === 1 ? ' border:2px solid #ffd36e;' : '') + '">' : ''; return '<div style="display:flex; flex-direction:column; align-items:center; width:96px;">' + av + '<div style="font-size:1.5rem;">' + awMedal(w.rank) + '</div><div style="font-size:.78rem; font-weight:800; max-width:96px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">' + awEsc(w.name || '?') + '</div><div style="width:100%; height:' + h + 'px; margin-top:4px; border-radius:7px 7px 0 0; background:' + bar + ';"></div></div>'; }
 function galaNext(){
   if (!_gala) return;
   if (_gala.t){ clearTimeout(_gala.t); _gala.t = null; }
@@ -1825,7 +1824,7 @@ function galaNext(){
   }
   else if (s.type === 'reveal'){
     const w = s.w, gold = s.gold;
-    const imgStyle = gold ? 'max-height:36vh; max-width:78%; border-radius:12px; border:3px solid #ffd36e; box-shadow:0 0 36px #ffd36ecc;' : 'max-height:30vh; max-width:66%; border-radius:12px; border:2px solid #ffffff44; box-shadow:0 6px 20px #000;';
+    const imgStyle = gold ? 'max-height:38vh; max-width:82%; border-radius:12px; border:3px solid #ffd36e; box-shadow:0 0 36px #ffd36ecc;' : 'max-height:34vh; max-width:74%; border-radius:12px; border:2px solid #ffffff55; box-shadow:0 6px 20px #000;';
     const av = s.img ? '<img src="' + s.img + '" style="' + imgStyle + '">' : '<div style="font-size:3rem;">🐱</div>';
     const halo = gold ? '<div style="position:absolute; inset:-34%; z-index:0; border-radius:50%; background:conic-gradient(from 0deg,#ffd36e00,#ffd36e55,#ffd36e00,#ffd36e55,#ffd36e00); animation:galaSpin 6s linear infinite;"></div>' : '';
     const crown = (gold && w.award === 'mvp') ? '<div style="position:absolute; top:-34px; left:50%; font-size:2.3rem; z-index:2; animation:galaCrown .8s .35s both;">👑</div>' : '';
@@ -4032,7 +4031,7 @@ async function migrateMelodies(){
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
 /* ---------- versione e aggiornamento automatico ---------- */
-const APP_VERSION = '20.2';   // unica fonte di verità: aggiorna anche version.txt a ogni release
+const APP_VERSION = '20.3';   // unica fonte di verità: aggiorna anche version.txt a ogni release
 try { document.getElementById('appVer').textContent = 'v' + APP_VERSION; } catch(e){}
 function verNewer(a, b){   // a più recente di b? confronto numerico 11.10 > 11.9
   const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);

@@ -55,9 +55,9 @@ language sql stable security definer set search_path = public as $$
     from agg where played >= 5
   ) r join names n using (serial) where r.rn <= 5
   union all
-  select 'dominatore', 1, d.serial, n.name, n.owner, d.streak::numeric, 60
-  from (select serial, streak from best where streak >= 2 order by streak desc limit 1) d
-  join names n using (serial);
+  select 'dominatore', r.rn::int, r.serial, n.name, n.owner, r.streak::numeric, (array[60,0,0,0,0])[r.rn]
+  from (select serial, streak, row_number() over (order by streak desc) rn from best where streak >= 2) r
+  join names n using (serial) where r.rn <= 5;
 $$;
 grant execute on function public.award_standings(timestamptz, timestamptz) to anon, authenticated;
 
