@@ -1670,13 +1670,37 @@
     "scout_yours": "You field (min {n})",
     "scout_go": "⚔️ Attack ({n})",
     "scout_pickmin": "Pick at least {n}",
-    "scout_wait": "Lemme see them champs, come on!",
+    "scout_wait": [
+      "Lemme see them champs! Who’s goin’ in? 👀",
+      "Show me the lineup, I gotta size up the enemy!",
+      "Pick your fighters, pick ’em! I ain’t got all day!"
+    ],
     "sfregio_name": "Scratch",
-    "sfregio_pct": "~{p}% — trust me, pal!",
-    "sfregio_hi": "Pfft, they’ll mop the floor with ’em! Bet my whiskers on it!",
-    "sfregio_mid": "Eh, it’s a coin toss… but let’s roll the dice, baby!",
-    "sfregio_low": "Ooh, risky, kitty. Risky but juicy!",
-    "sfregio_bad": "You kiddin’ me? They’ll eat ya alive! …but hey, your call.",
+    "sfregio_pct": "~{p}% — trust me, pal! 🐾",
+    "sfregio_hi": [
+      "Pfft, they’ll mop the floor with ’em! Bet my whiskers on it! 💥",
+      "Easy peasy, kitty! These fluffballs faint at a hiss!",
+      "Victory’s in the bag! I’m already fetchin’ the confetti! 🎉",
+      "A walk in the park, pal. Bring back a medal, will ya?"
+    ],
+    "sfregio_mid": [
+      "Eh, it’s a coin toss… but what are we, kittens? Go for it!",
+      "Fifty-fifty, buddy. Cross your paws and pray!",
+      "Could go either way. Keep them claws sharp!",
+      "Even odds. I’d place a tiny bet… but don’t tell ’em I said so!"
+    ],
+    "sfregio_low": [
+      "Ooh, risky, kitty. Risky but juicy! I’d maybe try it…",
+      "Yikes, this looks rough. Pack a bandage, just in case.",
+      "Long shot, pal. But heroes love a gamble… or a nap.",
+      "Don’t love it. Still, fortune favors the furry… sometimes."
+    ],
+    "sfregio_bad": [
+      "You kiddin’ me? These beasts’ll eat ya alive! 🙀",
+      "Pure suicide, buddy. Come back when you’ve bulked up.",
+      "Nope nope nope. They’ll make mincemeat outta ya!",
+      "Are you nuts? Those are lions in disguise! …your funeral."
+    ],
     "need3": "You need at least 3 fresh cards to attack (3v3).",
     "zone_take_free": "Take {name}? It’s free: you grab it without a fight."
   }

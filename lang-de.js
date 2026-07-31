@@ -1670,13 +1670,37 @@
     "scout_yours": "Du stellst auf (min {n})",
     "scout_go": "⚔️ Angreifen ({n})",
     "scout_pickmin": "Wähle mindestens {n}",
-    "scout_wait": "Zeig mir die Champions, los!",
+    "scout_wait": [
+      "Zeig mir die Champions! Wer zieht in den Kampf? 👀",
+      "Raus mit der Aufstellung, ich muss den Gegner checken!",
+      "Wähl deine Kämpfer, los! Ich hab nicht ewig Zeit!"
+    ],
     "sfregio_name": "Der Kratzer",
-    "sfregio_pct": "~{p}% — Ehrenwort!",
-    "sfregio_hi": "Pff, die fegen sie weg! Wetten, meine Schnurrhaare drauf!",
-    "sfregio_mid": "Tja, fifty-fifty… aber komm, wir wagen’s!",
-    "sfregio_low": "Oha, riskant, Kätzchen. Aber was für ’ne Show!",
-    "sfregio_bad": "Soll das ein Witz sein? Die fressen dich! …na gut, du entscheidest.",
+    "sfregio_pct": "~{p}% — Ehrenwort! 🐾",
+    "sfregio_hi": [
+      "Pff, die fegen sie weg! Wetten, meine Schnurrhaare drauf! 💥",
+      "Kinderspiel, Kätzchen! Die Fellknäuel kippen beim Fauchen um!",
+      "Sieg in der Tasche! Ich hol schon mal das Konfetti! 🎉",
+      "Ein Spaziergang, Kumpel. Bring ’ne Medaille mit!"
+    ],
+    "sfregio_mid": [
+      "Tja, fifty-fifty… aber sind wir Kätzchen? Los!",
+      "Kopf oder Zahl, Freund. Pfoten kreuzen und beten!",
+      "Kann so oder so laufen. Krallen scharf halten!",
+      "Gleichstand. Ich würd ’n bisschen wetten… aber psst!"
+    ],
+    "sfregio_low": [
+      "Oha, riskant, Kätzchen. Aber was für ’ne Show! Ich würd’s wagen… vielleicht.",
+      "Autsch, sieht übel aus. Nimm ’n Pflaster mit, sicher ist sicher.",
+      "Verzweiflungstat, Kumpel. Aber Helden lieben das Risiko… oder das Nickerchen.",
+      "Gefällt mir nicht. Trotzdem, das Glück liebt Schnurrbärte… manchmal."
+    ],
+    "sfregio_bad": [
+      "Soll das ein Witz sein? Die Biester fressen dich! 🙀",
+      "Glatter Selbstmord, Kumpel. Komm wieder, wenn du gewachsen bist.",
+      "Nein nein nein. Die machen Hackfleisch aus dir!",
+      "Bist du irre? Das sind verkleidete Löwen! …dein Problem."
+    ],
     "need3": "Du brauchst mindestens 3 frische Karten zum Angreifen (3v3).",
     "zone_take_free": "{name} besetzen? Sie ist frei: du nimmst sie ohne Kampf."
   }

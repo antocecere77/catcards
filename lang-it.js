@@ -1670,13 +1670,38 @@
     "scout_yours": "Tu schieri (min {n})",
     "scout_go": "⚔️ Attacca ({n})",
     "scout_pickmin": "Scegline almeno {n}",
-    "scout_wait": "Famme vede’ ’sti campioni, dai dai!",
+    "scout_wait": [
+      "Famme vede’ ’sti fenomeni! Chi mandi ar fronte? 👀",
+      "Aó, tira fori li campioni, che devo studià l’avversario!",
+      "Chi scenne in campo? Scejli, scejli, che nun ho tutto er giorno!"
+    ],
     "sfregio_name": "Er Graffio",
-    "sfregio_pct": "~{p}% de vittoria, fidate!",
-    "sfregio_hi": "Ahó, questi li spazzoli! Me ce gioco li baffi!",
-    "sfregio_mid": "Eh, è cinquina e cinquina… ma io ce provo, daje!",
-    "sfregio_low": "Mmm… rischi la pellaccia, gatto mio. Però che spettacolo!",
-    "sfregio_bad": "Aó ma sei matto? Co’ ’sti quattro gatti te se magnano! …vabbè, fai te.",
+    "sfregio_pct": "~{p}%, parola de Graffio! 🐾",
+    "sfregio_hi": [
+      "Ahó! ’Sti spelacchiati te li fai a merenda! Me ce gioco tutti li baffi! 💥",
+      "Va’ tranquillo! So’ gattini de pezza, je fai un soffio e scappano!",
+      "Vittoria in tasca, fidate! Preparo già er confetto! 🎉",
+      "Aó, è ’na passeggiata! Torni a casa co’ la coda dritta e ’na medaglia!",
+      "Questi? Manco se svejano! Vai e falli piagne, gattone!"
+    ],
+    "sfregio_mid": [
+      "Eh, è ballerina ’sta cosa… metà e metà. Ma che semo signorine? Daje!",
+      "Testa o coda, gatto mio. Però la fortuna aiuta li baffuti… forse.",
+      "Se pò fa’, se pò fa’… tieni le unghie pronte e ’ncrocia le zampe!",
+      "Cinquanta e cinquanta. ’Na puntatina ce la farei, ma nun di’ che t’ho spinto io!"
+    ],
+    "sfregio_low": [
+      "Mmmh. Rischi la coda, gattone. Però che fusto! Ce proverei… forse.",
+      "Aó, qua se mette male. Portate ’na benda, non se sa mai.",
+      "Rischioso assai. Ma se te sventra pure la mossa fortunata… boh, auguri!",
+      "Nun me piace ’sta storia. Però l’azzardo fa er campione… o er cuscino."
+    ],
+    "sfregio_bad": [
+      "Aó, ma che, t’ha dato de volta? ’Sti bestioni te sbranano! 🙀",
+      "Suicidio puro, gatto mio. Ripassa quando cresci ’n altro po’.",
+      "No no no. Questi te fanno a polpette. Nun te ce manna manco Er Graffio!",
+      "Ma sei impazzito? Quelli so’ leoni travestiti! …poi nun venì a piagne."
+    ],
     "need3": "Servono almeno 3 carte fresche per attaccare (3v3).",
     "zone_take_free": "Occupare {name}? È libera: la prendi senza combattere."
   }

@@ -1670,13 +1670,37 @@
     "scout_yours": "Tu alignes (min {n})",
     "scout_go": "⚔️ Attaquer ({n})",
     "scout_pickmin": "Choisis-en au moins {n}",
-    "scout_wait": "Montre-moi ces champions, allez !",
+    "scout_wait": [
+      "Montre-moi ces champions ! Qui monte au front ? 👀",
+      "Sors l’équipe, je dois jauger l’ennemi !",
+      "Choisis tes combattants, allez ! J’ai pas que ça à faire !"
+    ],
     "sfregio_name": "Griffe",
-    "sfregio_pct": "~{p}% — parole de matou !",
-    "sfregio_hi": "Pfff, ils vont les balayer ! J’y mets mes moustaches !",
-    "sfregio_mid": "Bon, c’est du 50-50… mais on tente, allez !",
-    "sfregio_low": "Ouh là, risqué, minou. Mais quel panache !",
-    "sfregio_bad": "T’es sérieux ? Ils vont te croquer ! …bon, comme tu veux.",
+    "sfregio_pct": "~{p}% — parole de matou ! 🐾",
+    "sfregio_hi": [
+      "Pfff, ils vont les balayer ! J’y mets mes moustaches ! 💥",
+      "Fastoche, minou ! Ces boules de poils s’évanouissent d’un feulement !",
+      "Victoire dans la poche ! Je sors déjà les confettis ! 🎉",
+      "Une promenade, mon gars. Ramène une médaille, hein !"
+    ],
+    "sfregio_mid": [
+      "Bon, c’est du 50-50… mais on est des chatons ? Fonce !",
+      "Pile ou face, l’ami. Croise les pattes et prie !",
+      "Ça peut basculer. Garde les griffes affûtées !",
+      "Égalité. Je miserais bien un peu… mais chut !"
+    ],
+    "sfregio_low": [
+      "Ouh là, risqué, minou. Mais quel panache ! J’essaierais… peut-être.",
+      "Aïe, ça sent le roussi. Prends un pansement, au cas où.",
+      "Coup de poker, l’ami. Mais les héros adorent le risque… ou la sieste.",
+      "J’aime pas ça. M’enfin, la chance sourit aux moustachus… parfois."
+    ],
+    "sfregio_bad": [
+      "T’es sérieux ? Ces monstres vont te croquer ! 🙀",
+      "Suicide pur, mon gars. Reviens quand t’auras grandi.",
+      "Non non non. Ils vont te réduire en pâtée !",
+      "T’es fou ? Ce sont des lions déguisés ! …c’est ton enterrement."
+    ],
     "need3": "Il te faut au moins 3 cartes fraîches pour attaquer (3v3).",
     "zone_take_free": "Occuper {name} ? Elle est libre : tu la prends sans combattre."
   }

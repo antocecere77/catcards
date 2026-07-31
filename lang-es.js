@@ -1670,13 +1670,37 @@
     "scout_yours": "Despliegas (mín {n})",
     "scout_go": "⚔️ Atacar ({n})",
     "scout_pickmin": "Elige al menos {n}",
-    "scout_wait": "¡Enséñame a esos campeones, va!",
+    "scout_wait": [
+      "¡Enséñame a esos campeones! ¿Quién va al frente? 👀",
+      "¡Saca el equipo, tengo que medir al rival!",
+      "¡Elige a tus luchadores, va! ¡No tengo todo el día!"
+    ],
     "sfregio_name": "El Zarpazo",
-    "sfregio_pct": "~{p}% — ¡palabra de gato!",
-    "sfregio_hi": "¡Bah, se los merienda! ¡Me juego los bigotes!",
-    "sfregio_mid": "Está 50-50… pero ¡vamos a probar, chaval!",
-    "sfregio_low": "Uy, arriesgado, minino. ¡Pero qué arte!",
-    "sfregio_bad": "¿En serio? ¡Te comen vivo! …bueno, tú mandas.",
+    "sfregio_pct": "~{p}% — ¡palabra de gato! 🐾",
+    "sfregio_hi": [
+      "¡Bah, se los merienda! ¡Me juego los bigotes! 💥",
+      "¡Fácil, minino! ¡Estos peluches se desmayan con un bufido!",
+      "¡Victoria en el bolsillo! ¡Ya saco el confeti! 🎉",
+      "Un paseo, chaval. ¡Tráete una medalla!"
+    ],
+    "sfregio_mid": [
+      "Está 50-50… pero ¿qué somos, gatitos? ¡A por ellos!",
+      "Cara o cruz, amigo. ¡Cruza las patas y reza!",
+      "Puede caer para cualquier lado. ¡Uñas afiladas!",
+      "Empate. Yo apostaría algo… ¡pero no digas que fui yo!"
+    ],
+    "sfregio_low": [
+      "Uy, arriesgado, minino. ¡Pero qué arte! Lo intentaría… quizá.",
+      "Ay, esto pinta feo. Lleva una venda, por si acaso.",
+      "Jugada a la desesperada. Pero los héroes aman el riesgo… o la siesta.",
+      "No me gusta. Aun así, la suerte ama a los bigotudos… a veces."
+    ],
+    "sfregio_bad": [
+      "¿En serio? ¡Estas bestias te comen vivo! 🙀",
+      "Suicidio puro, chaval. Vuelve cuando crezcas.",
+      "No no no. ¡Te hacen picadillo!",
+      "¿Estás loco? ¡Son leones disfrazados! …allá tú."
+    ],
     "need3": "Necesitas al menos 3 cartas frescas para atacar (3v3).",
     "zone_take_free": "¿Ocupar {name}? Está libre: la tomas sin luchar."
   }
