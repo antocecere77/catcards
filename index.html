@@ -15,11 +15,11 @@
 <script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs@master/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="lang-it.js?v=21.9"></script>
-<script src="lang-en.js?v=21.9"></script>
-<script src="lang-fr.js?v=21.9"></script>
-<script src="lang-es.js?v=21.9"></script>
-<script src="lang-de.js?v=21.9"></script>
+<script src="lang-it.js?v=22.0"></script>
+<script src="lang-en.js?v=22.0"></script>
+<script src="lang-fr.js?v=22.0"></script>
+<script src="lang-es.js?v=22.0"></script>
+<script src="lang-de.js?v=22.0"></script>
 <style>
   :root{
     --bg:#14121f; --panel:#1e1b2e; --panel2:#282440;
@@ -530,6 +530,7 @@
       <label class="small" style="margin-top:14px; display:block;">🛡️ Admin: motore a squadre (Fase 1)</label>
       <p class="count" style="margin-top:4px;">Prova una guerra 3v3 a staffetta (il vincitore resta ferito). Solo esibizione: nessun effetto su Mondo, punti o riposo.</p>
       <button class="btn secondary" onclick="demoClanWar()" style="margin-top:8px;">🛡️ Demo Guerra 3v3</button>
+      <button class="btn secondary" onclick="seedBotClans()" style="margin-top:8px;">🤖 Crea clan-bot (anima il mondo)</button>
     </div>
     <label class="small" style="margin-top:18px;" data-i18n="opt_av_label">Audio e presentazioni</label>
     <button class="btn secondary" data-snd onclick="toggleSound(this)" style="margin-top:4px;">🔊 Suoni: ON</button>
@@ -2114,6 +2115,17 @@ async function gangCheckMembership(){   // notifica se sei entrato / sei stato e
   if (prev === null || cur === prev) return;
   try { toast(cur && !prev ? G('joined_msg') : (!cur && prev ? G('kicked_msg') : G('changed_msg'))); } catch(e){}
   const d = document.getElementById('gangDot'); if (d && window._curTab !== 'gang') d.style.display = 'inline-block';
+}
+async function seedBotClans(){   // admin: crea alcuni clan-bot per animare il mondo
+  const out = document.getElementById('botOut');
+  if (!session || session.email !== ADMIN_EMAIL){ if (out) out.textContent = '⚠️ Solo admin.'; return; }
+  if (out) out.textContent = '🤖 Creo clan-bot…';
+  try {
+    const r = await fetch(SUPA_URL + '/rest/v1/rpc/admin_seed_bot_clans', {method: 'POST', headers: supaHeaders({'Content-Type': 'application/json'}), body: JSON.stringify({p_count: 6})});
+    if (!r.ok){ let m = 'HTTP ' + r.status; try { const j = await r.json(); if (j.message) m = j.message; } catch(e){} throw new Error(m); }
+    const n = await r.json();
+    if (out) out.textContent = '✅ ' + n + ' clan-bot creati.';
+  } catch(e){ if (out) out.textContent = '❌ ' + e.message; }
 }
 async function gangAttack(defenderId, nameEnc){   // 3a: attacca un clan → staffetta tra roster → punti-clan
   const attId = _gB.attackFrom; if (!attId) return;
@@ -4381,7 +4393,7 @@ async function migrateMelodies(){
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
 /* ---------- versione e aggiornamento automatico ---------- */
-const APP_VERSION = '21.9';   // unica fonte di verità: aggiorna anche version.txt a ogni release
+const APP_VERSION = '22.0';   // unica fonte di verità: aggiorna anche version.txt a ogni release
 try { document.getElementById('appVer').textContent = 'v' + APP_VERSION; } catch(e){}
 function verNewer(a, b){   // a più recente di b? confronto numerico 11.10 > 11.9
   const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);
