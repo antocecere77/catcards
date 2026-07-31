@@ -1620,7 +1620,7 @@
     "pick_title": "Wähle deine Aufstellung",
     "pick_desc": "Tippe die Karten der Reihe nach (min {min}, max {n}). Der Sieger bleibt im Spiel.",
     "pick_go": "⚔️ Angreifen ({n})",
-    "def_hint": "Die ersten Roster-Karten verteidigen. Sie stellen so viele wie der Angreifer (min 3).",
+    "def_hint": "Karten verteidigen in Roster-Reihenfolge: sie stellen so viele wie der Angreifer (3–5).",
     "def_size_lbl": "Verteidiger:",
     "warlog_title": "Kriegsprotokoll",
     "warlog_empty": "Noch keine Kriege.",
@@ -1663,6 +1663,18 @@
     "zone_parco": "Park",
     "zone_fontana": "Brunnen",
     "zone_molo": "Steg",
-    "pick_min": "Wähle mindestens {n}"
+    "pick_min": "Wähle mindestens {n}",
+    "scout_title": "Erkundung",
+    "scout_enemy": "Sie verteidigen",
+    "scout_yours": "Du stellst auf (min {n})",
+    "scout_go": "⚔️ Angreifen ({n})",
+    "scout_pickmin": "Wähle mindestens {n}",
+    "scout_wait": "Zeig mir, wen du schickst…",
+    "sfregio_name": "Narbengesicht",
+    "sfregio_pct": "~{p}% Chance",
+    "sfregio_hi": "Die fressen sie zum Frühstück. Locker.",
+    "sfregio_mid": "Knapp… aber ich würd’s wagen.",
+    "sfregio_low": "Tja. Du riskierst viel.",
+    "sfregio_bad": "Mit denen? Fast Selbstmord."
   }
 };

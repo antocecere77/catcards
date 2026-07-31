@@ -1620,7 +1620,7 @@
     "pick_title": "Elige tu formación",
     "pick_desc": "Toca las cartas en orden (mín {min}, máx {n}). El ganador se queda.",
     "pick_go": "⚔️ Atacar ({n})",
-    "def_hint": "Las primeras cartas del roster defienden. Responden con tantas como despliegue el atacante (mín 3).",
+    "def_hint": "Las cartas defienden en el orden del roster: responden con tantas como despliegue el atacante (3–5).",
     "def_size_lbl": "Defensores:",
     "warlog_title": "Registro de guerras",
     "warlog_empty": "Aún no hay guerras.",
@@ -1663,6 +1663,18 @@
     "zone_parco": "Parque",
     "zone_fontana": "Fuente",
     "zone_molo": "Muelle",
-    "pick_min": "Elige al menos {n}"
+    "pick_min": "Elige al menos {n}",
+    "scout_title": "Reconocimiento",
+    "scout_enemy": "Ellos defienden",
+    "scout_yours": "Despliegas (mín {n})",
+    "scout_go": "⚔️ Atacar ({n})",
+    "scout_pickmin": "Elige al menos {n}",
+    "scout_wait": "Enséñame a quién mandas…",
+    "sfregio_name": "El Chirlo",
+    "sfregio_pct": "~{p}% de lograrlo",
+    "sfregio_hi": "Se los meriendan. Ve tranquilo.",
+    "sfregio_mid": "Está reñido… pero yo lo intentaría.",
+    "sfregio_low": "Bah. Te la juegas fuerte.",
+    "sfregio_bad": "¿Con esto? Es casi un suicidio."
   }
 };

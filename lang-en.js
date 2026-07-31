@@ -1620,7 +1620,7 @@
     "pick_title": "Choose your lineup",
     "pick_desc": "Tap cards in order (min {min}, max {n}). The winner stays on.",
     "pick_go": "⚔️ Attack ({n})",
-    "def_hint": "The first roster cards defend. They field as many as the attacker brings (min 3).",
+    "def_hint": "Cards defend in roster order: they field as many as the attacker brings (3–5).",
     "def_size_lbl": "Defenders:",
     "warlog_title": "War log",
     "warlog_empty": "No wars yet.",
@@ -1663,6 +1663,18 @@
     "zone_parco": "Park",
     "zone_fontana": "Fountain",
     "zone_molo": "Pier",
-    "pick_min": "Pick at least {n}"
+    "pick_min": "Pick at least {n}",
+    "scout_title": "Recon",
+    "scout_enemy": "They defend",
+    "scout_yours": "You field (min {n})",
+    "scout_go": "⚔️ Attack ({n})",
+    "scout_pickmin": "Pick at least {n}",
+    "scout_wait": "Show me who you’re sending in…",
+    "sfregio_name": "Scarface",
+    "sfregio_pct": "~{p}% to pull it off",
+    "sfregio_hi": "They’ll eat these for breakfast. Go easy.",
+    "sfregio_mid": "It’s a toss-up… but I’d give it a shot.",
+    "sfregio_low": "Eh. You’re risking a lot here.",
+    "sfregio_bad": "With this lot? That’s near suicide."
   }
 };

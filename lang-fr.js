@@ -1620,7 +1620,7 @@
     "pick_title": "Choisis ta formation",
     "pick_desc": "Touche les cartes dans l’ordre (min {min}, max {n}). Le gagnant reste en jeu.",
     "pick_go": "⚔️ Attaquer ({n})",
-    "def_hint": "Les premières cartes du roster défendent. Elles répondent au même nombre que l’attaquant (min 3).",
+    "def_hint": "Les cartes défendent dans l’ordre du roster : elles répondent au même nombre que l’attaquant (3–5).",
     "def_size_lbl": "Défenseurs :",
     "warlog_title": "Journal des guerres",
     "warlog_empty": "Aucune guerre pour l’instant.",
@@ -1663,6 +1663,18 @@
     "zone_parco": "Parc",
     "zone_fontana": "Fontaine",
     "zone_molo": "Quai",
-    "pick_min": "Choisis-en au moins {n}"
+    "pick_min": "Choisis-en au moins {n}",
+    "scout_title": "Reconnaissance",
+    "scout_enemy": "Ils défendent",
+    "scout_yours": "Tu alignes (min {n})",
+    "scout_go": "⚔️ Attaquer ({n})",
+    "scout_pickmin": "Choisis-en au moins {n}",
+    "scout_wait": "Montre-moi qui tu envoies…",
+    "sfregio_name": "Le Balafré",
+    "sfregio_pct": "~{p}% d’y arriver",
+    "sfregio_hi": "Ils vont les croquer. Vas-y tranquille.",
+    "sfregio_mid": "C’est serré… mais je tenterais.",
+    "sfregio_low": "Bof. Tu risques gros, matou.",
+    "sfregio_bad": "Avec ça ? C’est du suicide."
   }
 };

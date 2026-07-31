@@ -15,11 +15,11 @@
 <script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs@master/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="lang-it.js?v=22.5"></script>
-<script src="lang-en.js?v=22.5"></script>
-<script src="lang-fr.js?v=22.5"></script>
-<script src="lang-es.js?v=22.5"></script>
-<script src="lang-de.js?v=22.5"></script>
+<script src="lang-it.js?v=22.6"></script>
+<script src="lang-en.js?v=22.6"></script>
+<script src="lang-fr.js?v=22.6"></script>
+<script src="lang-es.js?v=22.6"></script>
+<script src="lang-de.js?v=22.6"></script>
 <style>
   :root{
     --bg:#14121f; --panel:#1e1b2e; --panel2:#282440;
@@ -1540,6 +1540,61 @@ function pickLineup(cards, max, min){   // scegli la formazione d'attacco (ordin
     document.body.appendChild(ov); render();
   });
 }
+function cardPow(c){ const s = Array.isArray(c.statsv) ? c.statsv.reduce((a, b) => a + (+b || 0), 0) : 0; return s > 0 ? s : 100; }
+function scoutWinPct(mine, enemy){   // stima Monte Carlo della staffetta (Bradley-Terry sulla forza)
+  const A = mine.map(cardPow), B = enemy.slice(0, mine.length).map(cardPow);
+  if (!A.length) return null; if (!B.length) return 100;
+  let wins = 0; const K = 300;
+  for (let t = 0; t < K; t++){
+    let ai = 0, bi = 0;
+    while (ai < A.length && bi < B.length){ if (Math.random() < A[ai] / (A[ai] + B[bi])) bi++; else ai++; }
+    if (ai < A.length) wins++;
+  }
+  return Math.round(wins / K * 100);
+}
+function sfregioTier(p){ return p >= 70 ? 'hi' : p >= 50 ? 'mid' : p >= 30 ? 'low' : 'bad'; }
+function scoutAndPick(mine, enemy, min, max){   // 🕵️ ricognizione: vedi la difesa, Er Sfregio ti dà le probabilità, scegli la formazione
+  min = min || 1;
+  return new Promise(resolve => {
+    const sel = [];
+    const ov = document.createElement('div');
+    ov.style.cssText = 'position:fixed; inset:0; z-index:100001; background:#000b; display:flex; align-items:center; justify-content:center; padding:16px;';
+    const face = (c, faded) => '<div style="display:flex; flex-direction:column; align-items:center; gap:2px; width:56px;' + (faded ? ' opacity:.35;' : '') + '">' + (c.img ? '<img src="' + c.img + '" style="width:44px; height:44px; object-fit:cover; border-radius:8px;">' : '<span style="font-size:1.6rem;">🐱</span>') + '<span style="font-size:.58rem; text-align:center; line-height:1; max-width:54px; overflow:hidden; white-space:nowrap; text-overflow:ellipsis;">' + awEsc((c.name || '').split(' ')[0]) + '</span></div>';
+    const render = () => {
+      const n = sel.length, live = n || min;
+      const enemyRow = enemy.map((c, i) => face(c, i >= live)).join('');
+      let bubble;
+      if (!n) bubble = '<em>«' + G('scout_wait') + '»</em>';
+      else {
+        const p = scoutWinPct(sel.map(s => mine.find(c => c.serial === s)), enemy);
+        const col = p >= 70 ? '#7ee787' : p >= 50 ? '#ffd36e' : p >= 30 ? '#ffb060' : '#ff8080';
+        bubble = '<em>«' + G('sfregio_' + sfregioTier(p)) + '»</em><div style="font-weight:900; color:' + col + '; font-size:1.1rem; margin-top:2px;">' + G('sfregio_pct', {p: p}) + '</div>';
+      }
+      ov.innerHTML = '<div style="background:var(--panel,#1c1830); border-radius:16px; padding:16px; max-width:380px; width:100%; max-height:90vh; overflow:auto; box-shadow:0 10px 40px #000a;">' +
+        '<h3 style="margin:0 0 8px;">🗺️ ' + G('scout_title') + '</h3>' +
+        '<div style="font-size:.76rem; color:var(--muted,#9a90c0); margin-bottom:4px;">' + G('scout_enemy') + '</div>' +
+        '<div style="display:flex; gap:6px; flex-wrap:wrap; justify-content:center; background:#ff606016; border-radius:10px; padding:8px;">' + (enemy.length ? enemyRow : '<span class="count">—</span>') + '</div>' +
+        '<div style="display:flex; align-items:flex-start; gap:8px; margin:10px 0; background:var(--panel2,#0f0c1e); border:1px solid #ffffff18; border-radius:12px; padding:10px;">' +
+          '<span style="font-size:2rem; line-height:1;">😼</span>' +
+          '<div style="flex:1; min-width:0;"><div style="font-weight:800; font-size:.8rem; color:var(--accent,#c9a0ff);">' + G('sfregio_name') + '</div><div style="font-size:.86rem; line-height:1.35;">' + bubble + '</div></div></div>' +
+        '<div style="font-size:.76rem; color:var(--muted,#9a90c0); margin-bottom:4px;">' + G('scout_yours', {n: min}) + '</div>' +
+        '<div>' + mine.map(c => {
+          const k = sel.indexOf(c.serial), on = k >= 0;
+          return '<div data-s="' + c.serial + '" style="display:flex; align-items:center; gap:8px; padding:6px; border-radius:10px; margin-bottom:4px; cursor:pointer; border:2px solid ' + (on ? 'var(--accent,#c9a0ff)' : 'transparent') + '; background:' + (on ? '#ffffff12' : 'transparent') + ';">' +
+            (c.img ? '<img src="' + c.img + '" style="width:40px; border-radius:6px;">' : '<span style="font-size:1.3rem;">🐱</span>') +
+            '<span style="flex:1; min-width:0;"><strong>' + awEsc(c.name || c.serial) + '</strong></span>' +
+            (on ? '<span style="background:var(--accent,#c9a0ff); color:#111; font-weight:800; width:24px; height:24px; border-radius:50%; display:flex; align-items:center; justify-content:center;">' + (k + 1) + '</span>' : '') + '</div>';
+        }).join('') + '</div>' +
+        '<div style="display:flex; gap:8px; margin-top:12px;">' +
+          '<button class="btn" id="plOk" style="flex:1;"' + (n >= min ? '' : ' disabled') + '>' + (n >= min ? G('scout_go', {n: n}) : G('scout_pickmin', {n: min})) + '</button>' +
+          '<button class="btn secondary" id="plCancel" style="width:auto; margin:0; padding:12px 16px;">' + G('back') + '</button></div></div>';
+      ov.querySelectorAll('[data-s]').forEach(el => el.onclick = () => { const s = el.getAttribute('data-s'), k = sel.indexOf(s); if (k >= 0) sel.splice(k, 1); else { if (sel.length >= max) return; sel.push(s); } render(); });
+      ov.querySelector('#plOk').onclick = () => { if (sel.length >= min){ ov.remove(); resolve(sel.slice()); } };
+      ov.querySelector('#plCancel').onclick = () => { ov.remove(); resolve(null); };
+    };
+    document.body.appendChild(ov); render();
+  });
+}
 async function simClanWars(){   // admin: lancia un'ondata di guerre bot lato server
   const out = document.getElementById('simWarOut');
   if (!session || session.email !== ADMIN_EMAIL){ if (out) out.textContent = '⚠️ Solo admin.'; return; }
@@ -2113,16 +2168,15 @@ async function renderMyClan(clanId){
   html += '<div id="gMyCards"></div>';
   html += '<h3 style="margin-top:16px;">' + G('members') + '</h3>';
   members.forEach(m => { const isLead = m.user_id === clan.leader_id; html += '<div style="display:flex; align-items:center; gap:8px; padding:4px 0;"><span style="flex:1; min-width:0;">' + awEsc(m.owner_name || '?') + (isLead ? ' <span style="color:var(--accent); font-size:.78rem;">' + G('leader') + '</span>' : '') + '</span>' + ((isLeader && !isLead) ? '<button class="btn secondary" style="width:auto;margin:0;padding:4px 8px;" onclick="gangKick(\'' + m.user_id + '\')">' + G('kick') + '</button>' : '') + '</div>'; });
-  const defN = Math.min(3, roster.length);
   html += '<h3 style="margin-top:16px;">' + G('roster') + ' (' + roster.length + '/20)</h3>';
   html += '<p class="count" style="font-size:.74rem;">🛡️ ' + G('def_hint') + '</p>';
   if (isLeader && roster.length > 1) html += '<p class="count" style="font-size:.72rem;">' + G('order_hint') + '</p>';
   if (!roster.length) html += '<p class="count">' + G('roster_empty') + '</p>';
   roster.forEach((r, idx) => {
-    const cd = cm[r.serial] || {}, mine = r.added_by === session.user_id, isDef = idx < defN;
+    const cd = cm[r.serial] || {}, mine = r.added_by === session.user_id;
     const oc = ' onclick="showCardBySerial(\'' + r.serial + '\')" style="cursor:pointer;';
     const av = cd.img ? '<img src="' + cd.img + '"' + oc + ' width:38px; border-radius:6px; flex-shrink:0;">' : '<span' + oc + ' font-size:1.3rem;">🐱</span>';
-    html += '<div style="display:flex; align-items:center; gap:8px; padding:4px 0;' + (isDef ? ' background:#c9a0ff14; border-radius:8px;' : '') + '"><span class="count" style="width:18px;">' + (isDef ? '🛡️' : (idx + 1)) + '</span>' + av + '<span' + oc + ' flex:1; min-width:0;"><strong>' + awEsc(cd.name || r.serial) + '</strong></span>' + (isLeader ? '<button class="btn secondary" style="width:auto;margin:0;padding:4px 8px;" onclick="gangMove(\'' + r.serial + '\',-1)">▲</button><button class="btn secondary" style="width:auto;margin:0;padding:4px 8px;" onclick="gangMove(\'' + r.serial + '\',1)">▼</button>' : '') + ((mine || isLeader) ? '<button class="btn secondary" style="width:auto;margin:0;padding:4px 8px;" onclick="gangRemoveCard(\'' + r.serial + '\')">✖</button>' : '') + '</div>';
+    html += '<div style="display:flex; align-items:center; gap:8px; padding:4px 0;"><span class="count" style="width:18px;">' + (idx + 1) + '</span>' + av + '<span' + oc + ' flex:1; min-width:0;"><strong>' + awEsc(cd.name || r.serial) + '</strong></span>' + (isLeader ? '<button class="btn secondary" style="width:auto;margin:0;padding:4px 8px;" onclick="gangMove(\'' + r.serial + '\',-1)">▲</button><button class="btn secondary" style="width:auto;margin:0;padding:4px 8px;" onclick="gangMove(\'' + r.serial + '\',1)">▼</button>' : '') + ((mine || isLeader) ? '<button class="btn secondary" style="width:auto;margin:0;padding:4px 8px;" onclick="gangRemoveCard(\'' + r.serial + '\')">✖</button>' : '') + '</div>';
   });
   const inR = new Set(serials); const addable = collection.filter(c => !inR.has(c.serial));
   if (roster.length < 20){
@@ -2135,12 +2189,8 @@ async function renderMyClan(clanId){
     apps.forEach(a => { html += '<div style="display:flex; align-items:center; gap:8px; padding:5px 0;"><span style="flex:1;">' + awEsc(a.owner_name || '?') + '</span><button class="btn secondary" style="width:auto;margin:0;padding:5px 10px;" onclick="gangRespondApp(' + a.id + ',true)">' + G('approve') + '</button><button class="btn secondary" style="width:auto;margin:0;padding:5px 10px;" onclick="gangRespondApp(' + a.id + ',false)">' + G('reject') + '</button></div>'; });
     html += '<h3 style="margin-top:16px;">' + G('inv_title') + '</h3><div id="gInvList"><button class="btn secondary" onclick="gangLoadInvitables(' + clanId + ')">' + G('inv_browse') + '</button></div>';
   }
-  html += '<h3 style="margin-top:18px;">⚔️ ' + G('warlog_title') + '</h3><div id="gWarLog"><p class="count">…</p></div>';
-  html += '<h3 style="margin-top:18px;">' + G('browse_others') + '</h3><div id="gBrowse"></div>';
   html += '<button class="btn secondary" style="margin-top:18px;" onclick="gangLeave(' + isLeader + ')">' + (isLeader ? G('disband') : G('leave')) + '</button>';
   box.innerHTML = html; box._roster = serials;
-  gangShowBrowse(false, isLeader ? clanId : null);
-  gangLoadWarLog(clanId);
   gangLoadMyCards();
 }
 async function gangLoadMyCards(){   // le mie carte attualmente schierate in un clan (con ritiro rapido)
@@ -2359,7 +2409,7 @@ async function gangZoneAttack(zoneId){
     const teamA = myRoster.map(r => cm[r.serial]).filter(c => c && !(c.rest_until && new Date(c.rest_until).getTime() > now));
     if (!teamA.length){ alert(G('no_fresh')); return; }
     const minA = Math.min(3, teamA.length), maxA = Math.min(5, teamA.length);
-    const chosen = await pickLineup(teamA, maxA, minA); if (!chosen) return;
+    const chosen = await scoutAndPick(teamA, defAll, minA, maxA); if (!chosen) return;
     const lineupA = chosen.map(s => cm[s]).filter(Boolean); if (!lineupA.length) return;
     const teamB = defAll.slice(0, lineupA.length);   // simmetria: la difesa schiera tanti quanti ne porti tu
     const res = await runTeamBattle(lineupA, teamB, {label: 'GUERRA DI ZONA'}); try { closeBattle(); } catch(e){}
@@ -4615,7 +4665,7 @@ async function migrateMelodies(){
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
 /* ---------- versione e aggiornamento automatico ---------- */
-const APP_VERSION = '22.5';   // unica fonte di verità: aggiorna anche version.txt a ogni release
+const APP_VERSION = '22.6';   // unica fonte di verità: aggiorna anche version.txt a ogni release
 try { document.getElementById('appVer').textContent = 'v' + APP_VERSION; } catch(e){}
 function verNewer(a, b){   // a più recente di b? confronto numerico 11.10 > 11.9
   const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);

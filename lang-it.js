@@ -1620,7 +1620,7 @@
     "pick_title": "Scegli la formazione",
     "pick_desc": "Tocca le carte in ordine (min {min}, max {n}). Chi vince resta in campo.",
     "pick_go": "⚔️ Attacca ({n})",
-    "def_hint": "Le prime carte del roster difendono. Rispondono in tanti quanti ne schiera chi attacca (min 3).",
+    "def_hint": "Le carte difendono in ordine di roster: rispondono in tanti quanti ne schiera chi attacca (3–5).",
     "def_size_lbl": "Difensori:",
     "warlog_title": "Registro guerre",
     "warlog_empty": "Ancora nessuna guerra.",
@@ -1663,6 +1663,18 @@
     "zone_parco": "Parco",
     "zone_fontana": "Fontana",
     "zone_molo": "Molo",
-    "pick_min": "Scegline almeno {n}"
+    "pick_min": "Scegline almeno {n}",
+    "scout_title": "Ricognizione",
+    "scout_enemy": "Loro difendono",
+    "scout_yours": "Tu schieri (min {n})",
+    "scout_go": "⚔️ Attacca ({n})",
+    "scout_pickmin": "Scegline almeno {n}",
+    "scout_wait": "Famme vede’ chi mandi giù…",
+    "sfregio_name": "Er Sfregio",
+    "sfregio_pct": "~{p}% de faccela",
+    "sfregio_hi": "Questi se li magna a colazione. Vai sereno.",
+    "sfregio_mid": "È in bilico… ma io ce proverei, gatto.",
+    "sfregio_low": "Mah. Rischi grosso. Ce pensi bene?",
+    "sfregio_bad": "Co’ ’sta robba? È quasi ’n suicidio."
   }
 };
