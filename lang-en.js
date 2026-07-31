@@ -1618,9 +1618,9 @@
     "pts": "pts",
     "war_confirm": "Attack {name}? Your cards will then rest for an hour.",
     "pick_title": "Choose your lineup",
-    "pick_desc": "Tap cards in order (max {n}). The winner stays on.",
+    "pick_desc": "Tap cards in order (min {min}, max {n}). The winner stays on.",
     "pick_go": "⚔️ Attack ({n})",
-    "def_hint": "The first {n} cards defend the clan when you are attacked.",
+    "def_hint": "The first roster cards defend. They field as many as the attacker brings (min 3).",
     "def_size_lbl": "Defenders:",
     "warlog_title": "War log",
     "warlog_empty": "No wars yet.",
@@ -1662,6 +1662,7 @@
     "zone_mercato": "Market",
     "zone_parco": "Park",
     "zone_fontana": "Fountain",
-    "zone_molo": "Pier"
+    "zone_molo": "Pier",
+    "pick_min": "Pick at least {n}"
   }
 };

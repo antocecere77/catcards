@@ -1618,9 +1618,9 @@
     "pts": "pt",
     "war_confirm": "Attaccare {name}? Le tue carte poi riposeranno un’ora.",
     "pick_title": "Scegli la formazione",
-    "pick_desc": "Tocca le carte in ordine (max {n}). Chi vince resta in campo.",
+    "pick_desc": "Tocca le carte in ordine (min {min}, max {n}). Chi vince resta in campo.",
     "pick_go": "⚔️ Attacca ({n})",
-    "def_hint": "Le prime {n} carte difendono il clan quando ti attaccano.",
+    "def_hint": "Le prime carte del roster difendono. Rispondono in tanti quanti ne schiera chi attacca (min 3).",
     "def_size_lbl": "Difensori:",
     "warlog_title": "Registro guerre",
     "warlog_empty": "Ancora nessuna guerra.",
@@ -1662,6 +1662,7 @@
     "zone_mercato": "Mercato",
     "zone_parco": "Parco",
     "zone_fontana": "Fontana",
-    "zone_molo": "Molo"
+    "zone_molo": "Molo",
+    "pick_min": "Scegline almeno {n}"
   }
 };

@@ -15,11 +15,11 @@
 <script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs@master/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="lang-it.js?v=22.4"></script>
-<script src="lang-en.js?v=22.4"></script>
-<script src="lang-fr.js?v=22.4"></script>
-<script src="lang-es.js?v=22.4"></script>
-<script src="lang-de.js?v=22.4"></script>
+<script src="lang-it.js?v=22.5"></script>
+<script src="lang-en.js?v=22.5"></script>
+<script src="lang-fr.js?v=22.5"></script>
+<script src="lang-es.js?v=22.5"></script>
+<script src="lang-de.js?v=22.5"></script>
 <style>
   :root{
     --bg:#14121f; --panel:#1e1b2e; --panel2:#282440;
@@ -1508,7 +1508,8 @@ function askPlayerName(){
     inp.onkeydown = ev => { if (ev.key === 'Enter') ov.querySelector('#askNameOk').click(); };
   });
 }
-function pickLineup(cards, max){   // scegli la formazione d'attacco (ordine = ordine di clic)
+function pickLineup(cards, max, min){   // scegli la formazione d'attacco (ordine = ordine di clic)
+  min = min || 1;
   return new Promise(resolve => {
     const sel = [];
     const ov = document.createElement('div');
@@ -1516,7 +1517,7 @@ function pickLineup(cards, max){   // scegli la formazione d'attacco (ordine = o
     const render = () => {
       ov.innerHTML = '<div style="background:var(--panel,#1c1830); border-radius:16px; padding:18px; max-width:360px; width:100%; max-height:82vh; overflow:auto; box-shadow:0 10px 40px #000a;">' +
         '<h3 style="margin:0 0 4px;">⚔️ ' + G('pick_title') + '</h3>' +
-        '<p class="count" style="margin:0 0 10px;">' + G('pick_desc', {n: max}) + '</p>' +
+        '<p class="count" style="margin:0 0 10px;">' + G('pick_desc', {n: max, min: min}) + '</p>' +
         '<div>' + cards.map(c => {
           const k = sel.indexOf(c.serial), on = k >= 0;
           return '<div data-s="' + c.serial + '" style="display:flex; align-items:center; gap:8px; padding:6px; border-radius:10px; margin-bottom:4px; cursor:pointer; border:2px solid ' + (on ? 'var(--accent,#c9a0ff)' : 'transparent') + '; background:' + (on ? '#ffffff12' : 'transparent') + ';">' +
@@ -1525,7 +1526,7 @@ function pickLineup(cards, max){   // scegli la formazione d'attacco (ordine = o
             (on ? '<span style="background:var(--accent,#c9a0ff); color:#111; font-weight:800; width:24px; height:24px; border-radius:50%; display:flex; align-items:center; justify-content:center;">' + (k + 1) + '</span>' : '') + '</div>';
         }).join('') + '</div>' +
         '<div style="display:flex; gap:8px; margin-top:12px;">' +
-          '<button class="btn" id="plOk" style="flex:1;"' + (sel.length ? '' : ' disabled') + '>' + G('pick_go', {n: sel.length}) + '</button>' +
+          '<button class="btn" id="plOk" style="flex:1;"' + (sel.length >= min ? '' : ' disabled') + '>' + (sel.length >= min ? G('pick_go', {n: sel.length}) : G('pick_min', {n: min})) + '</button>' +
           '<button class="btn secondary" id="plCancel" style="width:auto; margin:0; padding:12px 16px;">' + G('back') + '</button>' +
         '</div></div>';
       ov.querySelectorAll('[data-s]').forEach(el => el.onclick = () => {
@@ -1533,7 +1534,7 @@ function pickLineup(cards, max){   // scegli la formazione d'attacco (ordine = o
         if (k >= 0) sel.splice(k, 1); else { if (sel.length >= max) return; sel.push(s); }
         render();
       });
-      ov.querySelector('#plOk').onclick = () => { if (sel.length) { ov.remove(); resolve(sel.slice()); } };
+      ov.querySelector('#plOk').onclick = () => { if (sel.length >= min) { ov.remove(); resolve(sel.slice()); } };
       ov.querySelector('#plCancel').onclick = () => { ov.remove(); resolve(null); };
     };
     document.body.appendChild(ov); render();
@@ -2098,8 +2099,7 @@ async function gangBrowseLoad(reset){
 }
 async function renderMyClan(clanId){
   const box = document.getElementById('gangBody'); if (!box) return;
-  const clan = (await gGet('clans?select=id,name,emblem,leader_id,open,points,def_size&id=eq.' + clanId))[0]; if (!clan){ renderNoClan(); return; }
-  const defN = Math.max(1, Math.min(5, clan.def_size || 3));
+  const clan = (await gGet('clans?select=id,name,emblem,leader_id,open,points&id=eq.' + clanId))[0]; if (!clan){ renderNoClan(); return; }
   const isLeader = clan.leader_id === session.user_id;
   window._myClan = clanId; window._myClanName = clan.name; window._myClanLeader = isLeader;
   const members = await gGet('clan_members?select=user_id,owner_name,joined_at&clan_id=eq.' + clanId + '&order=joined_at.asc');
@@ -2113,12 +2113,9 @@ async function renderMyClan(clanId){
   html += '<div id="gMyCards"></div>';
   html += '<h3 style="margin-top:16px;">' + G('members') + '</h3>';
   members.forEach(m => { const isLead = m.user_id === clan.leader_id; html += '<div style="display:flex; align-items:center; gap:8px; padding:4px 0;"><span style="flex:1; min-width:0;">' + awEsc(m.owner_name || '?') + (isLead ? ' <span style="color:var(--accent); font-size:.78rem;">' + G('leader') + '</span>' : '') + '</span>' + ((isLeader && !isLead) ? '<button class="btn secondary" style="width:auto;margin:0;padding:4px 8px;" onclick="gangKick(\'' + m.user_id + '\')">' + G('kick') + '</button>' : '') + '</div>'; });
+  const defN = Math.min(3, roster.length);
   html += '<h3 style="margin-top:16px;">' + G('roster') + ' (' + roster.length + '/20)</h3>';
-  html += '<p class="count" style="font-size:.74rem;">🛡️ ' + G('def_hint', {n: defN}) + '</p>';
-  if (isLeader){
-    html += '<div style="display:flex; align-items:center; gap:6px; margin:2px 0 6px;"><span class="count" style="font-size:.74rem;">' + G('def_size_lbl') + '</span>' +
-      [1,2,3,4,5].map(k => '<button class="btn secondary" style="width:auto;margin:0;padding:3px 9px;' + (k === defN ? 'background:var(--accent,#c9a0ff);color:#111;font-weight:800;' : '') + '" onclick="gangSetDefense(' + k + ')">' + k + '</button>').join('') + '</div>';
-  }
+  html += '<p class="count" style="font-size:.74rem;">🛡️ ' + G('def_hint') + '</p>';
   if (isLeader && roster.length > 1) html += '<p class="count" style="font-size:.72rem;">' + G('order_hint') + '</p>';
   if (!roster.length) html += '<p class="count">' + G('roster_empty') + '</p>';
   roster.forEach((r, idx) => {
@@ -2248,8 +2245,6 @@ async function seedBotClans(){   // admin: crea alcuni clan-bot per animare il m
 async function gangAttack(defenderId, nameEnc){   // 3b: scegli la formazione → staffetta vs difesa avversaria → punti-clan
   const attId = _gB.attackFrom; if (!attId) return;
   if (!confirm(G('war_confirm', {name: decodeURIComponent(nameEnc || '')}))) return;
-  const defClan = (await gGet('clans?select=def_size&id=eq.' + defenderId))[0] || {};
-  const defSize = Math.max(1, Math.min(5, defClan.def_size || 3));
   const myRoster = await gGet('clan_roster?select=serial,pos&clan_id=eq.' + attId + '&order=pos.asc');
   const defRoster = await gGet('clan_roster?select=serial,pos&clan_id=eq.' + defenderId + '&order=pos.asc');
   const serials = [...new Set([...myRoster, ...defRoster].map(r => r.serial))];
@@ -2257,14 +2252,15 @@ async function gangAttack(defenderId, nameEnc){   // 3b: scegli la formazione �
   const cm = {}; (await gGet('cards?select=serial,name,nick,statsv,hp,potere,img,dna,strum,annuncio,rest_until&serial=in.(' + serials.join(',') + ')')).forEach(c => cm[c.serial] = c);
   const now = Date.now();
   const teamA = myRoster.map(r => cm[r.serial]).filter(c => c && !(c.rest_until && new Date(c.rest_until).getTime() > now));   // fresche
-  const teamB = defRoster.map(r => cm[r.serial]).filter(Boolean).slice(0, defSize);   // la difesa avversaria (prime def_size)
+  const defAll = defRoster.map(r => cm[r.serial]).filter(Boolean);   // la difesa avversaria (ordine del roster)
   if (!teamA.length){ alert(G('no_fresh')); return; }
-  if (!teamB.length){ alert(G('enemy_empty')); return; }
-  const maxA = Math.min(5, teamA.length);
-  const chosen = await pickLineup(teamA, maxA);   // il giocatore sceglie chi schierare e in che ordine
+  if (!defAll.length){ alert(G('enemy_empty')); return; }
+  const minA = Math.min(3, teamA.length), maxA = Math.min(5, teamA.length);
+  const chosen = await pickLineup(teamA, maxA, minA);   // scegli chi schierare (min 3) e in che ordine
   if (!chosen) return;
-  const lineupA = chosen.map(s => cm[s]).filter(Boolean), lineupB = teamB;
+  const lineupA = chosen.map(s => cm[s]).filter(Boolean);
   if (!lineupA.length) return;
+  const lineupB = defAll.slice(0, lineupA.length);   // simmetria: la difesa schiera quanti ne porti tu
   const res = await runTeamBattle(lineupA, lineupB, {label: 'GUERRA DI CLAN'});
   try { closeBattle(); } catch(e){}
   if (!res) return;
@@ -2351,19 +2347,21 @@ async function gangZoneAttack(zoneId){
   const z = (window._zmap || []).find(x => x.id === zoneId); if (!z) return;
   if (!confirm(G('zone_confirm', {name: G('zone_' + z.code)}))) return;
   const myRoster = await gGet('clan_roster?select=serial,pos&clan_id=eq.' + my + '&order=pos.asc');
-  let defSize = 3, defRoster = [];
-  if (z.owner_clan){ const dc = (await gGet('clans?select=def_size&id=eq.' + z.owner_clan))[0] || {}; defSize = Math.max(1, Math.min(5, dc.def_size || 3)); defRoster = await gGet('clan_roster?select=serial,pos&clan_id=eq.' + z.owner_clan + '&order=pos.asc'); }
+  let defRoster = [];
+  if (z.owner_clan){ defRoster = await gGet('clan_roster?select=serial,pos&clan_id=eq.' + z.owner_clan + '&order=pos.asc'); }
   const allSer = [...new Set([...myRoster.map(r => r.serial), ...defRoster.map(r => r.serial)])];
   const cm = {}; if (allSer.length) (await gGet('cards?select=serial,name,nick,statsv,hp,potere,img,dna,strum,annuncio,rest_until&serial=in.(' + allSer.join(',') + ')')).forEach(c => cm[c.serial] = c);
   const now = Date.now();
-  const teamB = defRoster.map(r => cm[r.serial]).filter(Boolean).slice(0, defSize);
+  const defAll = defRoster.map(r => cm[r.serial]).filter(Boolean);
   let won, usedSerials = [];
-  if (!teamB.length){ won = true; }   // zona libera o difesa vuota: presa senza combattere
+  if (!defAll.length){ won = true; }   // zona libera o difesa vuota: presa senza combattere
   else {
     const teamA = myRoster.map(r => cm[r.serial]).filter(c => c && !(c.rest_until && new Date(c.rest_until).getTime() > now));
     if (!teamA.length){ alert(G('no_fresh')); return; }
-    const chosen = await pickLineup(teamA, Math.min(5, teamA.length)); if (!chosen) return;
+    const minA = Math.min(3, teamA.length), maxA = Math.min(5, teamA.length);
+    const chosen = await pickLineup(teamA, maxA, minA); if (!chosen) return;
     const lineupA = chosen.map(s => cm[s]).filter(Boolean); if (!lineupA.length) return;
+    const teamB = defAll.slice(0, lineupA.length);   // simmetria: la difesa schiera tanti quanti ne porti tu
     const res = await runTeamBattle(lineupA, teamB, {label: 'GUERRA DI ZONA'}); try { closeBattle(); } catch(e){}
     if (!res) return; won = res.winner === 'A'; usedSerials = lineupA.map(c => c.serial);
   }
@@ -4617,7 +4615,7 @@ async function migrateMelodies(){
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
 /* ---------- versione e aggiornamento automatico ---------- */
-const APP_VERSION = '22.4';   // unica fonte di verità: aggiorna anche version.txt a ogni release
+const APP_VERSION = '22.5';   // unica fonte di verità: aggiorna anche version.txt a ogni release
 try { document.getElementById('appVer').textContent = 'v' + APP_VERSION; } catch(e){}
 function verNewer(a, b){   // a più recente di b? confronto numerico 11.10 > 11.9
   const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);

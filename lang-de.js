@@ -1618,9 +1618,9 @@
     "pts": "Pkt",
     "war_confirm": "{name} angreifen? Deine Karten ruhen danach eine Stunde.",
     "pick_title": "Wähle deine Aufstellung",
-    "pick_desc": "Tippe die Karten der Reihe nach (max {n}). Der Sieger bleibt im Spiel.",
+    "pick_desc": "Tippe die Karten der Reihe nach (min {min}, max {n}). Der Sieger bleibt im Spiel.",
     "pick_go": "⚔️ Angreifen ({n})",
-    "def_hint": "Die ersten {n} Karten verteidigen den Clan, wenn du angegriffen wirst.",
+    "def_hint": "Die ersten Roster-Karten verteidigen. Sie stellen so viele wie der Angreifer (min 3).",
     "def_size_lbl": "Verteidiger:",
     "warlog_title": "Kriegsprotokoll",
     "warlog_empty": "Noch keine Kriege.",
@@ -1662,6 +1662,7 @@
     "zone_mercato": "Markt",
     "zone_parco": "Park",
     "zone_fontana": "Brunnen",
-    "zone_molo": "Steg"
+    "zone_molo": "Steg",
+    "pick_min": "Wähle mindestens {n}"
   }
 };
