@@ -15,11 +15,11 @@
 <script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs@master/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="lang-it.js?v=21.7"></script>
-<script src="lang-en.js?v=21.7"></script>
-<script src="lang-fr.js?v=21.7"></script>
-<script src="lang-es.js?v=21.7"></script>
-<script src="lang-de.js?v=21.7"></script>
+<script src="lang-it.js?v=21.8"></script>
+<script src="lang-en.js?v=21.8"></script>
+<script src="lang-fr.js?v=21.8"></script>
+<script src="lang-es.js?v=21.8"></script>
+<script src="lang-de.js?v=21.8"></script>
 <style>
   :root{
     --bg:#14121f; --panel:#1e1b2e; --panel2:#282440;
@@ -189,7 +189,7 @@
       <button class="tabBtn" data-hub="fight" onclick="showHub('fight')">⚔️ <span data-i18n="hub_fight">Combatti</span><span id="mondoDot" style="display:none; width:9px; height:9px; background:#e63946; border-radius:50%; margin-left:4px; vertical-align:middle;"></span></button>
       <button class="tabBtn" data-hub="cards" onclick="showHub('cards')">🐱 <span data-i18n="hub_cards">Carte</span><span id="collCountTag"></span></button>
       <button class="tabBtn" data-hub="glory" onclick="showHub('glory')">🏆 <span data-i18n="hub_glory">Gloria</span><span id="awardDot" style="display:none; width:9px; height:9px; background:#e63946; border-radius:50%; margin-left:4px; vertical-align:middle;"></span></button>
-      <button class="tabBtn" data-hub="social" onclick="showHub('social')">🏘️ <span data-i18n="hub_social">Sociale</span><span id="tradeTabDot" style="display:none; width:9px; height:9px; background:#e63946; border-radius:50%; margin-left:4px; vertical-align:middle;"></span></button>
+      <button class="tabBtn" data-hub="social" onclick="showHub('social')">🏘️ <span data-i18n="hub_social">Sociale</span><span id="tradeTabDot" style="display:none; width:9px; height:9px; background:#e63946; border-radius:50%; margin-left:4px; vertical-align:middle;"></span><span id="gangDot" style="display:none; width:9px; height:9px; background:#e63946; border-radius:50%; margin-left:3px; vertical-align:middle;"></span></button>
       <button class="tabBtn" data-hub="sys" onclick="showHub('sys')" style="flex:0 0 auto; width:auto; padding-left:14px; padding-right:14px;">⚙️</button>
     </div>
     <div id="subRow" style="display:flex; gap:6px; flex-wrap:wrap;"></div>
@@ -1973,21 +1973,18 @@ async function gRpc(fn, body){ const r = await fetch(SUPA_URL + '/rest/v1/rpc/' 
 const G_OWNER = () => (playerNameEl.value.trim() || serverOwner || 'anonimo');
 async function openGang(){
   const box = document.getElementById('gangBody'); if (!box) return;
+  { const d = document.getElementById('gangDot'); if (d) d.style.display = 'none'; }
   if (!session || !session.access_token){ box.innerHTML = '<h2>' + G('none_title') + '</h2><p class="count">' + G('login') + '</p>'; return; }
   box.innerHTML = '<p class="count">…</p>';
   const mem = await gGet('clan_members?select=clan_id&user_id=eq.' + session.user_id);
+  try { localStorage.setItem('catcards_gang_clan', mem.length ? String(mem[0].clan_id) : ''); } catch(e){}
   if (mem && mem.length) renderMyClan(mem[0].clan_id); else renderNoClan();
 }
 async function renderNoClan(){
   const box = document.getElementById('gangBody'); if (!box) return;
-  const clans = await gGet('clans?select=id,name,emblem,leader_id&order=created_at.desc');
-  const membersAll = await gGet('clan_members?select=clan_id');
-  const rosterAll = await gGet('clan_roster?select=clan_id');
-  const myApps = await gGet('clan_applications?select=clan_id&user_id=eq.' + session.user_id);
-  const invites = await gGet('clan_invites?select=id,clan_id,from_name&to_user_id=eq.' + session.user_id);
-  const mc = {}; membersAll.forEach(m => mc[m.clan_id] = (mc[m.clan_id] || 0) + 1);
-  const rc = {}; rosterAll.forEach(r => rc[r.clan_id] = (rc[r.clan_id] || 0) + 1);
-  const applied = new Set(myApps.map(a => a.clan_id));
+  const invites = await gGet('clan_invites?select=id,clan_id,serial,from_name&to_user_id=eq.' + session.user_id);
+  const invClans = {};
+  if (invites.length){ const ids = [...new Set(invites.map(i => i.clan_id))]; (await gGet('clans?select=id,name,emblem&id=in.(' + ids.join(',') + ')')).forEach(c => invClans[c.id] = c); }
   const emblems = ['🛡️', '⚔️', '🔥', '🐾', '👑', '⭐', '🌙', '🦁'];
   let html = '<h2>' + G('none_title') + '</h2><p class="count">' + G('none_sub') + '</p>';
   html += '<label class="small" style="margin-top:14px; display:block;">' + G('create') + '</label>';
@@ -1996,17 +1993,36 @@ async function renderNoClan(){
   html += '<button class="btn" onclick="gangCreate()" style="margin-top:10px;">' + G('create_btn') + '</button>';
   if (invites.length){
     html += '<h3 style="margin-top:20px;">' + G('invites') + '</h3>';
-    invites.forEach(iv => { const cl = clans.find(c => c.id === iv.clan_id) || {}; html += '<div style="display:flex; align-items:center; gap:8px; padding:6px 0;"><span style="flex:1;">' + (cl.emblem || '🛡️') + ' <strong>' + awEsc(cl.name || '?') + '</strong> <span class="count" style="font-size:.72rem;">' + G('invited_by', {who: awEsc(iv.from_name || '?')}) + '</span></span><button class="btn secondary" style="width:auto;margin:0;padding:6px 10px;" onclick="gangRespondInvite(' + iv.id + ',true)">' + G('accept') + '</button><button class="btn secondary" style="width:auto;margin:0;padding:6px 10px;" onclick="gangRespondInvite(' + iv.id + ',false)">' + G('decline') + '</button></div>'; });
+    invites.forEach(iv => { const cl = invClans[iv.clan_id] || {}; html += '<div style="display:flex; align-items:center; gap:8px; padding:6px 0;"><span style="flex:1;">' + (cl.emblem || '🛡️') + ' <strong>' + awEsc(cl.name || '?') + '</strong> <span class="count" style="font-size:.72rem;">' + G('invited_by', {who: awEsc(iv.from_name || '?')}) + '</span></span><button class="btn secondary" style="width:auto;margin:0;padding:6px 10px;" onclick="gangRespondInvite(' + iv.id + ',true)">' + G('accept') + '</button><button class="btn secondary" style="width:auto;margin:0;padding:6px 10px;" onclick="gangRespondInvite(' + iv.id + ',false)">' + G('decline') + '</button></div>'; });
   }
-  html += '<h3 style="margin-top:20px;">' + G('board') + '</h3>';
-  if (!clans.length) html += '<p class="count">' + G('board_empty') + '</p>';
-  else clans.forEach(c => {
-    const n = mc[c.id] || 0, full = n >= 8, ap = applied.has(c.id);
-    html += '<div style="display:flex; align-items:center; gap:8px; padding:8px 0; border-bottom:1px solid #2a2540;"><span style="font-size:1.4rem;">' + (c.emblem || '🛡️') + '</span><span style="flex:1; min-width:0;"><strong>' + awEsc(c.name) + '</strong><br><span class="count" style="font-size:.72rem;">' + G('members_n', {n: n}) + ' · ' + G('cards_n', {n: (rc[c.id] || 0)}) + '</span></span>' + (ap ? '<span class="count" style="font-size:.72rem;">' + G('applied') + '</span>' : full ? '<span class="count" style="font-size:.72rem;">' + G('full') + '</span>' : '<button class="btn secondary" style="width:auto;margin:0;padding:6px 12px;" onclick="gangApply(' + c.id + ')">' + G('apply') + '</button>') + '</div>';
-  });
+  html += '<h3 style="margin-top:20px;">' + G('board') + '</h3><div id="gBrowse"></div>';
   box.innerHTML = html;
   box._emblem = '🛡️';
   box.querySelectorAll('.gEmblem').forEach(b => b.onclick = () => { box.querySelectorAll('.gEmblem').forEach(x => x.style.borderColor = ''); b.style.borderColor = 'var(--accent)'; box._emblem = b.dataset.em; });
+  gangShowBrowse(true);
+}
+async function gRpcData(fn, body){ try { const r = await fetch(SUPA_URL + '/rest/v1/rpc/' + fn, {method: 'POST', headers: supaHeaders({'Content-Type': 'application/json'}), body: JSON.stringify(body || {})}); return r.ok ? await r.json() : []; } catch(e){ return []; } }
+let _gB = {search: '', offset: 0, canApply: false, applied: new Set(), t: null};
+async function gangShowBrowse(canApply){
+  const c = document.getElementById('gBrowse'); if (!c) return;
+  _gB = {search: '', offset: 0, canApply: canApply, applied: new Set(), t: null};
+  if (canApply) (await gGet('clan_applications?select=clan_id&user_id=eq.' + session.user_id)).forEach(a => _gB.applied.add(a.clan_id));
+  c.innerHTML = '<input type="text" id="gSearchInp" placeholder="' + G('search_ph') + '" style="margin-top:4px;" oninput="gangBrowseSearch()"><div id="gBrowseList" style="margin-top:6px;"></div><button class="btn secondary" id="gMoreBtn" style="display:none; margin-top:6px;" onclick="gangBrowseLoad(false)">' + G('more') + '</button>';
+  gangBrowseLoad(true);
+}
+function gangBrowseSearch(){ _gB.search = (document.getElementById('gSearchInp').value || '').trim(); clearTimeout(_gB.t); _gB.t = setTimeout(() => gangBrowseLoad(true), 300); }
+async function gangBrowseLoad(reset){
+  const list = document.getElementById('gBrowseList'); if (!list) return;
+  if (reset){ _gB.offset = 0; list.innerHTML = ''; }
+  const LIM = 15;
+  const rows = await gRpcData('clan_browse', {p_search: _gB.search, p_limit: LIM, p_offset: _gB.offset});
+  if (!rows.length && _gB.offset === 0) list.innerHTML = '<p class="count">' + G('board_empty') + '</p>';
+  else list.insertAdjacentHTML('beforeend', rows.map(c => {
+    const action = !_gB.canApply ? '' : (_gB.applied.has(c.id) ? '<span class="count" style="font-size:.72rem;">' + G('applied') + '</span>' : c.member_count >= 8 ? '<span class="count" style="font-size:.72rem;">' + G('full') + '</span>' : !c.open ? '<span class="count" style="font-size:.72rem;">' + G('closed_lbl') + '</span>' : '<button class="btn secondary" style="width:auto;margin:0;padding:6px 12px;" onclick="gangApply(' + c.id + ')">' + G('apply') + '</button>');
+    return '<div style="display:flex; align-items:center; gap:8px; padding:8px 0; border-bottom:1px solid #2a2540;"><span style="font-size:1.4rem;">' + (c.emblem || '🛡️') + '</span><span style="flex:1; min-width:0;"><strong>' + awEsc(c.name) + '</strong> ' + (c.open ? '' : '🔒') + '<br><span class="count" style="font-size:.72rem;">' + G('members_n', {n: c.member_count}) + ' · ' + G('cards_n', {n: c.roster_count}) + '</span></span>' + action + '</div>';
+  }).join(''));
+  _gB.offset += rows.length;
+  const more = document.getElementById('gMoreBtn'); if (more) more.style.display = (rows.length === LIM) ? 'block' : 'none';
 }
 async function renderMyClan(clanId){
   const box = document.getElementById('gangBody'); if (!box) return;
@@ -2017,9 +2033,10 @@ async function renderMyClan(clanId){
   const serials = roster.map(r => r.serial); const cm = {};
   if (serials.length){ (await gGet('cards?select=serial,name,img&serial=in.(' + serials.join(',') + ')')).forEach(c => cm[c.serial] = c); }
   const apps = isLeader ? await gGet('clan_applications?select=id,owner_name&clan_id=eq.' + clanId + '&order=created_at.asc') : [];
-  let html = '<div style="text-align:center;"><div style="font-size:2.4rem;">' + (clan.emblem || '🛡️') + '</div><h2 style="margin:2px 0;">' + awEsc(clan.name) + '</h2><p class="count">' + G('members_n', {n: members.length}) + '</p></div>';
+  let html = '<div style="text-align:center;"><div style="font-size:2.4rem;">' + (clan.emblem || '🛡️') + '</div><h2 style="margin:2px 0;">' + awEsc(clan.name) + '</h2><p class="count" style="margin:0;">' + G('members_n', {n: members.length}) + '</p>';
+  html += '<div style="margin-top:4px;"><span class="count">' + (clan.open ? G('open_lbl') : G('closed_lbl')) + '</span>' + (isLeader ? ' <button class="btn secondary" style="width:auto; margin:0; padding:4px 10px;" onclick="gangSetOpen(' + (!clan.open) + ')">' + (clan.open ? G('set_closed') : G('set_open')) + '</button>' : '') + '</div></div>';
   html += '<h3 style="margin-top:16px;">' + G('members') + '</h3>';
-  members.forEach(m => { html += '<div style="padding:4px 0;">' + awEsc(m.owner_name || '?') + (m.user_id === clan.leader_id ? ' <span style="color:var(--accent); font-size:.78rem;">' + G('leader') + '</span>' : '') + '</div>'; });
+  members.forEach(m => { const isLead = m.user_id === clan.leader_id; html += '<div style="display:flex; align-items:center; gap:8px; padding:4px 0;"><span style="flex:1; min-width:0;">' + awEsc(m.owner_name || '?') + (isLead ? ' <span style="color:var(--accent); font-size:.78rem;">' + G('leader') + '</span>' : '') + '</span>' + ((isLeader && !isLead) ? '<button class="btn secondary" style="width:auto;margin:0;padding:4px 8px;" onclick="gangKick(\'' + m.user_id + '\')">' + G('kick') + '</button>' : '') + '</div>'; });
   html += '<h3 style="margin-top:16px;">' + G('roster') + ' (' + roster.length + '/20)</h3>';
   if (isLeader && roster.length > 1) html += '<p class="count" style="font-size:.72rem;">' + G('order_hint') + '</p>';
   if (!roster.length) html += '<p class="count">' + G('roster_empty') + '</p>';
@@ -2039,8 +2056,10 @@ async function renderMyClan(clanId){
     apps.forEach(a => { html += '<div style="display:flex; align-items:center; gap:8px; padding:5px 0;"><span style="flex:1;">' + awEsc(a.owner_name || '?') + '</span><button class="btn secondary" style="width:auto;margin:0;padding:5px 10px;" onclick="gangRespondApp(' + a.id + ',true)">' + G('approve') + '</button><button class="btn secondary" style="width:auto;margin:0;padding:5px 10px;" onclick="gangRespondApp(' + a.id + ',false)">' + G('reject') + '</button></div>'; });
     html += '<h3 style="margin-top:16px;">' + G('inv_title') + '</h3><div id="gInvList"><button class="btn secondary" onclick="gangLoadInvitables(' + clanId + ')">' + G('inv_browse') + '</button></div>';
   }
+  html += '<h3 style="margin-top:18px;">' + G('browse_others') + '</h3><div id="gBrowse"></div>';
   html += '<button class="btn secondary" style="margin-top:18px;" onclick="gangLeave(' + isLeader + ')">' + (isLeader ? G('disband') : G('leave')) + '</button>';
   box.innerHTML = html; box._roster = serials;
+  gangShowBrowse(false);
 }
 async function gangCreate(){
   const box = document.getElementById('gangBody'); const inp = document.getElementById('gNewName');
@@ -2055,19 +2074,46 @@ async function gangAddCard(){ const s = document.getElementById('gAddSel'); if (
 async function gangRemoveCard(serial){ try { await gRpc('clan_roster_remove', {p_serial: serial}); openGang(); } catch(e){ alert('❌ ' + e.message); } }
 async function gangMove(serial, dir){ const box = document.getElementById('gangBody'); const arr = (box._roster || []).slice(); const i = arr.indexOf(serial); if (i < 0) return; const j = i + dir; if (j < 0 || j >= arr.length) return; arr.splice(i, 1); arr.splice(j, 0, serial); try { await gRpc('clan_roster_reorder', {p_serials: arr}); openGang(); } catch(e){ alert('❌ ' + e.message); } }
 async function gangLeave(isLeader){ if (!confirm(isLeader ? G('disband_confirm') : G('leave_confirm'))) return; try { await gRpc('clan_leave', {}); openGang(); } catch(e){ alert('❌ ' + e.message); } }
-async function gangLoadInvitables(clanId){   // sfoglia i giocatori (dai loro card nel mondo) e invitali, stile Mercato
+async function gangLoadInvitables(clanId){   // passo 1: cerca il giocatore
   const el = document.getElementById('gInvList'); if (!el) return;
-  el.innerHTML = '<p class="count">…</p>';
-  const cards = await gGet('cards?select=owner_id,owner&owner_id=not.is.null&retired=not.is.true&limit=1000');
-  const inClan = new Set((await gGet('clan_members?select=user_id')).map(m => m.user_id));
-  const invited = new Set((await gGet('clan_invites?select=to_user_id&clan_id=eq.' + clanId)).map(i => i.to_user_id));
-  const seen = {}, players = [];
-  cards.forEach(c => { if (!c.owner_id || seen[c.owner_id]) return; if (c.owner_id === session.user_id || inClan.has(c.owner_id)) return; seen[c.owner_id] = 1; players.push({id: c.owner_id, name: c.owner || '?'}); });
-  players.sort((a, b) => (a.name || '').localeCompare(b.name || '', undefined, {sensitivity: 'base'}));
-  if (!players.length){ el.innerHTML = '<p class="count">' + G('no_free') + '</p>'; return; }
-  el.innerHTML = players.slice(0, 60).map(p => '<div style="display:flex; align-items:center; gap:8px; padding:5px 0;"><span style="flex:1; min-width:0;">' + awEsc(p.name) + '</span>' + (invited.has(p.id) ? '<span class="count" style="font-size:.72rem;">' + G('invited_lbl') + '</span>' : '<button class="btn secondary" style="width:auto;margin:0;padding:5px 10px;" onclick="gangInvite(' + clanId + ',\'' + p.id + '\')">' + G('invite_btn') + '</button>') + '</div>').join('');
+  el.innerHTML = '<input type="text" id="gPlayerSearch" placeholder="' + G('search_player') + '" style="margin-top:4px;" oninput="gangPlayerSearch(' + clanId + ')"><div id="gPlayerList" style="margin-top:6px;"></div>';
+  gangPlayerRun(clanId, '');
 }
-async function gangInvite(clanId, toId){ try { await gRpc('clan_invite', {p_clan: clanId, p_to: toId, p_from: G_OWNER()}); gangLoadInvitables(clanId); } catch(e){ alert('❌ ' + e.message); } }
+let _gPT = null;
+function gangPlayerSearch(clanId){ clearTimeout(_gPT); const v = (document.getElementById('gPlayerSearch').value || '').trim(); _gPT = setTimeout(() => gangPlayerRun(clanId, v), 300); }
+async function gangPlayerRun(clanId, search){
+  const list = document.getElementById('gPlayerList'); if (!list) return;
+  list.innerHTML = '<p class="count">…</p>';
+  const players = await gRpcData('player_search', {p_search: search});
+  const invited = new Set((await gGet('clan_invites?select=to_user_id&clan_id=eq.' + clanId)).map(i => i.to_user_id));
+  if (!players.length){ list.innerHTML = '<p class="count">' + G('no_free') + '</p>'; return; }
+  list.innerHTML = players.map(p => '<div style="display:flex; align-items:center; gap:8px; padding:5px 0;"><span style="flex:1; min-width:0;">' + awEsc(p.owner || '?') + '</span>' + (invited.has(p.user_id) ? '<span class="count" style="font-size:.72rem;">' + G('invited_lbl') + '</span>' : '<button class="btn secondary" style="width:auto;margin:0;padding:5px 10px;" onclick="gangPlayerCards(' + clanId + ',\'' + p.user_id + '\',\'' + encodeURIComponent(p.owner || '?') + '\')">' + G('see_cards') + '</button>') + '</div>').join('');
+}
+async function gangPlayerCards(clanId, userId, nameEnc){   // passo 2: vedi le carte del giocatore e invita quella scelta
+  const list = document.getElementById('gPlayerList'); if (!list) return;
+  const name = decodeURIComponent(nameEnc);
+  list.innerHTML = '<p class="count">…</p>';
+  const cards = await gGet('cards?select=serial,name,img&owner_id=eq.' + userId + '&retired=not.is.true&limit=50');
+  const inv = await gGet('clan_invites?select=serial&clan_id=eq.' + clanId + '&to_user_id=eq.' + userId);
+  const invSerial = inv.length ? inv[0].serial : null;
+  let h = '<div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;"><button class="btn secondary" style="width:auto;margin:0;padding:4px 10px;" onclick="gangLoadInvitables(' + clanId + ')">‹ ' + G('back') + '</button><strong>' + awEsc(name) + '</strong></div>';
+  if (!cards.length) h += '<p class="count">' + G('no_cards') + '</p>';
+  else h += cards.map(c => '<div style="display:flex; align-items:center; gap:8px; padding:4px 0;">' + (c.img ? '<img src="' + c.img + '" style="width:36px; border-radius:6px;">' : '<span style="font-size:1.2rem;">🐱</span>') + '<span style="flex:1; min-width:0;"><strong>' + awEsc(c.name || c.serial) + '</strong></span>' + (invSerial === c.serial ? '<span class="count" style="font-size:.72rem;">' + G('invited_lbl') + '</span>' : '<button class="btn secondary" style="width:auto;margin:0;padding:5px 10px;" onclick="gangInvite(' + clanId + ',\'' + userId + '\',\'' + c.serial + '\',\'' + nameEnc + '\')">' + G('invite_btn') + '</button>') + '</div>').join('');
+  list.innerHTML = h;
+}
+async function gangInvite(clanId, toId, serial, nameEnc){ try { await gRpc('clan_invite', {p_clan: clanId, p_to: toId, p_serial: serial, p_from: G_OWNER()}); try { toast(G('invite_sent')); } catch(e){} gangPlayerCards(clanId, toId, nameEnc); } catch(e){ alert('❌ ' + e.message); } }
+async function gangSetOpen(open){ try { await gRpc('clan_set_open', {p_open: open}); openGang(); } catch(e){ alert('❌ ' + e.message); } }
+async function gangKick(userId){ if (!confirm(G('kick_confirm'))) return; try { await gRpc('clan_kick', {p_user: userId}); openGang(); } catch(e){ alert('❌ ' + e.message); } }
+async function gangCheckMembership(){   // notifica se sei entrato / sei stato espulso
+  if (!session || !session.access_token) return;
+  const mem = await gGet('clan_members?select=clan_id&user_id=eq.' + session.user_id);
+  const cur = mem.length ? String(mem[0].clan_id) : '';
+  let prev = null; try { prev = localStorage.getItem('catcards_gang_clan'); } catch(e){}
+  try { localStorage.setItem('catcards_gang_clan', cur); } catch(e){}
+  if (prev === null || cur === prev) return;
+  try { toast(cur && !prev ? G('joined_msg') : (!cur && prev ? G('kicked_msg') : G('changed_msg'))); } catch(e){}
+  const d = document.getElementById('gangDot'); if (d && window._curTab !== 'gang') d.style.display = 'inline-block';
+}
 /* ---------- notiziario: cosa è successo alle tue carte mentre eri via ---------- */
 async function checkWorldNews(){
   if (!collection.length) return;
@@ -4311,7 +4357,7 @@ async function migrateMelodies(){
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
 /* ---------- versione e aggiornamento automatico ---------- */
-const APP_VERSION = '21.7';   // unica fonte di verità: aggiorna anche version.txt a ogni release
+const APP_VERSION = '21.8';   // unica fonte di verità: aggiorna anche version.txt a ogni release
 try { document.getElementById('appVer').textContent = 'v' + APP_VERSION; } catch(e){}
 function verNewer(a, b){   // a più recente di b? confronto numerico 11.10 > 11.9
   const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);
@@ -7551,6 +7597,7 @@ async function onQrFound(data, mine){
     try { await fetch(SUPA_URL + '/rest/v1/rpc/settle_due_weeks', {method: 'POST', headers: awH(), body: '{}'}); } catch(e){}
     try { checkAwardEdition(); } catch(e){}
     try { awCheckWinnings(); } catch(e){}   // notifica vincite + pallino sulla scheda Award
+    try { gangCheckMembership(); } catch(e){}   // notifica se sei entrato/espulso da un clan
   }, 5000);
   renderMedals();
   try { renderMissions(); } catch(e){}

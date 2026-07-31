@@ -1588,6 +1588,23 @@
     "inv_browse": "🔎 Browse players",
     "invite_btn": "Invite",
     "invited_lbl": "✅ Invited",
-    "no_free": "No free players to invite."
+    "no_free": "No free players to invite.",
+    "search_ph": "Search a clan…",
+    "more": "Load more",
+    "open_lbl": "Open",
+    "closed_lbl": "🔒 Closed",
+    "browse_others": "📋 Browse other clans",
+    "set_open": "🔓 Open the clan",
+    "set_closed": "🔒 Close the clan",
+    "search_player": "Search a player…",
+    "see_cards": "See cards",
+    "back": "Back",
+    "no_cards": "No published cards.",
+    "invite_sent": "✉️ Invite sent!",
+    "kick": "Kick",
+    "kick_confirm": "Kick this member from the clan?",
+    "joined_msg": "🛡️ You joined a clan!",
+    "kicked_msg": "🚪 You are no longer in the clan.",
+    "changed_msg": "Your clan changed."
   }
 };

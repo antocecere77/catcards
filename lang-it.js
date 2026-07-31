@@ -1588,6 +1588,23 @@
     "inv_browse": "🔎 Sfoglia i giocatori",
     "invite_btn": "Invita",
     "invited_lbl": "✅ Invitato",
-    "no_free": "Nessun giocatore libero da invitare."
+    "no_free": "Nessun giocatore libero da invitare.",
+    "search_ph": "Cerca un clan…",
+    "more": "Carica altri",
+    "open_lbl": "Aperto",
+    "closed_lbl": "🔒 Chiuso",
+    "browse_others": "📋 Sfoglia gli altri clan",
+    "set_open": "🔓 Apri il clan",
+    "set_closed": "🔒 Chiudi il clan",
+    "search_player": "Cerca un giocatore…",
+    "see_cards": "Vedi le carte",
+    "back": "Indietro",
+    "no_cards": "Nessuna carta pubblicata.",
+    "invite_sent": "✉️ Invito inviato!",
+    "kick": "Espelli",
+    "kick_confirm": "Espellere questo membro dal clan?",
+    "joined_msg": "🛡️ Sei entrato in un clan!",
+    "kicked_msg": "🚪 Non fai più parte del clan.",
+    "changed_msg": "Il tuo clan è cambiato."
   }
 };
