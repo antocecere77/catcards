@@ -101,7 +101,11 @@
     "opt_ai_desc": "Sin clave API uso un filtro cartoon integrado y gratuito. Con una clave <strong>Google Gemini</strong> el cartoon lo genera la IA (calidad muy superior). Créala gratis en <strong>aistudio.google.com</strong> → «Get API key».",
     "tab_award": "🏆 Premios",
     "publish_btn": "🌍 Publicar en el Mundo",
-    "pub_moved": "Para publicar o retirar una carta, tócala en la pestaña 📚 Cartas."
+    "pub_moved": "Para publicar o retirar una carta, tócala en la pestaña 📚 Cartas.",
+    "ask_name_title": "¿Cómo te llamas?",
+    "ask_name_desc": "El nombre que verán los rivales (mín 3 letras).",
+    "ask_name_ok": "Guardar y publicar",
+    "ask_name_cancel": "Cancelar"
   },
   "stat": {
     "Forza": "Fuerza",

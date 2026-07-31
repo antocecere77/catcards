@@ -101,7 +101,11 @@
     "opt_ai_desc": "Sans clé API j'utilise un filtre cartoon intégré et gratuit. Avec une clé <strong>Google Gemini</strong> le cartoon est généré par l'IA (bien meilleure qualité). Crée-la gratuitement sur <strong>aistudio.google.com</strong> → « Get API key ».",
     "tab_award": "🏆 Awards",
     "publish_btn": "🌍 Publier dans le Monde",
-    "pub_moved": "Pour publier ou retirer une carte, touche-la dans l’onglet 📚 Cartes."
+    "pub_moved": "Pour publier ou retirer une carte, touche-la dans l’onglet 📚 Cartes.",
+    "ask_name_title": "Comment t’appelles-tu ?",
+    "ask_name_desc": "Le nom que verront les adversaires (min 3 lettres).",
+    "ask_name_ok": "Enregistrer et publier",
+    "ask_name_cancel": "Annuler"
   },
   "stat": {
     "Forza": "Force",

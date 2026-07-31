@@ -101,7 +101,11 @@
     "opt_ai_desc": "Without an API key I use a built-in free cartoon filter. With a <strong>Google Gemini</strong> key the cartoon is AI-generated (much higher quality). Create one free at <strong>aistudio.google.com</strong> → «Get API key».",
     "tab_award": "🏆 Awards",
     "publish_btn": "🌍 Publish to the World",
-    "pub_moved": "To publish or retire a card, tap it in the 📚 Cards tab."
+    "pub_moved": "To publish or retire a card, tap it in the 📚 Cards tab.",
+    "ask_name_title": "What’s your name?",
+    "ask_name_desc": "The name challengers will see (min 3 letters).",
+    "ask_name_ok": "Save & publish",
+    "ask_name_cancel": "Cancel"
   },
   "stat": {
     "Forza": "Strength",

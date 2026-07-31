@@ -101,7 +101,11 @@
     "opt_ai_desc": "Ohne API-Schlüssel nutze ich einen eingebauten, kostenlosen Cartoon-Filter. Mit einem <strong>Google-Gemini</strong>-Schlüssel wird der Cartoon von der KI erzeugt (viel bessere Qualität). Erstelle ihn gratis auf <strong>aistudio.google.com</strong> → «Get API key».",
     "tab_award": "🏆 Awards",
     "publish_btn": "🌍 In der Welt veröffentlichen",
-    "pub_moved": "Zum Veröffentlichen/Zurückziehen einer Karte tippe sie im Reiter 📚 Karten an."
+    "pub_moved": "Zum Veröffentlichen/Zurückziehen einer Karte tippe sie im Reiter 📚 Karten an.",
+    "ask_name_title": "Wie heißt du?",
+    "ask_name_desc": "Der Name, den Herausforderer sehen (min. 3 Zeichen).",
+    "ask_name_ok": "Speichern & veröffentlichen",
+    "ask_name_cancel": "Abbrechen"
   },
   "stat": {
     "Forza": "Stärke",

@@ -15,11 +15,11 @@
 <script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs@master/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="lang-it.js?v=21.3"></script>
-<script src="lang-en.js?v=21.3"></script>
-<script src="lang-fr.js?v=21.3"></script>
-<script src="lang-es.js?v=21.3"></script>
-<script src="lang-de.js?v=21.3"></script>
+<script src="lang-it.js?v=21.4"></script>
+<script src="lang-en.js?v=21.4"></script>
+<script src="lang-fr.js?v=21.4"></script>
+<script src="lang-es.js?v=21.4"></script>
+<script src="lang-de.js?v=21.4"></script>
 <style>
   :root{
     --bg:#14121f; --panel:#1e1b2e; --panel2:#282440;
@@ -1466,11 +1466,37 @@ function toggleWorld(){
   const c = collection[modalIndex];
   if (myActive.has(c.serial)) retireCard(); else publishOne(c.serial);
 }
+function askPlayerName(){
+  return new Promise(resolve => {
+    const ov = document.createElement('div');
+    ov.style.cssText = 'position:fixed; inset:0; z-index:100001; background:#000a; display:flex; align-items:center; justify-content:center; padding:20px;';
+    ov.innerHTML = '<div style="background:var(--panel,#1c1830); border-radius:16px; padding:20px; max-width:340px; width:100%; box-shadow:0 10px 40px #000a;">' +
+      '<h3 style="margin:0 0 6px;">🧑 ' + TSEC('ui', 'ask_name_title') + '</h3>' +
+      '<p class="count" style="margin:0 0 10px;">' + TSEC('ui', 'ask_name_desc') + '</p>' +
+      '<input id="askNameInp" type="text" maxlength="20" placeholder="Es. Antonio" style="width:100%; padding:12px; border-radius:10px; border:1px solid #4d4477; background:var(--panel2,#0f0c1e); color:var(--text,#fff);">' +
+      '<div style="display:flex; gap:8px; margin-top:12px;">' +
+        '<button class="btn" id="askNameOk" style="flex:1;">' + TSEC('ui', 'ask_name_ok') + '</button>' +
+        '<button class="btn secondary" id="askNameCancel" style="width:auto; margin:0; padding:12px 16px;">' + TSEC('ui', 'ask_name_cancel') + '</button>' +
+      '</div></div>';
+    document.body.appendChild(ov);
+    const inp = ov.querySelector('#askNameInp'); inp.value = (playerNameEl.value || '').trim(); setTimeout(() => inp.focus(), 50);
+    const done = v => { ov.remove(); resolve(v); };
+    ov.querySelector('#askNameOk').onclick = () => { const v = inp.value.trim(); if (v.length < 3){ inp.style.borderColor = '#e63946'; return; } done(v); };
+    ov.querySelector('#askNameCancel').onclick = () => done(null);
+    inp.onkeydown = ev => { if (ev.key === 'Enter') ov.querySelector('#askNameOk').click(); };
+  });
+}
 async function publishOne(serial){
   const e = collection.find(c => c.serial === serial); if (!e) return;
   if (!session || !session.access_token){ alert(TSEC('msg', 'retire_login')); return; }
-  const owner = playerNameEl.value.trim();
-  if (owner.length < 3){ alert('⚠️ Imposta prima il tuo nome giocatore (min 3 lettere) in 🥋 Dojo.'); return; }
+  let owner = playerNameEl.value.trim();
+  if (owner.length < 3){   // mai inserito il nome: chiedilo con una modale, poi pubblica
+    const nm = await askPlayerName();
+    if (!nm) return;
+    owner = nm; playerNameEl.value = nm;
+    try { localStorage.setItem('catcards_player', nm); } catch(e2){}
+    try { updateNameSaveBtn(); } catch(e2){}
+  }
   await refreshSessionIfNeeded();
   try {
     if (myPublished.has(serial)){
@@ -4169,7 +4195,7 @@ async function migrateMelodies(){
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
 /* ---------- versione e aggiornamento automatico ---------- */
-const APP_VERSION = '21.3';   // unica fonte di verità: aggiorna anche version.txt a ogni release
+const APP_VERSION = '21.4';   // unica fonte di verità: aggiorna anche version.txt a ogni release
 try { document.getElementById('appVer').textContent = 'v' + APP_VERSION; } catch(e){}
 function verNewer(a, b){   // a più recente di b? confronto numerico 11.10 > 11.9
   const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);
