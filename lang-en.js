@@ -99,7 +99,9 @@
     "coll_none": "No cards yet: create one in the 📸 Create tab, or import a backup from ⚙️ Options.",
     "xp_line": "📈 Level {lvl} — {inLvl}/100 XP (≈ {w} world wins to Lv.{next})",
     "opt_ai_desc": "Without an API key I use a built-in free cartoon filter. With a <strong>Google Gemini</strong> key the cartoon is AI-generated (much higher quality). Create one free at <strong>aistudio.google.com</strong> → «Get API key».",
-    "tab_award": "🏆 Awards"
+    "tab_award": "🏆 Awards",
+    "publish_btn": "🌍 Publish to the World",
+    "pub_moved": "To publish or retire a card, tap it in the 📚 Cards tab."
   },
   "stat": {
     "Forza": "Strength",

@@ -99,7 +99,9 @@
     "coll_none": "Aucune carte pour l'instant : crées-en une dans l'onglet 📸 Créer, ou importe une sauvegarde depuis ⚙️ Options.",
     "xp_line": "📈 Niveau {lvl} — {inLvl}/100 XP (≈ {w} victoires mondiales pour le niv.{next})",
     "opt_ai_desc": "Sans clé API j'utilise un filtre cartoon intégré et gratuit. Avec une clé <strong>Google Gemini</strong> le cartoon est généré par l'IA (bien meilleure qualité). Crée-la gratuitement sur <strong>aistudio.google.com</strong> → « Get API key ».",
-    "tab_award": "🏆 Awards"
+    "tab_award": "🏆 Awards",
+    "publish_btn": "🌍 Publier dans le Monde",
+    "pub_moved": "Pour publier ou retirer une carte, touche-la dans l’onglet 📚 Cartes."
   },
   "stat": {
     "Forza": "Force",

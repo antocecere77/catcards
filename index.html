@@ -15,11 +15,11 @@
 <script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs@master/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="lang-it.js?v=21.2"></script>
-<script src="lang-en.js?v=21.2"></script>
-<script src="lang-fr.js?v=21.2"></script>
-<script src="lang-es.js?v=21.2"></script>
-<script src="lang-de.js?v=21.2"></script>
+<script src="lang-it.js?v=21.3"></script>
+<script src="lang-en.js?v=21.3"></script>
+<script src="lang-fr.js?v=21.3"></script>
+<script src="lang-es.js?v=21.3"></script>
+<script src="lang-de.js?v=21.3"></script>
 <style>
   :root{
     --bg:#14121f; --panel:#1e1b2e; --panel2:#282440;
@@ -261,12 +261,10 @@
       <div id="statsList" class="count" style="line-height:2; margin-top:6px;"></div>
     </div>
     <details id="pubDetails" style="margin-top:12px;">
-      <summary data-i18n="pub_sum">🗂️ Scegli quali carte pubblicare nel Mondo</summary>
-      <label class="small" style="margin-top:8px;" data-i18n="player_name">Il tuo nome giocatore (obbligatorio, min 3 lettere)</label>
-      <input type="text" id="playerName" placeholder="Es. Antonio" maxlength="20">
+      <summary data-i18n="player_name">Il tuo nome giocatore (obbligatorio, min 3 lettere)</summary>
+      <input type="text" id="playerName" placeholder="Es. Antonio" maxlength="20" style="margin-top:8px;">
       <button class="btn secondary" id="nameSaveBtn" onclick="applyOwnerName()" style="display:none; margin-top:8px;">💾 Applica il nuovo nome a tutte le carte pubblicate</button>
-      <div id="pubList" style="margin-top:8px;"></div>
-      <button class="btn" id="pubBtn" onclick="publishCards()" style="margin-top:8px;" data-i18n="pub_btn">📤 Pubblica le carte selezionate</button>
+      <p class="count" data-i18n="pub_moved" style="margin-top:8px; opacity:.85;">Per pubblicare o ritirare una carta, toccala nella scheda 📚 Carte.</p>
       <p class="count" id="pubMsg" style="margin-top:6px;"></p>
     </details>
   </div>
@@ -639,7 +637,7 @@
     <button class="btn" onclick="downloadSaved()" data-i18n="dl_short">⬇️ Scarica</button>
     <button class="btn secondary" onclick="pickNick()" data-i18n="nick_btn">✏️ Cambia soprannome</button>
     <button class="btn secondary" onclick="playSavedTheme()" data-i18n="theme_btn">▶️ Ascolta il tema</button>
-    <button class="btn secondary" onclick="retireCard()" data-i18n="retire_btn">🚪 Ritira dal mondo</button>
+    <button class="btn secondary" id="mWorldBtn" onclick="toggleWorld()">🚪 Ritira dal mondo</button>
     <button class="btn secondary" onclick="buyFrame()" data-i18n="frame_btn">🎨 Cornice d'Oro (100 punti)</button>
     <button class="btn secondary" onclick="deleteSaved()" data-i18n="del_btn">🗑️ Elimina</button>
     <button class="btn secondary" onclick="closeModal()" data-i18n="close">✖ Chiudi</button>
@@ -1460,7 +1458,33 @@ function openCardModal(i){
   document.getElementById('modalCap').innerHTML =
     '<em>«' + descrOf(c) + '»</em><br>' + bits.join('  ·  ') + '<br>' + mvLine +
     '<div style="max-width:300px; margin:8px auto 0;">' + xpBarHtml(c.serial) + '</div>';
+  { const wb = document.getElementById('mWorldBtn'); if (wb) wb.textContent = myActive.has(c.serial) ? TSEC('ui', 'retire_btn') : TSEC('ui', 'publish_btn'); }   // toggle Pubblica/Ritira
   document.getElementById('modal').style.display = 'flex';
+}
+function toggleWorld(){
+  if (modalIndex < 0) return;
+  const c = collection[modalIndex];
+  if (myActive.has(c.serial)) retireCard(); else publishOne(c.serial);
+}
+async function publishOne(serial){
+  const e = collection.find(c => c.serial === serial); if (!e) return;
+  if (!session || !session.access_token){ alert(TSEC('msg', 'retire_login')); return; }
+  const owner = playerNameEl.value.trim();
+  if (owner.length < 3){ alert('⚠️ Imposta prima il tuo nome giocatore (min 3 lettere) in 🥋 Dojo.'); return; }
+  await refreshSessionIfNeeded();
+  try {
+    if (myPublished.has(serial)){
+      await fetch(SUPA_URL + '/rest/v1/cards?serial=eq.' + encodeURIComponent(serial), {method: 'PATCH', headers: supaHeaders(), body: JSON.stringify({retired: false})});   // era ritirata: riattiva
+    } else {
+      const row = await makeCardRow(e, owner);
+      const r = await fetch(SUPA_URL + '/rest/v1/cards', {method: 'POST', headers: supaHeaders({Prefer: 'resolution=merge-duplicates'}), body: JSON.stringify([row])});
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+    }
+    myPublished.add(serial); myActive.add(serial);
+    const wb = document.getElementById('mWorldBtn'); if (wb) wb.textContent = TSEC('ui', 'retire_btn');
+    try { toast('🌍 ' + e.name + ' — ' + TSEC('ui', 'publish_btn')); } catch(e2){}
+    syncWorldBase(); loadMyWorldCards(); try { refreshArena(); } catch(e2){}
+  } catch(err){ alert('❌ ' + err.message); }
 }
 function pickNick(){
   if (modalIndex < 0) return;
@@ -2189,7 +2213,12 @@ async function retireCard(){
     const rows = r.ok ? await r.json() : [];
     if (!r.ok) alert(TSEC('msg', 'err_http', {code: r.status}));
     else if (!rows.length) alert(TSEC('msg', 'card_not_pub'));
-    else alert(TSEC('msg', 'retired_ok', {name: c.name}));
+    else {
+      alert(TSEC('msg', 'retired_ok', {name: c.name}));
+      myActive.delete(c.serial);   // ritirata: non più attiva nel Mondo
+      const wb = document.getElementById('mWorldBtn'); if (wb) wb.textContent = TSEC('ui', 'publish_btn');
+      try { loadMyWorldCards(); refreshArena(); } catch(e2){}
+    }
   } catch(err){ alert(TSEC('msg', 'err_net', {m: err.message})); }
 }
 function deleteSaved(){
@@ -4140,7 +4169,7 @@ async function migrateMelodies(){
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
 /* ---------- versione e aggiornamento automatico ---------- */
-const APP_VERSION = '21.2';   // unica fonte di verità: aggiorna anche version.txt a ogni release
+const APP_VERSION = '21.3';   // unica fonte di verità: aggiorna anche version.txt a ogni release
 try { document.getElementById('appVer').textContent = 'v' + APP_VERSION; } catch(e){}
 function verNewer(a, b){   // a più recente di b? confronto numerico 11.10 > 11.9
   const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);

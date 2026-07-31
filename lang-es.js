@@ -99,7 +99,9 @@
     "coll_none": "Aún no hay cartas: crea una en la pestaña 📸 Crear, o importa una copia desde ⚙️ Opciones.",
     "xp_line": "📈 Nivel {lvl} — {inLvl}/100 XP (≈ {w} victorias mundiales para el Nv.{next})",
     "opt_ai_desc": "Sin clave API uso un filtro cartoon integrado y gratuito. Con una clave <strong>Google Gemini</strong> el cartoon lo genera la IA (calidad muy superior). Créala gratis en <strong>aistudio.google.com</strong> → «Get API key».",
-    "tab_award": "🏆 Premios"
+    "tab_award": "🏆 Premios",
+    "publish_btn": "🌍 Publicar en el Mundo",
+    "pub_moved": "Para publicar o retirar una carta, tócala en la pestaña 📚 Cartas."
   },
   "stat": {
     "Forza": "Fuerza",
