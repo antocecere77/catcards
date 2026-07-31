@@ -1612,6 +1612,17 @@
     "no_fresh": "Nessuna carta fresca da schierare (sono a riposo).",
     "enemy_empty": "Il clan avversario non ha carte nel roster.",
     "pts": "pt",
-    "war_confirm": "Attaccare {name}? Le tue carte poi riposeranno un’ora."
+    "war_confirm": "Attaccare {name}? Le tue carte poi riposeranno un’ora.",
+    "pick_title": "Scegli la formazione",
+    "pick_desc": "Tocca le carte in ordine (max {n}). Chi vince resta in campo.",
+    "pick_go": "⚔️ Attacca ({n})",
+    "def_hint": "Le prime {n} carte difendono il clan quando ti attaccano.",
+    "def_size_lbl": "Difensori:",
+    "warlog_title": "Registro guerre",
+    "warlog_empty": "Ancora nessuna guerra.",
+    "wl_attacked": "Hai attaccato {name}",
+    "wl_defended": "{name} ti ha attaccato",
+    "wl_win": "Vittoria",
+    "wl_lose": "Sconfitta"
   }
 };

@@ -1612,6 +1612,17 @@
     "no_fresh": "Aucune carte fraîche à aligner (elles se reposent).",
     "enemy_empty": "Le clan adverse n’a aucune carte.",
     "pts": "pts",
-    "war_confirm": "Attaquer {name} ? Tes cartes se reposeront ensuite une heure."
+    "war_confirm": "Attaquer {name} ? Tes cartes se reposeront ensuite une heure.",
+    "pick_title": "Choisis ta formation",
+    "pick_desc": "Touche les cartes dans l’ordre (max {n}). Le gagnant reste en jeu.",
+    "pick_go": "⚔️ Attaquer ({n})",
+    "def_hint": "Les {n} premières cartes défendent le clan quand on t’attaque.",
+    "def_size_lbl": "Défenseurs :",
+    "warlog_title": "Journal des guerres",
+    "warlog_empty": "Aucune guerre pour l’instant.",
+    "wl_attacked": "Tu as attaqué {name}",
+    "wl_defended": "{name} t’a attaqué",
+    "wl_win": "Victoire",
+    "wl_lose": "Défaite"
   }
 };

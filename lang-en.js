@@ -1612,6 +1612,17 @@
     "no_fresh": "No fresh cards to field (they are resting).",
     "enemy_empty": "The enemy clan has no cards in the roster.",
     "pts": "pts",
-    "war_confirm": "Attack {name}? Your cards will then rest for an hour."
+    "war_confirm": "Attack {name}? Your cards will then rest for an hour.",
+    "pick_title": "Choose your lineup",
+    "pick_desc": "Tap cards in order (max {n}). The winner stays on.",
+    "pick_go": "⚔️ Attack ({n})",
+    "def_hint": "The first {n} cards defend the clan when you are attacked.",
+    "def_size_lbl": "Defenders:",
+    "warlog_title": "War log",
+    "warlog_empty": "No wars yet.",
+    "wl_attacked": "You attacked {name}",
+    "wl_defended": "{name} attacked you",
+    "wl_win": "Win",
+    "wl_lose": "Loss"
   }
 };

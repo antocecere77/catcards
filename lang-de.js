@@ -1612,6 +1612,17 @@
     "no_fresh": "Keine frischen Karten (sie ruhen).",
     "enemy_empty": "Der gegnerische Clan hat keine Karten.",
     "pts": "Pkt",
-    "war_confirm": "{name} angreifen? Deine Karten ruhen danach eine Stunde."
+    "war_confirm": "{name} angreifen? Deine Karten ruhen danach eine Stunde.",
+    "pick_title": "Wähle deine Aufstellung",
+    "pick_desc": "Tippe die Karten der Reihe nach (max {n}). Der Sieger bleibt im Spiel.",
+    "pick_go": "⚔️ Angreifen ({n})",
+    "def_hint": "Die ersten {n} Karten verteidigen den Clan, wenn du angegriffen wirst.",
+    "def_size_lbl": "Verteidiger:",
+    "warlog_title": "Kriegsprotokoll",
+    "warlog_empty": "Noch keine Kriege.",
+    "wl_attacked": "Du hast {name} angegriffen",
+    "wl_defended": "{name} hat dich angegriffen",
+    "wl_win": "Sieg",
+    "wl_lose": "Niederlage"
   }
 };
