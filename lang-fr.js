@@ -1583,6 +1583,11 @@
     "leave_confirm": "Quitter le clan ?",
     "disband_confirm": "Tu es le chef : partir dissout le clan. Confirmer ?",
     "created": "🛡️ Clan créé !",
-    "order_hint": "(le chef peut réordonner avec ▲▼)"
+    "order_hint": "(le chef peut réordonner avec ▲▼)",
+    "inv_title": "✉️ Inviter des joueurs",
+    "inv_browse": "🔎 Parcourir les joueurs",
+    "invite_btn": "Inviter",
+    "invited_lbl": "✅ Invité",
+    "no_free": "Aucun joueur libre à inviter."
   }
 };

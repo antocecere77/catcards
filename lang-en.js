@@ -1583,6 +1583,11 @@
     "leave_confirm": "Leave the clan?",
     "disband_confirm": "You are the leader: leaving disbands the clan. Confirm?",
     "created": "🛡️ Clan created!",
-    "order_hint": "(the leader can reorder with ▲▼)"
+    "order_hint": "(the leader can reorder with ▲▼)",
+    "inv_title": "✉️ Invite players",
+    "inv_browse": "🔎 Browse players",
+    "invite_btn": "Invite",
+    "invited_lbl": "✅ Invited",
+    "no_free": "No free players to invite."
   }
 };

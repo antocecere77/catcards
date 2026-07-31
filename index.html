@@ -15,11 +15,11 @@
 <script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs@master/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="lang-it.js?v=21.6"></script>
-<script src="lang-en.js?v=21.6"></script>
-<script src="lang-fr.js?v=21.6"></script>
-<script src="lang-es.js?v=21.6"></script>
-<script src="lang-de.js?v=21.6"></script>
+<script src="lang-it.js?v=21.7"></script>
+<script src="lang-en.js?v=21.7"></script>
+<script src="lang-fr.js?v=21.7"></script>
+<script src="lang-es.js?v=21.7"></script>
+<script src="lang-de.js?v=21.7"></script>
 <style>
   :root{
     --bg:#14121f; --panel:#1e1b2e; --panel2:#282440;
@@ -1991,7 +1991,7 @@ async function renderNoClan(){
   const emblems = ['🛡️', '⚔️', '🔥', '🐾', '👑', '⭐', '🌙', '🦁'];
   let html = '<h2>' + G('none_title') + '</h2><p class="count">' + G('none_sub') + '</p>';
   html += '<label class="small" style="margin-top:14px; display:block;">' + G('create') + '</label>';
-  html += '<input id="gNewName" maxlength="24" placeholder="' + G('name_ph') + '" style="width:100%; margin-top:6px;">';
+  html += '<input type="text" id="gNewName" maxlength="24" placeholder="' + G('name_ph') + '" style="margin-top:6px;">';
   html += '<div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:8px;">' + emblems.map((e, i) => '<button type="button" class="btn secondary gEmblem" data-em="' + e + '" style="width:auto; margin:0; padding:8px 12px;' + (i === 0 ? ' border-color:var(--accent);' : '') + '">' + e + '</button>').join('') + '</div>';
   html += '<button class="btn" onclick="gangCreate()" style="margin-top:10px;">' + G('create_btn') + '</button>';
   if (invites.length){
@@ -2037,6 +2037,7 @@ async function renderMyClan(clanId){
     html += '<h3 style="margin-top:16px;">' + G('apps') + '</h3>';
     if (!apps.length) html += '<p class="count">' + G('apps_empty') + '</p>';
     apps.forEach(a => { html += '<div style="display:flex; align-items:center; gap:8px; padding:5px 0;"><span style="flex:1;">' + awEsc(a.owner_name || '?') + '</span><button class="btn secondary" style="width:auto;margin:0;padding:5px 10px;" onclick="gangRespondApp(' + a.id + ',true)">' + G('approve') + '</button><button class="btn secondary" style="width:auto;margin:0;padding:5px 10px;" onclick="gangRespondApp(' + a.id + ',false)">' + G('reject') + '</button></div>'; });
+    html += '<h3 style="margin-top:16px;">' + G('inv_title') + '</h3><div id="gInvList"><button class="btn secondary" onclick="gangLoadInvitables(' + clanId + ')">' + G('inv_browse') + '</button></div>';
   }
   html += '<button class="btn secondary" style="margin-top:18px;" onclick="gangLeave(' + isLeader + ')">' + (isLeader ? G('disband') : G('leave')) + '</button>';
   box.innerHTML = html; box._roster = serials;
@@ -2054,6 +2055,19 @@ async function gangAddCard(){ const s = document.getElementById('gAddSel'); if (
 async function gangRemoveCard(serial){ try { await gRpc('clan_roster_remove', {p_serial: serial}); openGang(); } catch(e){ alert('❌ ' + e.message); } }
 async function gangMove(serial, dir){ const box = document.getElementById('gangBody'); const arr = (box._roster || []).slice(); const i = arr.indexOf(serial); if (i < 0) return; const j = i + dir; if (j < 0 || j >= arr.length) return; arr.splice(i, 1); arr.splice(j, 0, serial); try { await gRpc('clan_roster_reorder', {p_serials: arr}); openGang(); } catch(e){ alert('❌ ' + e.message); } }
 async function gangLeave(isLeader){ if (!confirm(isLeader ? G('disband_confirm') : G('leave_confirm'))) return; try { await gRpc('clan_leave', {}); openGang(); } catch(e){ alert('❌ ' + e.message); } }
+async function gangLoadInvitables(clanId){   // sfoglia i giocatori (dai loro card nel mondo) e invitali, stile Mercato
+  const el = document.getElementById('gInvList'); if (!el) return;
+  el.innerHTML = '<p class="count">…</p>';
+  const cards = await gGet('cards?select=owner_id,owner&owner_id=not.is.null&retired=not.is.true&limit=1000');
+  const inClan = new Set((await gGet('clan_members?select=user_id')).map(m => m.user_id));
+  const invited = new Set((await gGet('clan_invites?select=to_user_id&clan_id=eq.' + clanId)).map(i => i.to_user_id));
+  const seen = {}, players = [];
+  cards.forEach(c => { if (!c.owner_id || seen[c.owner_id]) return; if (c.owner_id === session.user_id || inClan.has(c.owner_id)) return; seen[c.owner_id] = 1; players.push({id: c.owner_id, name: c.owner || '?'}); });
+  players.sort((a, b) => (a.name || '').localeCompare(b.name || '', undefined, {sensitivity: 'base'}));
+  if (!players.length){ el.innerHTML = '<p class="count">' + G('no_free') + '</p>'; return; }
+  el.innerHTML = players.slice(0, 60).map(p => '<div style="display:flex; align-items:center; gap:8px; padding:5px 0;"><span style="flex:1; min-width:0;">' + awEsc(p.name) + '</span>' + (invited.has(p.id) ? '<span class="count" style="font-size:.72rem;">' + G('invited_lbl') + '</span>' : '<button class="btn secondary" style="width:auto;margin:0;padding:5px 10px;" onclick="gangInvite(' + clanId + ',\'' + p.id + '\')">' + G('invite_btn') + '</button>') + '</div>').join('');
+}
+async function gangInvite(clanId, toId){ try { await gRpc('clan_invite', {p_clan: clanId, p_to: toId, p_from: G_OWNER()}); gangLoadInvitables(clanId); } catch(e){ alert('❌ ' + e.message); } }
 /* ---------- notiziario: cosa è successo alle tue carte mentre eri via ---------- */
 async function checkWorldNews(){
   if (!collection.length) return;
@@ -4297,7 +4311,7 @@ async function migrateMelodies(){
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
 /* ---------- versione e aggiornamento automatico ---------- */
-const APP_VERSION = '21.6';   // unica fonte di verità: aggiorna anche version.txt a ogni release
+const APP_VERSION = '21.7';   // unica fonte di verità: aggiorna anche version.txt a ogni release
 try { document.getElementById('appVer').textContent = 'v' + APP_VERSION; } catch(e){}
 function verNewer(a, b){   // a più recente di b? confronto numerico 11.10 > 11.9
   const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);

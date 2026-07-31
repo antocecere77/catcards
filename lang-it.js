@@ -1583,6 +1583,11 @@
     "leave_confirm": "Uscire dal clan?",
     "disband_confirm": "Sei il capo: se esci, il clan si scioglie. Confermi?",
     "created": "🛡️ Clan creato!",
-    "order_hint": "(il capo può riordinare con ▲▼)"
+    "order_hint": "(il capo può riordinare con ▲▼)",
+    "inv_title": "✉️ Invita giocatori",
+    "inv_browse": "🔎 Sfoglia i giocatori",
+    "invite_btn": "Invita",
+    "invited_lbl": "✅ Invitato",
+    "no_free": "Nessun giocatore libero da invitare."
   }
 };

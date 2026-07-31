@@ -1583,6 +1583,11 @@
     "leave_confirm": "¿Salir del clan?",
     "disband_confirm": "Eres el jefe: al salir el clan se disuelve. ¿Confirmas?",
     "created": "🛡️ ¡Clan creado!",
-    "order_hint": "(el jefe puede reordenar con ▲▼)"
+    "order_hint": "(el jefe puede reordenar con ▲▼)",
+    "inv_title": "✉️ Invitar jugadores",
+    "inv_browse": "🔎 Explorar jugadores",
+    "invite_btn": "Invitar",
+    "invited_lbl": "✅ Invitado",
+    "no_free": "No hay jugadores libres para invitar."
   }
 };

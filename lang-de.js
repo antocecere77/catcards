@@ -1583,6 +1583,11 @@
     "leave_confirm": "Clan verlassen?",
     "disband_confirm": "Du bist der Anführer: Verlassen löst den Clan auf. Bestätigen?",
     "created": "🛡️ Clan gegründet!",
-    "order_hint": "(der Anführer kann mit ▲▼ umsortieren)"
+    "order_hint": "(der Anführer kann mit ▲▼ umsortieren)",
+    "inv_title": "✉️ Spieler einladen",
+    "inv_browse": "🔎 Spieler durchsuchen",
+    "invite_btn": "Einladen",
+    "invited_lbl": "✅ Eingeladen",
+    "no_free": "Keine freien Spieler zum Einladen."
   }
 };
