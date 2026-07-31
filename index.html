@@ -15,11 +15,11 @@
 <script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs@master/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="lang-it.js?v=22.7"></script>
-<script src="lang-en.js?v=22.7"></script>
-<script src="lang-fr.js?v=22.7"></script>
-<script src="lang-es.js?v=22.7"></script>
-<script src="lang-de.js?v=22.7"></script>
+<script src="lang-it.js?v=22.8"></script>
+<script src="lang-en.js?v=22.8"></script>
+<script src="lang-fr.js?v=22.8"></script>
+<script src="lang-es.js?v=22.8"></script>
+<script src="lang-de.js?v=22.8"></script>
 <style>
   :root{
     --bg:#14121f; --panel:#1e1b2e; --panel2:#282440;
@@ -2133,7 +2133,7 @@ async function renderMyClan(clanId){
   const members = await gGet('clan_members?select=user_id,owner_name,joined_at&clan_id=eq.' + clanId + '&order=joined_at.asc');
   const roster = await gGet('clan_roster?select=serial,pos,added_by&clan_id=eq.' + clanId + '&order=pos.asc');
   const serials = roster.map(r => r.serial); const cm = {};
-  if (serials.length){ (await gGet('cards?select=serial,name,img&serial=in.(' + serials.join(',') + ')')).forEach(c => cm[c.serial] = c); }
+  if (serials.length){ (await gGet('cards?select=serial,name,img,rest_until&serial=in.(' + serials.join(',') + ')')).forEach(c => cm[c.serial] = c); }
   const apps = isLeader ? await gGet('clan_applications?select=id,owner_name&clan_id=eq.' + clanId + '&order=created_at.asc') : [];
   let html = '<div style="text-align:center;"><div style="font-size:2.4rem;">' + (clan.emblem || '🛡️') + '</div><h2 style="margin:2px 0;">' + awEsc(clan.name) + '</h2><p class="count" style="margin:0;">' + G('members_n', {n: members.length}) + ' · ' + (clan.points || 0) + ' ' + G('pts') + '</p>';
   html += '<div style="margin-top:4px;"><span class="count">' + (clan.open ? G('open_lbl') : G('closed_lbl')) + '</span>' + (isLeader ? ' <button class="btn secondary" style="width:auto; margin:0; padding:4px 10px;" onclick="gangSetOpen(' + (!clan.open) + ')">' + (clan.open ? G('set_closed') : G('set_open')) + '</button>' : '') + '</div></div>';
@@ -2145,9 +2145,11 @@ async function renderMyClan(clanId){
   if (!roster.length) html += '<p class="count">' + G('roster_empty') + '</p>';
   roster.forEach((r, idx) => {
     const cd = cm[r.serial] || {}, mine = r.added_by === session.user_id;
+    const restMs = cd.rest_until ? new Date(cd.rest_until).getTime() - Date.now() : 0;
+    const restTag = restMs > 0 ? ' <span class="count" style="font-size:.7rem; white-space:nowrap;">😴 ' + Math.ceil(restMs / 60000) + 'm</span>' : '';
     const oc = ' onclick="showCardBySerial(\'' + r.serial + '\')" style="cursor:pointer;';
-    const av = cd.img ? '<img src="' + cd.img + '"' + oc + ' width:38px; border-radius:6px; flex-shrink:0;">' : '<span' + oc + ' font-size:1.3rem;">🐱</span>';
-    html += '<div style="display:flex; align-items:center; gap:8px; padding:4px 0;"><span class="count" style="width:18px;">' + (idx + 1) + '</span>' + av + '<span' + oc + ' flex:1; min-width:0;"><strong>' + awEsc(cd.name || r.serial) + '</strong></span>' + (isLeader ? '<button class="btn secondary" style="width:auto;margin:0;padding:4px 8px;" onclick="gangMove(\'' + r.serial + '\',-1)">▲</button><button class="btn secondary" style="width:auto;margin:0;padding:4px 8px;" onclick="gangMove(\'' + r.serial + '\',1)">▼</button>' : '') + ((mine || isLeader) ? '<button class="btn secondary" style="width:auto;margin:0;padding:4px 8px;" onclick="gangRemoveCard(\'' + r.serial + '\')">✖</button>' : '') + '</div>';
+    const av = cd.img ? '<img src="' + cd.img + '"' + oc + ' width:38px; border-radius:6px; flex-shrink:0;' + (restMs > 0 ? ' filter:grayscale(.6); opacity:.7;' : '') + '">' : '<span' + oc + ' font-size:1.3rem;">🐱</span>';
+    html += '<div style="display:flex; align-items:center; gap:8px; padding:4px 0;' + (restMs > 0 ? ' opacity:.85;' : '') + '"><span class="count" style="width:18px;">' + (idx + 1) + '</span>' + av + '<span' + oc + ' flex:1; min-width:0;"><strong>' + awEsc(cd.name || r.serial) + '</strong>' + restTag + '</span>' + (isLeader ? '<button class="btn secondary" style="width:auto;margin:0;padding:4px 8px;" onclick="gangMove(\'' + r.serial + '\',-1)">▲</button><button class="btn secondary" style="width:auto;margin:0;padding:4px 8px;" onclick="gangMove(\'' + r.serial + '\',1)">▼</button>' : '') + ((mine || isLeader) ? '<button class="btn secondary" style="width:auto;margin:0;padding:4px 8px;" onclick="gangRemoveCard(\'' + r.serial + '\')">✖</button>' : '') + '</div>';
   });
   const inR = new Set(serials); const addable = collection.filter(c => !inR.has(c.serial));
   if (roster.length < 20){
@@ -4641,7 +4643,7 @@ async function migrateMelodies(){
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
 /* ---------- versione e aggiornamento automatico ---------- */
-const APP_VERSION = '22.7';   // unica fonte di verità: aggiorna anche version.txt a ogni release
+const APP_VERSION = '22.8';   // unica fonte di verità: aggiorna anche version.txt a ogni release
 try { document.getElementById('appVer').textContent = 'v' + APP_VERSION; } catch(e){}
 function verNewer(a, b){   // a più recente di b? confronto numerico 11.10 > 11.9
   const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);
