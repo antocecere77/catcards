@@ -110,7 +110,8 @@
     "hub_cards": "Karten",
     "hub_glory": "Ruhm",
     "hub_social": "Sozial",
-    "tab_opz": "⚙️ Optionen"
+    "tab_opz": "⚙️ Optionen",
+    "tab_gang": "🛡️ Gang"
   },
   "stat": {
     "Forza": "Stärke",
@@ -1546,5 +1547,42 @@
     "val_pluricampione": "{n} Titel",
     "hof_novevite": "Die Neun Leben",
     "val_novevite": "Pfad komplett"
+  },
+  "gang": {
+    "login": "Melde dich an, um Clans zu nutzen.",
+    "none_title": "🛡️ Die Clans",
+    "none_sub": "Tritt einem Clan bei oder gründe deinen eigenen. Zusammen kämpft man im Team.",
+    "create": "Gründe deinen Clan",
+    "name_ph": "Clan-Name",
+    "emblem": "Emblem",
+    "create_btn": "🛡️ Clan gründen",
+    "board": "📋 Pinnwand — bestehende Clans",
+    "board_empty": "Noch keine Clans. Sei der Erste!",
+    "members_n": "{n} Mitglieder",
+    "cards_n": "{n} Karten",
+    "apply": "Anfragen",
+    "applied": "✅ Anfrage gesendet",
+    "full": "Voll",
+    "invites": "✉️ Deine Einladungen",
+    "invited_by": "Einladung von {who}",
+    "accept": "Annehmen",
+    "decline": "Ablehnen",
+    "members": "👥 Mitglieder",
+    "leader": "👑 Anführer",
+    "roster": "🃏 Kader",
+    "roster_empty": "Leerer Kader. Füge deine Karten hinzu!",
+    "add_card": "➕ Hinzufügen",
+    "add_none": "Keine Karten zum Hinzufügen",
+    "remove": "Entfernen",
+    "apps": "📥 Beitrittsanfragen",
+    "apps_empty": "Keine Anfragen.",
+    "approve": "Annehmen",
+    "reject": "Ablehnen",
+    "leave": "🚪 Clan verlassen",
+    "disband": "💥 Clan auflösen",
+    "leave_confirm": "Clan verlassen?",
+    "disband_confirm": "Du bist der Anführer: Verlassen löst den Clan auf. Bestätigen?",
+    "created": "🛡️ Clan gegründet!",
+    "order_hint": "(der Anführer kann mit ▲▼ umsortieren)"
   }
 };

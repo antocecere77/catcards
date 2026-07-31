@@ -110,7 +110,8 @@
     "hub_cards": "Cartas",
     "hub_glory": "Gloria",
     "hub_social": "Social",
-    "tab_opz": "⚙️ Opciones"
+    "tab_opz": "⚙️ Opciones",
+    "tab_gang": "🛡️ Gang"
   },
   "stat": {
     "Forza": "Fuerza",
@@ -1546,5 +1547,42 @@
     "val_pluricampione": "{n} títulos",
     "hof_novevite": "Las Nueve Vidas",
     "val_novevite": "Sendero completo"
+  },
+  "gang": {
+    "login": "Inicia sesión para usar los clanes.",
+    "none_title": "🛡️ Los Clanes",
+    "none_sub": "Únete a un clan o crea el tuyo. Juntos se lucha en equipo.",
+    "create": "Crea tu clan",
+    "name_ph": "Nombre del clan",
+    "emblem": "Emblema",
+    "create_btn": "🛡️ Crear clan",
+    "board": "📋 Tablón — clanes existentes",
+    "board_empty": "Aún no hay clanes. ¡Sé el primero!",
+    "members_n": "{n} miembros",
+    "cards_n": "{n} cartas",
+    "apply": "Solicitar",
+    "applied": "✅ Solicitud enviada",
+    "full": "Lleno",
+    "invites": "✉️ Tus invitaciones",
+    "invited_by": "invitación de {who}",
+    "accept": "Aceptar",
+    "decline": "Rechazar",
+    "members": "👥 Miembros",
+    "leader": "👑 jefe",
+    "roster": "🃏 Plantilla",
+    "roster_empty": "Plantilla vacía. ¡Añade tus cartas!",
+    "add_card": "➕ Añadir",
+    "add_none": "No hay cartas para añadir",
+    "remove": "Quitar",
+    "apps": "📥 Solicitudes de ingreso",
+    "apps_empty": "Sin solicitudes.",
+    "approve": "Aceptar",
+    "reject": "Rechazar",
+    "leave": "🚪 Salir del clan",
+    "disband": "💥 Disolver el clan",
+    "leave_confirm": "¿Salir del clan?",
+    "disband_confirm": "Eres el jefe: al salir el clan se disuelve. ¿Confirmas?",
+    "created": "🛡️ ¡Clan creado!",
+    "order_hint": "(el jefe puede reordenar con ▲▼)"
   }
 };

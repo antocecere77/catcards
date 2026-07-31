@@ -110,7 +110,8 @@
     "hub_cards": "Cards",
     "hub_glory": "Glory",
     "hub_social": "Social",
-    "tab_opz": "⚙️ Settings"
+    "tab_opz": "⚙️ Settings",
+    "tab_gang": "🛡️ Gang"
   },
   "stat": {
     "Forza": "Strength",
@@ -1546,5 +1547,42 @@
     "val_pluricampione": "{n} titles",
     "hof_novevite": "The Nine Lives",
     "val_novevite": "Path complete"
+  },
+  "gang": {
+    "login": "Sign in to use clans.",
+    "none_title": "🛡️ Clans",
+    "none_sub": "Join a clan or create your own. Together you fight as a team.",
+    "create": "Create your clan",
+    "name_ph": "Clan name",
+    "emblem": "Emblem",
+    "create_btn": "🛡️ Create clan",
+    "board": "📋 Board — existing clans",
+    "board_empty": "No clans yet. Be the first to create one!",
+    "members_n": "{n} members",
+    "cards_n": "{n} cards",
+    "apply": "Apply",
+    "applied": "✅ Request sent",
+    "full": "Full",
+    "invites": "✉️ Your invites",
+    "invited_by": "invite from {who}",
+    "accept": "Accept",
+    "decline": "Decline",
+    "members": "👥 Members",
+    "leader": "👑 leader",
+    "roster": "🃏 Roster",
+    "roster_empty": "Empty roster. Add your cards!",
+    "add_card": "➕ Add",
+    "add_none": "No cards to add",
+    "remove": "Remove",
+    "apps": "📥 Join requests",
+    "apps_empty": "No requests.",
+    "approve": "Accept",
+    "reject": "Reject",
+    "leave": "🚪 Leave clan",
+    "disband": "💥 Disband clan",
+    "leave_confirm": "Leave the clan?",
+    "disband_confirm": "You are the leader: leaving disbands the clan. Confirm?",
+    "created": "🛡️ Clan created!",
+    "order_hint": "(the leader can reorder with ▲▼)"
   }
 };
