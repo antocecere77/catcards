@@ -15,11 +15,11 @@
 <script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs@master/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="lang-it.js?v=21.4"></script>
-<script src="lang-en.js?v=21.4"></script>
-<script src="lang-fr.js?v=21.4"></script>
-<script src="lang-es.js?v=21.4"></script>
-<script src="lang-de.js?v=21.4"></script>
+<script src="lang-it.js?v=21.5"></script>
+<script src="lang-en.js?v=21.5"></script>
+<script src="lang-fr.js?v=21.5"></script>
+<script src="lang-es.js?v=21.5"></script>
+<script src="lang-de.js?v=21.5"></script>
 <style>
   :root{
     --bg:#14121f; --panel:#1e1b2e; --panel2:#282440;
@@ -185,24 +185,14 @@
   <p id="bootErr" style="display:none; color:#ff6b6b; font-size:.8rem; max-width:440px; text-align:center; margin-bottom:10px;"></p>
 
   <div id="tabs" style="display:flex; flex-direction:column; gap:8px; width:100%; max-width:440px; margin-bottom:6px;">
-    <div style="display:flex; gap:8px;">
-      <button class="tabBtn" data-tab="crea" onclick="showTab('crea')"><span data-i18n="tab_crea">📸 Crea</span></button>
-      <button class="tabBtn" data-tab="coll" onclick="showTab('coll')" id="collTabBtn"><span data-i18n="tab_carte">📚 Carte</span><span id="collCountTag"></span></button>
-      <button class="tabBtn" data-tab="arena" onclick="showTab('arena')"><span data-i18n="tab_dojo">🥋 Dojo</span></button>
-      <button class="tabBtn" data-tab="mondo" onclick="showTab('mondo')"><span data-i18n="tab_mondo">🌍 Mondo</span><span id="mondoDot" style="display:none; width:9px; height:9px; background:#e63946; border-radius:50%; margin-left:5px; vertical-align:middle;"></span></button>
+    <div id="hubRow" style="display:flex; gap:6px;">
+      <button class="tabBtn" data-hub="fight" onclick="showHub('fight')">⚔️ <span data-i18n="hub_fight">Combatti</span><span id="mondoDot" style="display:none; width:9px; height:9px; background:#e63946; border-radius:50%; margin-left:4px; vertical-align:middle;"></span></button>
+      <button class="tabBtn" data-hub="cards" onclick="showHub('cards')">🐱 <span data-i18n="hub_cards">Carte</span><span id="collCountTag"></span></button>
+      <button class="tabBtn" data-hub="glory" onclick="showHub('glory')">🏆 <span data-i18n="hub_glory">Gloria</span><span id="awardDot" style="display:none; width:9px; height:9px; background:#e63946; border-radius:50%; margin-left:4px; vertical-align:middle;"></span></button>
+      <button class="tabBtn" data-hub="social" onclick="showHub('social')">🏘️ <span data-i18n="hub_social">Sociale</span><span id="tradeTabDot" style="display:none; width:9px; height:9px; background:#e63946; border-radius:50%; margin-left:4px; vertical-align:middle;"></span></button>
+      <button class="tabBtn" data-hub="sys" onclick="showHub('sys')" style="flex:0 0 auto; width:auto; padding-left:14px; padding-right:14px;">⚙️</button>
     </div>
-    <div style="display:flex; gap:8px;">
-      <button class="tabBtn" data-tab="mercato" onclick="showTab('mercato')"><span data-i18n="tab_mercato">🔁 Mercato</span><span id="tradeTabDot" style="display:none; width:9px; height:9px; background:#e63946; border-radius:50%; margin-left:4px; vertical-align:middle;"></span></button>
-      <button class="tabBtn" data-tab="sent" onclick="showTab('sent')"><span data-i18n="tab_sent">🗺️ Sentiero</span></button>
-      <button class="tabBtn" data-tab="boss" onclick="showTab('boss')"><span data-i18n="tab_boss">🤖 Boss</span></button>
-      <button class="tabBtn" data-tab="pal" onclick="showTab('pal')"><span data-i18n="tab_pal">🏋️ Palestra</span></button>
-    </div>
-    <div style="display:flex; gap:8px;">
-      <button class="tabBtn" data-tab="med" onclick="showTab('med')"><span data-i18n="tab_med">🏅 Medagliere</span></button>
-      <button class="tabBtn" data-tab="award" onclick="showTab('award')"><span data-i18n="tab_award">🏆 Award</span><span id="awardDot" style="display:none; width:9px; height:9px; background:#e63946; border-radius:50%; margin-left:5px; vertical-align:middle;"></span></button>
-      <button class="tabBtn" data-tab="reg" onclick="showTab('reg')"><span data-i18n="tab_reg">📖 Regole</span></button>
-      <button class="tabBtn" data-tab="opz" onclick="showTab('opz')">⚙️</button>
-    </div>
+    <div id="subRow" style="display:flex; gap:6px; flex-wrap:wrap;"></div>
   </div>
 
   <div id="tab-crea" style="width:100%; max-width:440px;">
@@ -1558,13 +1548,33 @@ function stepCard(d){
 
 /* ---------- navigazione a schede ---------- */
 const NEED_LOGIN_TABS = ['arena', 'mondo', 'mercato', 'boss', 'pal'];
+const HUBS = {
+  fight:  ['mondo', 'boss', 'sent', 'arena'],
+  cards:  ['crea', 'coll', 'pal'],
+  glory:  ['award', 'med'],
+  social: ['mercato'],
+  sys:    ['opz', 'reg']
+};
+const SUBTAB_LABEL = {crea: 'tab_crea', coll: 'tab_carte', arena: 'tab_dojo', mondo: 'tab_mondo', mercato: 'tab_mercato', sent: 'tab_sent', boss: 'tab_boss', pal: 'tab_pal', med: 'tab_med', award: 'tab_award', reg: 'tab_reg', opz: 'tab_opz'};
+const TAB_HUB = {}; Object.keys(HUBS).forEach(h => HUBS[h].forEach(t => { TAB_HUB[t] = h; }));
+function renderSubRow(hub, activeTab){
+  const row = document.getElementById('subRow'); if (!row) return;
+  row.innerHTML = (HUBS[hub] || []).map(tk => '<button class="tabBtn' + (tk === activeTab ? ' active' : '') + '" onclick="showTab(\'' + tk + '\')">' + T(SUBTAB_LABEL[tk]) + '</button>').join('');
+}
+function showHub(hub){
+  const tabs = HUBS[hub] || []; if (!tabs.length) return;
+  showTab(tabs.indexOf(window._curTab) >= 0 ? window._curTab : tabs[0]);   // resta sul tab corrente se è in questo hub
+}
 function showTab(t){
   const locked = NEED_LOGIN_TABS.indexOf(t) >= 0 && !(session && session.access_token);
   ['crea', 'coll', 'arena', 'mondo', 'mercato', 'award', 'sent', 'boss', 'pal', 'med', 'reg', 'opz', 'locked'].forEach(k => {
     const el = document.getElementById('tab-' + k);
     if (el) el.style.display = (locked ? (k === 'locked') : (k === t)) ? 'block' : 'none';
   });
-  document.querySelectorAll('.tabBtn').forEach(b => b.classList.toggle('active', b.dataset.tab === t));
+  const hub = TAB_HUB[t] || 'cards';
+  window._curHub = hub;
+  document.querySelectorAll('#hubRow [data-hub]').forEach(b => b.classList.toggle('active', b.dataset.hub === hub));
+  renderSubRow(hub, t);
   window._curTab = t;
   if (locked) return;   // niente account, niente arena: solo Crea, Carte, Regole e Opzioni
   if (t === 'arena'){ try { renderPubList(); if (!myPublished.size && collection.length) checkWorldNews().then(() => renderPubList()); } catch(e){} }
@@ -4195,7 +4205,7 @@ async function migrateMelodies(){
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
 /* ---------- versione e aggiornamento automatico ---------- */
-const APP_VERSION = '21.4';   // unica fonte di verità: aggiorna anche version.txt a ogni release
+const APP_VERSION = '21.5';   // unica fonte di verità: aggiorna anche version.txt a ogni release
 try { document.getElementById('appVer').textContent = 'v' + APP_VERSION; } catch(e){}
 function verNewer(a, b){   // a più recente di b? confronto numerico 11.10 > 11.9
   const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);

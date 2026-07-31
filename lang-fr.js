@@ -105,7 +105,12 @@
     "ask_name_title": "Comment t’appelles-tu ?",
     "ask_name_desc": "Le nom que verront les adversaires (min 3 lettres).",
     "ask_name_ok": "Enregistrer et publier",
-    "ask_name_cancel": "Annuler"
+    "ask_name_cancel": "Annuler",
+    "hub_fight": "Combattre",
+    "hub_cards": "Cartes",
+    "hub_glory": "Gloire",
+    "hub_social": "Social",
+    "tab_opz": "⚙️ Options"
   },
   "stat": {
     "Forza": "Force",

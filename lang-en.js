@@ -105,7 +105,12 @@
     "ask_name_title": "What’s your name?",
     "ask_name_desc": "The name challengers will see (min 3 letters).",
     "ask_name_ok": "Save & publish",
-    "ask_name_cancel": "Cancel"
+    "ask_name_cancel": "Cancel",
+    "hub_fight": "Fight",
+    "hub_cards": "Cards",
+    "hub_glory": "Glory",
+    "hub_social": "Social",
+    "tab_opz": "⚙️ Settings"
   },
   "stat": {
     "Forza": "Strength",

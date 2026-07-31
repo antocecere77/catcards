@@ -105,7 +105,12 @@
     "ask_name_title": "Wie heißt du?",
     "ask_name_desc": "Der Name, den Herausforderer sehen (min. 3 Zeichen).",
     "ask_name_ok": "Speichern & veröffentlichen",
-    "ask_name_cancel": "Abbrechen"
+    "ask_name_cancel": "Abbrechen",
+    "hub_fight": "Kämpfen",
+    "hub_cards": "Karten",
+    "hub_glory": "Ruhm",
+    "hub_social": "Sozial",
+    "tab_opz": "⚙️ Optionen"
   },
   "stat": {
     "Forza": "Stärke",

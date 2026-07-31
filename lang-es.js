@@ -105,7 +105,12 @@
     "ask_name_title": "¿Cómo te llamas?",
     "ask_name_desc": "El nombre que verán los rivales (mín 3 letras).",
     "ask_name_ok": "Guardar y publicar",
-    "ask_name_cancel": "Cancelar"
+    "ask_name_cancel": "Cancelar",
+    "hub_fight": "Combatir",
+    "hub_cards": "Cartas",
+    "hub_glory": "Gloria",
+    "hub_social": "Social",
+    "tab_opz": "⚙️ Opciones"
   },
   "stat": {
     "Forza": "Fuerza",

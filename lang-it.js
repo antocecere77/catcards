@@ -105,7 +105,12 @@
     "ask_name_title": "Come ti chiami?",
     "ask_name_desc": "È il nome che vedranno gli sfidanti (min 3 lettere).",
     "ask_name_ok": "Salva e pubblica",
-    "ask_name_cancel": "Annulla"
+    "ask_name_cancel": "Annulla",
+    "hub_fight": "Combatti",
+    "hub_cards": "Carte",
+    "hub_glory": "Gloria",
+    "hub_social": "Sociale",
+    "tab_opz": "⚙️ Opzioni"
   },
   "stat": {
     "Forza": "Forza",
