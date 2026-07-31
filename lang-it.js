@@ -111,7 +111,11 @@
     "hub_glory": "Gloria",
     "hub_social": "Sociale",
     "tab_opz": "⚙️ Opzioni",
-    "tab_gang": "🛡️ Gang"
+    "tab_gang": "🛡️ Gang",
+    "in_clan": "Nel {name}",
+    "withdraw_clan": "Ritira",
+    "withdraw_confirm": "Ritirare questa carta dal clan?",
+    "withdraw_done": "Carta ritirata dal clan."
   },
   "stat": {
     "Forza": "Forza",
@@ -1623,6 +1627,8 @@
     "wl_attacked": "Hai attaccato {name}",
     "wl_defended": "{name} ti ha attaccato",
     "wl_win": "Vittoria",
-    "wl_lose": "Sconfitta"
+    "wl_lose": "Sconfitta",
+    "mycards_title": "Le mie carte nei clan",
+    "mycards_pull": "Ritira"
   }
 };

@@ -111,7 +111,11 @@
     "hub_glory": "Glory",
     "hub_social": "Social",
     "tab_opz": "⚙️ Settings",
-    "tab_gang": "🛡️ Gang"
+    "tab_gang": "🛡️ Gang",
+    "in_clan": "In {name}",
+    "withdraw_clan": "Withdraw",
+    "withdraw_confirm": "Withdraw this card from the clan?",
+    "withdraw_done": "Card withdrawn from the clan."
   },
   "stat": {
     "Forza": "Strength",
@@ -1623,6 +1627,8 @@
     "wl_attacked": "You attacked {name}",
     "wl_defended": "{name} attacked you",
     "wl_win": "Win",
-    "wl_lose": "Loss"
+    "wl_lose": "Loss",
+    "mycards_title": "My cards in clans",
+    "mycards_pull": "Withdraw"
   }
 };

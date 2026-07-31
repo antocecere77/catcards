@@ -111,7 +111,11 @@
     "hub_glory": "Ruhm",
     "hub_social": "Sozial",
     "tab_opz": "⚙️ Optionen",
-    "tab_gang": "🛡️ Gang"
+    "tab_gang": "🛡️ Gang",
+    "in_clan": "In {name}",
+    "withdraw_clan": "Abziehen",
+    "withdraw_confirm": "Diese Karte aus dem Clan abziehen?",
+    "withdraw_done": "Karte aus dem Clan abgezogen."
   },
   "stat": {
     "Forza": "Stärke",
@@ -1623,6 +1627,8 @@
     "wl_attacked": "Du hast {name} angegriffen",
     "wl_defended": "{name} hat dich angegriffen",
     "wl_win": "Sieg",
-    "wl_lose": "Niederlage"
+    "wl_lose": "Niederlage",
+    "mycards_title": "Meine Karten in Clans",
+    "mycards_pull": "Abziehen"
   }
 };

@@ -111,7 +111,11 @@
     "hub_glory": "Gloria",
     "hub_social": "Social",
     "tab_opz": "⚙️ Opciones",
-    "tab_gang": "🛡️ Gang"
+    "tab_gang": "🛡️ Gang",
+    "in_clan": "En {name}",
+    "withdraw_clan": "Retirar",
+    "withdraw_confirm": "¿Retirar esta carta del clan?",
+    "withdraw_done": "Carta retirada del clan."
   },
   "stat": {
     "Forza": "Fuerza",
@@ -1623,6 +1627,8 @@
     "wl_attacked": "Atacaste a {name}",
     "wl_defended": "{name} te atacó",
     "wl_win": "Victoria",
-    "wl_lose": "Derrota"
+    "wl_lose": "Derrota",
+    "mycards_title": "Mis cartas en clanes",
+    "mycards_pull": "Retirar"
   }
 };
