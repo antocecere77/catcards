@@ -115,7 +115,8 @@
     "in_clan": "Nel {name}",
     "withdraw_clan": "Ritira",
     "withdraw_confirm": "Ritirare questa carta dal clan?",
-    "withdraw_done": "Carta ritirata dal clan."
+    "withdraw_done": "Carta ritirata dal clan.",
+    "tab_terr": "Territorio"
   },
   "stat": {
     "Forza": "Forza",
@@ -1669,12 +1670,14 @@
     "scout_yours": "Tu schieri (min {n})",
     "scout_go": "⚔️ Attacca ({n})",
     "scout_pickmin": "Scegline almeno {n}",
-    "scout_wait": "Famme vede’ chi mandi giù…",
-    "sfregio_name": "Er Sfregio",
-    "sfregio_pct": "~{p}% de faccela",
-    "sfregio_hi": "Questi se li magna a colazione. Vai sereno.",
-    "sfregio_mid": "È in bilico… ma io ce proverei, gatto.",
-    "sfregio_low": "Mah. Rischi grosso. Ce pensi bene?",
-    "sfregio_bad": "Co’ ’sta robba? È quasi ’n suicidio."
+    "scout_wait": "Famme vede’ ’sti campioni, dai dai!",
+    "sfregio_name": "Er Graffio",
+    "sfregio_pct": "~{p}% de vittoria, fidate!",
+    "sfregio_hi": "Ahó, questi li spazzoli! Me ce gioco li baffi!",
+    "sfregio_mid": "Eh, è cinquina e cinquina… ma io ce provo, daje!",
+    "sfregio_low": "Mmm… rischi la pellaccia, gatto mio. Però che spettacolo!",
+    "sfregio_bad": "Aó ma sei matto? Co’ ’sti quattro gatti te se magnano! …vabbè, fai te.",
+    "need3": "Servono almeno 3 carte fresche per attaccare (3v3).",
+    "zone_take_free": "Occupare {name}? È libera: la prendi senza combattere."
   }
 };

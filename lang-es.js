@@ -115,7 +115,8 @@
     "in_clan": "En {name}",
     "withdraw_clan": "Retirar",
     "withdraw_confirm": "¿Retirar esta carta del clan?",
-    "withdraw_done": "Carta retirada del clan."
+    "withdraw_done": "Carta retirada del clan.",
+    "tab_terr": "Territorio"
   },
   "stat": {
     "Forza": "Fuerza",
@@ -1669,12 +1670,14 @@
     "scout_yours": "Despliegas (mín {n})",
     "scout_go": "⚔️ Atacar ({n})",
     "scout_pickmin": "Elige al menos {n}",
-    "scout_wait": "Enséñame a quién mandas…",
-    "sfregio_name": "El Chirlo",
-    "sfregio_pct": "~{p}% de lograrlo",
-    "sfregio_hi": "Se los meriendan. Ve tranquilo.",
-    "sfregio_mid": "Está reñido… pero yo lo intentaría.",
-    "sfregio_low": "Bah. Te la juegas fuerte.",
-    "sfregio_bad": "¿Con esto? Es casi un suicidio."
+    "scout_wait": "¡Enséñame a esos campeones, va!",
+    "sfregio_name": "El Zarpazo",
+    "sfregio_pct": "~{p}% — ¡palabra de gato!",
+    "sfregio_hi": "¡Bah, se los merienda! ¡Me juego los bigotes!",
+    "sfregio_mid": "Está 50-50… pero ¡vamos a probar, chaval!",
+    "sfregio_low": "Uy, arriesgado, minino. ¡Pero qué arte!",
+    "sfregio_bad": "¿En serio? ¡Te comen vivo! …bueno, tú mandas.",
+    "need3": "Necesitas al menos 3 cartas frescas para atacar (3v3).",
+    "zone_take_free": "¿Ocupar {name}? Está libre: la tomas sin luchar."
   }
 };

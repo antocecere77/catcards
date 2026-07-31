@@ -115,7 +115,8 @@
     "in_clan": "In {name}",
     "withdraw_clan": "Withdraw",
     "withdraw_confirm": "Withdraw this card from the clan?",
-    "withdraw_done": "Card withdrawn from the clan."
+    "withdraw_done": "Card withdrawn from the clan.",
+    "tab_terr": "Territory"
   },
   "stat": {
     "Forza": "Strength",
@@ -1669,12 +1670,14 @@
     "scout_yours": "You field (min {n})",
     "scout_go": "⚔️ Attack ({n})",
     "scout_pickmin": "Pick at least {n}",
-    "scout_wait": "Show me who you’re sending in…",
-    "sfregio_name": "Scarface",
-    "sfregio_pct": "~{p}% to pull it off",
-    "sfregio_hi": "They’ll eat these for breakfast. Go easy.",
-    "sfregio_mid": "It’s a toss-up… but I’d give it a shot.",
-    "sfregio_low": "Eh. You’re risking a lot here.",
-    "sfregio_bad": "With this lot? That’s near suicide."
+    "scout_wait": "Lemme see them champs, come on!",
+    "sfregio_name": "Scratch",
+    "sfregio_pct": "~{p}% — trust me, pal!",
+    "sfregio_hi": "Pfft, they’ll mop the floor with ’em! Bet my whiskers on it!",
+    "sfregio_mid": "Eh, it’s a coin toss… but let’s roll the dice, baby!",
+    "sfregio_low": "Ooh, risky, kitty. Risky but juicy!",
+    "sfregio_bad": "You kiddin’ me? They’ll eat ya alive! …but hey, your call.",
+    "need3": "You need at least 3 fresh cards to attack (3v3).",
+    "zone_take_free": "Take {name}? It’s free: you grab it without a fight."
   }
 };

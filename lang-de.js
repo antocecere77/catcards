@@ -115,7 +115,8 @@
     "in_clan": "In {name}",
     "withdraw_clan": "Abziehen",
     "withdraw_confirm": "Diese Karte aus dem Clan abziehen?",
-    "withdraw_done": "Karte aus dem Clan abgezogen."
+    "withdraw_done": "Karte aus dem Clan abgezogen.",
+    "tab_terr": "Gebiet"
   },
   "stat": {
     "Forza": "Stärke",
@@ -1669,12 +1670,14 @@
     "scout_yours": "Du stellst auf (min {n})",
     "scout_go": "⚔️ Angreifen ({n})",
     "scout_pickmin": "Wähle mindestens {n}",
-    "scout_wait": "Zeig mir, wen du schickst…",
-    "sfregio_name": "Narbengesicht",
-    "sfregio_pct": "~{p}% Chance",
-    "sfregio_hi": "Die fressen sie zum Frühstück. Locker.",
-    "sfregio_mid": "Knapp… aber ich würd’s wagen.",
-    "sfregio_low": "Tja. Du riskierst viel.",
-    "sfregio_bad": "Mit denen? Fast Selbstmord."
+    "scout_wait": "Zeig mir die Champions, los!",
+    "sfregio_name": "Der Kratzer",
+    "sfregio_pct": "~{p}% — Ehrenwort!",
+    "sfregio_hi": "Pff, die fegen sie weg! Wetten, meine Schnurrhaare drauf!",
+    "sfregio_mid": "Tja, fifty-fifty… aber komm, wir wagen’s!",
+    "sfregio_low": "Oha, riskant, Kätzchen. Aber was für ’ne Show!",
+    "sfregio_bad": "Soll das ein Witz sein? Die fressen dich! …na gut, du entscheidest.",
+    "need3": "Du brauchst mindestens 3 frische Karten zum Angreifen (3v3).",
+    "zone_take_free": "{name} besetzen? Sie ist frei: du nimmst sie ohne Kampf."
   }
 };

@@ -115,7 +115,8 @@
     "in_clan": "Dans {name}",
     "withdraw_clan": "Retirer",
     "withdraw_confirm": "Retirer cette carte du clan ?",
-    "withdraw_done": "Carte retirée du clan."
+    "withdraw_done": "Carte retirée du clan.",
+    "tab_terr": "Territoire"
   },
   "stat": {
     "Forza": "Force",
@@ -1669,12 +1670,14 @@
     "scout_yours": "Tu alignes (min {n})",
     "scout_go": "⚔️ Attaquer ({n})",
     "scout_pickmin": "Choisis-en au moins {n}",
-    "scout_wait": "Montre-moi qui tu envoies…",
-    "sfregio_name": "Le Balafré",
-    "sfregio_pct": "~{p}% d’y arriver",
-    "sfregio_hi": "Ils vont les croquer. Vas-y tranquille.",
-    "sfregio_mid": "C’est serré… mais je tenterais.",
-    "sfregio_low": "Bof. Tu risques gros, matou.",
-    "sfregio_bad": "Avec ça ? C’est du suicide."
+    "scout_wait": "Montre-moi ces champions, allez !",
+    "sfregio_name": "Griffe",
+    "sfregio_pct": "~{p}% — parole de matou !",
+    "sfregio_hi": "Pfff, ils vont les balayer ! J’y mets mes moustaches !",
+    "sfregio_mid": "Bon, c’est du 50-50… mais on tente, allez !",
+    "sfregio_low": "Ouh là, risqué, minou. Mais quel panache !",
+    "sfregio_bad": "T’es sérieux ? Ils vont te croquer ! …bon, comme tu veux.",
+    "need3": "Il te faut au moins 3 cartes fraîches pour attaquer (3v3).",
+    "zone_take_free": "Occuper {name} ? Elle est libre : tu la prends sans combattre."
   }
 };
