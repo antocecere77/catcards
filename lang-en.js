@@ -1605,6 +1605,13 @@
     "kick_confirm": "Kick this member from the clan?",
     "joined_msg": "🛡️ You joined a clan!",
     "kicked_msg": "🚪 You are no longer in the clan.",
-    "changed_msg": "Your clan changed."
+    "changed_msg": "Your clan changed.",
+    "attack": "⚔️ Attack",
+    "war_won": "🏆 War won! +30 clan points",
+    "war_lost": "💥 War lost. +5 consolation",
+    "no_fresh": "No fresh cards to field (they are resting).",
+    "enemy_empty": "The enemy clan has no cards in the roster.",
+    "pts": "pts",
+    "war_confirm": "Attack {name}? Your cards will then rest for an hour."
   }
 };

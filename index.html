@@ -15,11 +15,11 @@
 <script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs@master/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="lang-it.js?v=21.8"></script>
-<script src="lang-en.js?v=21.8"></script>
-<script src="lang-fr.js?v=21.8"></script>
-<script src="lang-es.js?v=21.8"></script>
-<script src="lang-de.js?v=21.8"></script>
+<script src="lang-it.js?v=21.9"></script>
+<script src="lang-en.js?v=21.9"></script>
+<script src="lang-fr.js?v=21.9"></script>
+<script src="lang-es.js?v=21.9"></script>
+<script src="lang-de.js?v=21.9"></script>
 <style>
   :root{
     --bg:#14121f; --panel:#1e1b2e; --panel2:#282440;
@@ -1999,13 +1999,13 @@ async function renderNoClan(){
   box.innerHTML = html;
   box._emblem = '🛡️';
   box.querySelectorAll('.gEmblem').forEach(b => b.onclick = () => { box.querySelectorAll('.gEmblem').forEach(x => x.style.borderColor = ''); b.style.borderColor = 'var(--accent)'; box._emblem = b.dataset.em; });
-  gangShowBrowse(true);
+  gangShowBrowse(true, null);
 }
 async function gRpcData(fn, body){ try { const r = await fetch(SUPA_URL + '/rest/v1/rpc/' + fn, {method: 'POST', headers: supaHeaders({'Content-Type': 'application/json'}), body: JSON.stringify(body || {})}); return r.ok ? await r.json() : []; } catch(e){ return []; } }
 let _gB = {search: '', offset: 0, canApply: false, applied: new Set(), t: null};
-async function gangShowBrowse(canApply){
+async function gangShowBrowse(canApply, attackFrom){
   const c = document.getElementById('gBrowse'); if (!c) return;
-  _gB = {search: '', offset: 0, canApply: canApply, applied: new Set(), t: null};
+  _gB = {search: '', offset: 0, canApply: canApply, attackFrom: attackFrom || null, applied: new Set(), t: null};
   if (canApply) (await gGet('clan_applications?select=clan_id&user_id=eq.' + session.user_id)).forEach(a => _gB.applied.add(a.clan_id));
   c.innerHTML = '<input type="text" id="gSearchInp" placeholder="' + G('search_ph') + '" style="margin-top:4px;" oninput="gangBrowseSearch()"><div id="gBrowseList" style="margin-top:6px;"></div><button class="btn secondary" id="gMoreBtn" style="display:none; margin-top:6px;" onclick="gangBrowseLoad(false)">' + G('more') + '</button>';
   gangBrowseLoad(true);
@@ -2019,21 +2019,22 @@ async function gangBrowseLoad(reset){
   if (!rows.length && _gB.offset === 0) list.innerHTML = '<p class="count">' + G('board_empty') + '</p>';
   else list.insertAdjacentHTML('beforeend', rows.map(c => {
     const action = !_gB.canApply ? '' : (_gB.applied.has(c.id) ? '<span class="count" style="font-size:.72rem;">' + G('applied') + '</span>' : c.member_count >= 8 ? '<span class="count" style="font-size:.72rem;">' + G('full') + '</span>' : !c.open ? '<span class="count" style="font-size:.72rem;">' + G('closed_lbl') + '</span>' : '<button class="btn secondary" style="width:auto;margin:0;padding:6px 12px;" onclick="gangApply(' + c.id + ')">' + G('apply') + '</button>');
-    return '<div style="display:flex; align-items:center; gap:8px; padding:8px 0; border-bottom:1px solid #2a2540;"><span style="font-size:1.4rem;">' + (c.emblem || '🛡️') + '</span><span style="flex:1; min-width:0;"><strong>' + awEsc(c.name) + '</strong> ' + (c.open ? '' : '🔒') + '<br><span class="count" style="font-size:.72rem;">' + G('members_n', {n: c.member_count}) + ' · ' + G('cards_n', {n: c.roster_count}) + '</span></span>' + action + '</div>';
+    const attackBtn = (_gB.attackFrom && c.id !== _gB.attackFrom) ? '<button class="btn secondary" style="width:auto;margin:0;padding:6px 10px;" onclick="gangAttack(' + c.id + ',\'' + encodeURIComponent(c.name) + '\')">' + G('attack') + '</button>' : '';
+    return '<div style="display:flex; align-items:center; gap:8px; padding:8px 0; border-bottom:1px solid #2a2540;"><span style="font-size:1.4rem;">' + (c.emblem || '🛡️') + '</span><span style="flex:1; min-width:0;"><strong>' + awEsc(c.name) + '</strong> ' + (c.open ? '' : '🔒') + '<br><span class="count" style="font-size:.72rem;">' + G('members_n', {n: c.member_count}) + ' · ' + G('cards_n', {n: c.roster_count}) + ' · ' + (c.points || 0) + ' ' + G('pts') + '</span></span>' + action + attackBtn + '</div>';
   }).join(''));
   _gB.offset += rows.length;
   const more = document.getElementById('gMoreBtn'); if (more) more.style.display = (rows.length === LIM) ? 'block' : 'none';
 }
 async function renderMyClan(clanId){
   const box = document.getElementById('gangBody'); if (!box) return;
-  const clan = (await gGet('clans?select=id,name,emblem,leader_id&id=eq.' + clanId))[0]; if (!clan){ renderNoClan(); return; }
+  const clan = (await gGet('clans?select=id,name,emblem,leader_id,open,points&id=eq.' + clanId))[0]; if (!clan){ renderNoClan(); return; }
   const isLeader = clan.leader_id === session.user_id;
   const members = await gGet('clan_members?select=user_id,owner_name,joined_at&clan_id=eq.' + clanId + '&order=joined_at.asc');
   const roster = await gGet('clan_roster?select=serial,pos,added_by&clan_id=eq.' + clanId + '&order=pos.asc');
   const serials = roster.map(r => r.serial); const cm = {};
   if (serials.length){ (await gGet('cards?select=serial,name,img&serial=in.(' + serials.join(',') + ')')).forEach(c => cm[c.serial] = c); }
   const apps = isLeader ? await gGet('clan_applications?select=id,owner_name&clan_id=eq.' + clanId + '&order=created_at.asc') : [];
-  let html = '<div style="text-align:center;"><div style="font-size:2.4rem;">' + (clan.emblem || '🛡️') + '</div><h2 style="margin:2px 0;">' + awEsc(clan.name) + '</h2><p class="count" style="margin:0;">' + G('members_n', {n: members.length}) + '</p>';
+  let html = '<div style="text-align:center;"><div style="font-size:2.4rem;">' + (clan.emblem || '🛡️') + '</div><h2 style="margin:2px 0;">' + awEsc(clan.name) + '</h2><p class="count" style="margin:0;">' + G('members_n', {n: members.length}) + ' · ' + (clan.points || 0) + ' ' + G('pts') + '</p>';
   html += '<div style="margin-top:4px;"><span class="count">' + (clan.open ? G('open_lbl') : G('closed_lbl')) + '</span>' + (isLeader ? ' <button class="btn secondary" style="width:auto; margin:0; padding:4px 10px;" onclick="gangSetOpen(' + (!clan.open) + ')">' + (clan.open ? G('set_closed') : G('set_open')) + '</button>' : '') + '</div></div>';
   html += '<h3 style="margin-top:16px;">' + G('members') + '</h3>';
   members.forEach(m => { const isLead = m.user_id === clan.leader_id; html += '<div style="display:flex; align-items:center; gap:8px; padding:4px 0;"><span style="flex:1; min-width:0;">' + awEsc(m.owner_name || '?') + (isLead ? ' <span style="color:var(--accent); font-size:.78rem;">' + G('leader') + '</span>' : '') + '</span>' + ((isLeader && !isLead) ? '<button class="btn secondary" style="width:auto;margin:0;padding:4px 8px;" onclick="gangKick(\'' + m.user_id + '\')">' + G('kick') + '</button>' : '') + '</div>'; });
@@ -2059,7 +2060,7 @@ async function renderMyClan(clanId){
   html += '<h3 style="margin-top:18px;">' + G('browse_others') + '</h3><div id="gBrowse"></div>';
   html += '<button class="btn secondary" style="margin-top:18px;" onclick="gangLeave(' + isLeader + ')">' + (isLeader ? G('disband') : G('leave')) + '</button>';
   box.innerHTML = html; box._roster = serials;
-  gangShowBrowse(false);
+  gangShowBrowse(false, isLeader ? clanId : null);
 }
 async function gangCreate(){
   const box = document.getElementById('gangBody'); const inp = document.getElementById('gNewName');
@@ -2113,6 +2114,29 @@ async function gangCheckMembership(){   // notifica se sei entrato / sei stato e
   if (prev === null || cur === prev) return;
   try { toast(cur && !prev ? G('joined_msg') : (!cur && prev ? G('kicked_msg') : G('changed_msg'))); } catch(e){}
   const d = document.getElementById('gangDot'); if (d && window._curTab !== 'gang') d.style.display = 'inline-block';
+}
+async function gangAttack(defenderId, nameEnc){   // 3a: attacca un clan → staffetta tra roster → punti-clan
+  const attId = _gB.attackFrom; if (!attId) return;
+  if (!confirm(G('war_confirm', {name: decodeURIComponent(nameEnc || '')}))) return;
+  const myRoster = await gGet('clan_roster?select=serial,pos&clan_id=eq.' + attId + '&order=pos.asc');
+  const defRoster = await gGet('clan_roster?select=serial,pos&clan_id=eq.' + defenderId + '&order=pos.asc');
+  const serials = [...new Set([...myRoster, ...defRoster].map(r => r.serial))];
+  if (!serials.length){ alert(G('enemy_empty')); return; }
+  const cm = {}; (await gGet('cards?select=serial,name,nick,statsv,hp,potere,img,dna,strum,annuncio,rest_until&serial=in.(' + serials.join(',') + ')')).forEach(c => cm[c.serial] = c);
+  const now = Date.now();
+  const teamA = myRoster.map(r => cm[r.serial]).filter(c => c && !(c.rest_until && new Date(c.rest_until).getTime() > now));   // fresche
+  const teamB = defRoster.map(r => cm[r.serial]).filter(Boolean);   // la difesa ignora il riposo
+  if (!teamA.length){ alert(G('no_fresh')); return; }
+  if (!teamB.length){ alert(G('enemy_empty')); return; }
+  const N = Math.min(3, teamA.length, teamB.length);
+  const lineupA = teamA.slice(0, N), lineupB = teamB.slice(0, N);
+  const res = await runTeamBattle(lineupA, lineupB, {label: 'GUERRA DI CLAN'});
+  try { closeBattle(); } catch(e){}
+  if (!res) return;
+  const won = res.winner === 'A';
+  try { await gRpc('clan_war_report', {p_defender: defenderId, p_attacker_won: won, p_attacker_serials: lineupA.map(c => c.serial)}); } catch(e){ alert('❌ ' + e.message); }
+  try { toast(won ? G('war_won') : G('war_lost')); } catch(e){}
+  openGang();
 }
 /* ---------- notiziario: cosa è successo alle tue carte mentre eri via ---------- */
 async function checkWorldNews(){
@@ -4357,7 +4381,7 @@ async function migrateMelodies(){
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
 /* ---------- versione e aggiornamento automatico ---------- */
-const APP_VERSION = '21.8';   // unica fonte di verità: aggiorna anche version.txt a ogni release
+const APP_VERSION = '21.9';   // unica fonte di verità: aggiorna anche version.txt a ogni release
 try { document.getElementById('appVer').textContent = 'v' + APP_VERSION; } catch(e){}
 function verNewer(a, b){   // a più recente di b? confronto numerico 11.10 > 11.9
   const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);

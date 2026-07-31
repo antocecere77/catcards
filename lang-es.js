@@ -1605,6 +1605,13 @@
     "kick_confirm": "¿Expulsar a este miembro del clan?",
     "joined_msg": "🛡️ ¡Te uniste a un clan!",
     "kicked_msg": "🚪 Ya no estás en el clan.",
-    "changed_msg": "Tu clan ha cambiado."
+    "changed_msg": "Tu clan ha cambiado.",
+    "attack": "⚔️ Atacar",
+    "war_won": "🏆 ¡Guerra ganada! +30 puntos de clan",
+    "war_lost": "💥 Guerra perdida. +5 de consolación",
+    "no_fresh": "No hay cartas frescas para alinear (están descansando).",
+    "enemy_empty": "El clan rival no tiene cartas.",
+    "pts": "pts",
+    "war_confirm": "¿Atacar a {name}? Tus cartas descansarán una hora."
   }
 };
