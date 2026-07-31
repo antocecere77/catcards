@@ -116,7 +116,7 @@
     "withdraw_clan": "Withdraw",
     "withdraw_confirm": "Withdraw this card from the clan?",
     "withdraw_done": "Card withdrawn from the clan.",
-    "tab_terr": "Territory"
+    "tab_terr": "🗺️ Territory"
   },
   "stat": {
     "Forza": "Strength",

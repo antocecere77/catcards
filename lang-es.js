@@ -116,7 +116,7 @@
     "withdraw_clan": "Retirar",
     "withdraw_confirm": "¿Retirar esta carta del clan?",
     "withdraw_done": "Carta retirada del clan.",
-    "tab_terr": "Territorio"
+    "tab_terr": "🗺️ Territorio"
   },
   "stat": {
     "Forza": "Fuerza",

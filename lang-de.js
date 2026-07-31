@@ -116,7 +116,7 @@
     "withdraw_clan": "Abziehen",
     "withdraw_confirm": "Diese Karte aus dem Clan abziehen?",
     "withdraw_done": "Karte aus dem Clan abgezogen.",
-    "tab_terr": "Gebiet"
+    "tab_terr": "🗺️ Gebiet"
   },
   "stat": {
     "Forza": "Stärke",
