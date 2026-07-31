@@ -15,11 +15,11 @@
 <script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs@master/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="lang-it.js?v=22.0"></script>
-<script src="lang-en.js?v=22.0"></script>
-<script src="lang-fr.js?v=22.0"></script>
-<script src="lang-es.js?v=22.0"></script>
-<script src="lang-de.js?v=22.0"></script>
+<script src="lang-it.js?v=22.1"></script>
+<script src="lang-en.js?v=22.1"></script>
+<script src="lang-fr.js?v=22.1"></script>
+<script src="lang-es.js?v=22.1"></script>
+<script src="lang-de.js?v=22.1"></script>
 <style>
   :root{
     --bg:#14121f; --panel:#1e1b2e; --panel2:#282440;
@@ -2044,8 +2044,9 @@ async function renderMyClan(clanId){
   if (!roster.length) html += '<p class="count">' + G('roster_empty') + '</p>';
   roster.forEach((r, idx) => {
     const cd = cm[r.serial] || {}, mine = r.added_by === session.user_id;
-    const av = cd.img ? '<img src="' + cd.img + '" style="width:38px; border-radius:6px; flex-shrink:0;">' : '<span style="font-size:1.3rem;">🐱</span>';
-    html += '<div style="display:flex; align-items:center; gap:8px; padding:4px 0;"><span class="count" style="width:18px;">' + (idx + 1) + '</span>' + av + '<span style="flex:1; min-width:0;"><strong>' + awEsc(cd.name || r.serial) + '</strong></span>' + (isLeader ? '<button class="btn secondary" style="width:auto;margin:0;padding:4px 8px;" onclick="gangMove(\'' + r.serial + '\',-1)">▲</button><button class="btn secondary" style="width:auto;margin:0;padding:4px 8px;" onclick="gangMove(\'' + r.serial + '\',1)">▼</button>' : '') + ((mine || isLeader) ? '<button class="btn secondary" style="width:auto;margin:0;padding:4px 8px;" onclick="gangRemoveCard(\'' + r.serial + '\')">✖</button>' : '') + '</div>';
+    const oc = ' onclick="showCardBySerial(\'' + r.serial + '\')" style="cursor:pointer;';
+    const av = cd.img ? '<img src="' + cd.img + '"' + oc + ' width:38px; border-radius:6px; flex-shrink:0;">' : '<span' + oc + ' font-size:1.3rem;">🐱</span>';
+    html += '<div style="display:flex; align-items:center; gap:8px; padding:4px 0;"><span class="count" style="width:18px;">' + (idx + 1) + '</span>' + av + '<span' + oc + ' flex:1; min-width:0;"><strong>' + awEsc(cd.name || r.serial) + '</strong></span>' + (isLeader ? '<button class="btn secondary" style="width:auto;margin:0;padding:4px 8px;" onclick="gangMove(\'' + r.serial + '\',-1)">▲</button><button class="btn secondary" style="width:auto;margin:0;padding:4px 8px;" onclick="gangMove(\'' + r.serial + '\',1)">▼</button>' : '') + ((mine || isLeader) ? '<button class="btn secondary" style="width:auto;margin:0;padding:4px 8px;" onclick="gangRemoveCard(\'' + r.serial + '\')">✖</button>' : '') + '</div>';
   });
   const inR = new Set(serials); const addable = collection.filter(c => !inR.has(c.serial));
   if (roster.length < 20){
@@ -2100,7 +2101,7 @@ async function gangPlayerCards(clanId, userId, nameEnc){   // passo 2: vedi le c
   const invSerial = inv.length ? inv[0].serial : null;
   let h = '<div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;"><button class="btn secondary" style="width:auto;margin:0;padding:4px 10px;" onclick="gangLoadInvitables(' + clanId + ')">‹ ' + G('back') + '</button><strong>' + awEsc(name) + '</strong></div>';
   if (!cards.length) h += '<p class="count">' + G('no_cards') + '</p>';
-  else h += cards.map(c => '<div style="display:flex; align-items:center; gap:8px; padding:4px 0;">' + (c.img ? '<img src="' + c.img + '" style="width:36px; border-radius:6px;">' : '<span style="font-size:1.2rem;">🐱</span>') + '<span style="flex:1; min-width:0;"><strong>' + awEsc(c.name || c.serial) + '</strong></span>' + (invSerial === c.serial ? '<span class="count" style="font-size:.72rem;">' + G('invited_lbl') + '</span>' : '<button class="btn secondary" style="width:auto;margin:0;padding:5px 10px;" onclick="gangInvite(' + clanId + ',\'' + userId + '\',\'' + c.serial + '\',\'' + nameEnc + '\')">' + G('invite_btn') + '</button>') + '</div>').join('');
+  else h += cards.map(c => { const oc = ' onclick="showCardBySerial(\'' + c.serial + '\')" style="cursor:pointer;'; return '<div style="display:flex; align-items:center; gap:8px; padding:4px 0;">' + (c.img ? '<img src="' + c.img + '"' + oc + ' width:36px; border-radius:6px;">' : '<span' + oc + ' font-size:1.2rem;">🐱</span>') + '<span' + oc + ' flex:1; min-width:0;"><strong>' + awEsc(c.name || c.serial) + '</strong></span>' + (invSerial === c.serial ? '<span class="count" style="font-size:.72rem;">' + G('invited_lbl') + '</span>' : '<button class="btn secondary" style="width:auto;margin:0;padding:5px 10px;" onclick="gangInvite(' + clanId + ',\'' + userId + '\',\'' + c.serial + '\',\'' + nameEnc + '\')">' + G('invite_btn') + '</button>') + '</div>'; }).join('');
   list.innerHTML = h;
 }
 async function gangInvite(clanId, toId, serial, nameEnc){ try { await gRpc('clan_invite', {p_clan: clanId, p_to: toId, p_serial: serial, p_from: G_OWNER()}); try { toast(G('invite_sent')); } catch(e){} gangPlayerCards(clanId, toId, nameEnc); } catch(e){ alert('❌ ' + e.message); } }
@@ -4393,7 +4394,7 @@ async function migrateMelodies(){
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
 /* ---------- versione e aggiornamento automatico ---------- */
-const APP_VERSION = '22.0';   // unica fonte di verità: aggiorna anche version.txt a ogni release
+const APP_VERSION = '22.1';   // unica fonte di verità: aggiorna anche version.txt a ogni release
 try { document.getElementById('appVer').textContent = 'v' + APP_VERSION; } catch(e){}
 function verNewer(a, b){   // a più recente di b? confronto numerico 11.10 > 11.9
   const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);
