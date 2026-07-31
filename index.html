@@ -15,11 +15,11 @@
 <script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs@master/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="lang-it.js?v=23.0"></script>
-<script src="lang-en.js?v=23.0"></script>
-<script src="lang-fr.js?v=23.0"></script>
-<script src="lang-es.js?v=23.0"></script>
-<script src="lang-de.js?v=23.0"></script>
+<script src="lang-it.js?v=23.1"></script>
+<script src="lang-en.js?v=23.1"></script>
+<script src="lang-fr.js?v=23.1"></script>
+<script src="lang-es.js?v=23.1"></script>
+<script src="lang-de.js?v=23.1"></script>
 <style>
   :root{
     --bg:#14121f; --panel:#1e1b2e; --panel2:#282440;
@@ -1530,6 +1530,11 @@ function graffioPool(kind){   // kind: 'hi'|'mid'|'low'|'bad'|'wait' → array d
   return Array.isArray(a) ? a : (a ? [a] : ['…']);
 }
 function graffioPick(kind){ const p = graffioPool(kind); return p[Math.floor(Math.random() * p.length)]; }
+function graffioAvatar(){   // ritratto generato con fallback all'emoji finché non c'è su Storage
+  return '<span style="width:44px; height:44px; flex-shrink:0; display:inline-flex; align-items:center; justify-content:center;">' +
+    '<img src="' + portraitUrl('char', 'graffio') + '" onerror="this.style.display=\'none\'; this.nextSibling.style.display=\'inline\';" style="width:44px; height:44px; border-radius:10px; object-fit:cover;">' +
+    '<span style="display:none; font-size:2rem;">😼</span></span>';
+}
 function scoutView(serial){ const m = document.getElementById('worldModal'); if (m) m.style.zIndex = '100010'; showCardBySerial(serial); }
 function scoutAndPick(mine, enemy, min, max){   // 🕵️ ricognizione: vedi la difesa, Er Sfregio ti dà le probabilità, scegli la formazione
   min = min || 1;
@@ -1556,7 +1561,7 @@ function scoutAndPick(mine, enemy, min, max){   // 🕵️ ricognizione: vedi la
         '<div style="font-size:.76rem; color:var(--muted,#9a90c0); margin-bottom:4px;">' + G('scout_enemy') + '</div>' +
         '<div style="display:flex; gap:6px; flex-wrap:wrap; justify-content:center; background:#ff606016; border-radius:10px; padding:8px;">' + (enemy.length ? enemyRow : '<span class="count">—</span>') + '</div>' +
         '<div style="display:flex; align-items:flex-start; gap:8px; margin:10px 0; background:var(--panel2,#0f0c1e); border:1px solid #ffffff18; border-radius:12px; padding:10px;">' +
-          '<span style="font-size:2rem; line-height:1;">😼</span>' +
+          graffioAvatar() +
           '<div style="flex:1; min-width:0;"><div style="font-weight:800; font-size:.8rem; color:var(--accent,#c9a0ff);">' + G('sfregio_name') + '</div><div style="font-size:.86rem; line-height:1.35;">' + bubble + '</div></div></div>' +
         '<div style="font-size:.76rem; color:var(--muted,#9a90c0); margin-bottom:4px;">' + G('scout_yours', {n: min}) + '</div>' +
         '<div>' + mine.map(c => {
@@ -4654,7 +4659,7 @@ async function migrateMelodies(){
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
 /* ---------- versione e aggiornamento automatico ---------- */
-const APP_VERSION = '23.0';   // unica fonte di verità: aggiorna anche version.txt a ogni release
+const APP_VERSION = '23.1';   // unica fonte di verità: aggiorna anche version.txt a ogni release
 try { document.getElementById('appVer').textContent = 'v' + APP_VERSION; } catch(e){}
 function verNewer(a, b){   // a più recente di b? confronto numerico 11.10 > 11.9
   const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);
@@ -6578,6 +6583,7 @@ const ADVISORS = [
   {id: 'baratto', prompt: 'Comic book style portrait of a CAT (full feline face clearly visible): a sly charming bazaar-merchant cat with a cunning wide grin, a golden hoop earring, a small tilted red fez, holding shiny gold coins in his paw, colorful oriental market stall behind him. Slippery salesman vibes. Bold ink outlines, flat cel shading, warm colors, dark purple background. Square bust portrait.'},
   {id: 'incanto', prompt: 'Comic book style portrait of a CAT (full feline face clearly visible): an energetic auctioneer cat mid-shout, one paw raised holding a wooden auction gavel, monocle, elegant bow tie, wide theatrical grin, excited wide eyes. Lively showman vibes. Bold ink outlines, flat cel shading, warm colors, dark purple background. Square bust portrait.'},
   {id: 'gala', prompt: 'Comic book style portrait of a CAT (full feline face clearly visible): a suave Saturday-night TV showman crooner cat in a black tuxedo with a shiny bow tie, slicked-back fur, wearing dark sunglasses at night, holding a vintage microphone up to his mouth mid-announcement, confident charismatic grin, golden stage spotlight and red curtain behind him. Glamorous gala host vibes. Bold ink outlines, flat cel shading, warm colors, dark purple background. Square bust portrait.'},
+  {id: 'graffio', prompt: 'Comic book style portrait of a CAT (full feline face clearly visible): a cheeky streetwise alley-cat bookmaker and tout, a fresh diagonal claw-scratch scar across one cheek, cocky lopsided smirk showing a single gold tooth, one eyebrow cocked, a flat coppola cap tilted to the side, a wooden toothpick in the corner of his mouth, a rolled-up betting slip tucked behind one ear. Funny mischievous con-artist vibes, playful not scary. Bold ink outlines, flat cel shading, warm colors, dark purple background. Square bust portrait.'},
 ];
 // carica un ritratto condiviso dentro un <img>; se non c'è ancora sullo Storage, resta l'emoji
 function loadAdvisor(imgId, emojiId, id){
