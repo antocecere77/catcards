@@ -15,11 +15,11 @@
 <script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs@master/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="lang-it.js?v=22.3"></script>
-<script src="lang-en.js?v=22.3"></script>
-<script src="lang-fr.js?v=22.3"></script>
-<script src="lang-es.js?v=22.3"></script>
-<script src="lang-de.js?v=22.3"></script>
+<script src="lang-it.js?v=22.4"></script>
+<script src="lang-en.js?v=22.4"></script>
+<script src="lang-fr.js?v=22.4"></script>
+<script src="lang-es.js?v=22.4"></script>
+<script src="lang-de.js?v=22.4"></script>
 <style>
   :root{
     --bg:#14121f; --panel:#1e1b2e; --panel2:#282440;
@@ -533,6 +533,11 @@
       <button class="btn secondary" onclick="seedBotClans()" style="margin-top:8px;">🤖 Crea clan-bot (anima il mondo)</button>
       <button class="btn secondary" onclick="simClanWars()" style="margin-top:8px;">⚔️ Simula guerre bot (1 ondata)</button>
       <p class="count" id="simWarOut" style="margin-top:6px;"></p>
+      <label class="small" style="margin-top:14px; display:block;">🗺️ Admin: mappa a zone (Fase 3c)</label>
+      <button class="btn secondary" onclick="seedZones()" style="margin-top:8px;">🗺️ Crea la mappa a zone</button>
+      <button class="btn secondary" onclick="simZoneWars()" style="margin-top:8px;">⚔️ Simula conquiste bot</button>
+      <button class="btn secondary" onclick="zoneDaily()" style="margin-top:8px;">💰 Rendita giornaliera zone</button>
+      <p class="count" id="zoneAdminOut" style="margin-top:6px;"></p>
     </div>
     <label class="small" style="margin-top:18px;" data-i18n="opt_av_label">Audio e presentazioni</label>
     <button class="btn secondary" data-snd onclick="toggleSound(this)" style="margin-top:4px;">🔊 Suoni: ON</button>
@@ -2096,6 +2101,7 @@ async function renderMyClan(clanId){
   const clan = (await gGet('clans?select=id,name,emblem,leader_id,open,points,def_size&id=eq.' + clanId))[0]; if (!clan){ renderNoClan(); return; }
   const defN = Math.max(1, Math.min(5, clan.def_size || 3));
   const isLeader = clan.leader_id === session.user_id;
+  window._myClan = clanId; window._myClanName = clan.name; window._myClanLeader = isLeader;
   const members = await gGet('clan_members?select=user_id,owner_name,joined_at&clan_id=eq.' + clanId + '&order=joined_at.asc');
   const roster = await gGet('clan_roster?select=serial,pos,added_by&clan_id=eq.' + clanId + '&order=pos.asc');
   const serials = roster.map(r => r.serial); const cm = {};
@@ -2103,6 +2109,7 @@ async function renderMyClan(clanId){
   const apps = isLeader ? await gGet('clan_applications?select=id,owner_name&clan_id=eq.' + clanId + '&order=created_at.asc') : [];
   let html = '<div style="text-align:center;"><div style="font-size:2.4rem;">' + (clan.emblem || '🛡️') + '</div><h2 style="margin:2px 0;">' + awEsc(clan.name) + '</h2><p class="count" style="margin:0;">' + G('members_n', {n: members.length}) + ' · ' + (clan.points || 0) + ' ' + G('pts') + '</p>';
   html += '<div style="margin-top:4px;"><span class="count">' + (clan.open ? G('open_lbl') : G('closed_lbl')) + '</span>' + (isLeader ? ' <button class="btn secondary" style="width:auto; margin:0; padding:4px 10px;" onclick="gangSetOpen(' + (!clan.open) + ')">' + (clan.open ? G('set_closed') : G('set_open')) + '</button>' : '') + '</div></div>';
+  html += '<button class="btn" style="margin-top:12px;" onclick="renderZoneMap()">' + G('map_btn') + '</button>';
   html += '<div id="gMyCards"></div>';
   html += '<h3 style="margin-top:16px;">' + G('members') + '</h3>';
   members.forEach(m => { const isLead = m.user_id === clan.leader_id; html += '<div style="display:flex; align-items:center; gap:8px; padding:4px 0;"><span style="flex:1; min-width:0;">' + awEsc(m.owner_name || '?') + (isLead ? ' <span style="color:var(--accent); font-size:.78rem;">' + G('leader') + '</span>' : '') + '</span>' + ((isLeader && !isLead) ? '<button class="btn secondary" style="width:auto;margin:0;padding:4px 8px;" onclick="gangKick(\'' + m.user_id + '\')">' + G('kick') + '</button>' : '') + '</div>'; });
@@ -2266,6 +2273,107 @@ async function gangAttack(defenderId, nameEnc){   // 3b: scegli la formazione �
   try { toast(won ? G('war_won') : G('war_lost')); } catch(e){}
   openGang();
 }
+/* ---------- 🗺️ Mappa a zone (Fase 3c) ---------- */
+const ZEMO = {porto:'🐟', tetti:'🏠', giardino:'🌿', vicolo:'🛣️', piazza:'🏛️', mercato:'🧺', parco:'🌳', fontana:'💧', molo:'⚓'};
+const ZPAL = ['#F5C4B3', '#CECBF6', '#FAC775', '#B5D4F4', '#F4C0D1', '#C0DD97'];
+const ZINK = {'#9FE1CB':'#085041', '#F5C4B3':'#712B13', '#CECBF6':'#3C3489', '#FAC775':'#633806', '#B5D4F4':'#0C447C', '#F4C0D1':'#72243E', '#C0DD97':'#27500A'};
+function zClanColor(id){ if (id == null) return null; let h = 0; const s = String(id); for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0; return ZPAL[h % ZPAL.length]; }
+async function renderZoneMap(){
+  const box = document.getElementById('gangBody'); if (!box) return;
+  box.innerHTML = '<p class="count">…</p>';
+  const zmap = await gRpcData('clan_zones_map', {});
+  window._zmap = zmap || [];
+  if (!window._zmap.length){ box.innerHTML = '<div style="display:flex; align-items:center; gap:8px;"><button class="btn secondary" style="width:auto; margin:0; padding:5px 10px;" onclick="openGang()">‹ ' + G('back') + '</button></div><p class="count" style="margin-top:10px;">' + G('map_empty') + '</p>'; return; }
+  if (typeof window._zsel !== 'number' || !window._zmap.some(z => z.id === window._zsel)) window._zsel = 4;
+  box.innerHTML = '<div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;"><button class="btn secondary" style="width:auto; margin:0; padding:5px 10px;" onclick="openGang()">‹ ' + G('back') + '</button><strong style="flex:1;">🗺️ ' + G('map_title') + '</strong></div>' +
+    '<div id="zGrid" style="display:grid; grid-template-columns:repeat(3,1fr); gap:7px;"></div>' +
+    '<div id="zDetail" style="margin-top:10px;"></div>' +
+    '<h3 style="margin-top:14px;">' + G('map_legend') + '</h3><div id="zLegend"></div>' +
+    '<h3 style="margin-top:14px;">⚔️ ' + G('warlog_title') + '</h3><div id="zWarLog"><p class="count">…</p></div>';
+  zoneFillGrid(); zoneDetail(); zoneLegend(); zoneLoadLog();
+}
+function zoneFillGrid(){
+  const el = document.getElementById('zGrid'); if (!el) return;
+  const zmap = window._zmap, my = window._myClan;
+  el.innerHTML = zmap.map(z => {
+    const col = (z.owner_clan === my && my != null) ? '#9FE1CB' : zClanColor(z.owner_clan);
+    const fill = col || 'var(--panel2,#0f0c1e)', ink = col ? (ZINK[col] || '#222') : 'var(--muted,#9a90c0)';
+    const on = z.id === window._zsel;
+    return '<button onclick="zoneSelect(' + z.id + ')" style="border:' + (on ? '2px' : '1px') + ' solid ' + (on ? ink : '#ffffff22') + '; border-radius:10px; background:' + fill + '; padding:8px 4px 6px; display:flex; flex-direction:column; align-items:center; gap:1px; cursor:pointer; min-height:62px;' + (z.is_capital ? ' box-shadow:0 0 0 2px #ffd36e66;' : '') + '">' +
+      '<span style="font-size:1.25rem;">' + (ZEMO[z.code] || '⬛') + '</span>' +
+      '<span style="font-size:.64rem; font-weight:700; color:' + ink + '; line-height:1;">' + G('zone_' + z.code) + '</span>' +
+      (z.is_capital ? '<span style="font-size:.58rem; color:' + ink + '; font-weight:800;">★ 3×</span>' : '') + '</button>';
+  }).join('');
+}
+function zoneSelect(id){ window._zsel = id; zoneFillGrid(); zoneDetail(); }
+function zoneDetail(){
+  const el = document.getElementById('zDetail'); if (!el) return;
+  const zmap = window._zmap, my = window._myClan, z = zmap.find(x => x.id === window._zsel); if (!z){ el.innerHTML = ''; return; }
+  const mine = z.owner_clan === my && my != null;
+  const owned = zmap.filter(x => x.owner_clan === my && my != null).map(x => x.id);
+  const anyFree = zmap.some(x => x.owner_clan == null);
+  const leader = window._myClanLeader;
+  const ppd = z.is_capital ? 3 : 1;
+  let reach;
+  if (owned.length) reach = zmap.some(x => x.owner_clan === my && (x.neighbors || []).indexOf(z.id) >= 0);
+  else reach = (z.owner_clan == null) || !anyFree;
+  const owner = z.owner_clan == null ? G('zone_free') : (mine ? G('zone_yours') : G('zone_owner', {name: awEsc((z.owner_emblem || '') + ' ' + (z.owner_name || '?'))}));
+  const note = mine ? G('zone_defends', {n: ppd}) : (z.owner_clan == null ? G('zone_free_note', {n: ppd}) : G('zone_enemy_note', {n: ppd}));
+  let btn;
+  if (mine) btn = '<div style="font-size:.8rem; color:#7ee787;">🛡️ ' + G('zone_mine_def') + '</div>';
+  else if (!my) btn = '<div class="count" style="font-size:.78rem;">' + G('zone_noclan') + '</div>';
+  else if (!leader) btn = '<div class="count" style="font-size:.78rem;">' + G('zone_leader_only') + '</div>';
+  else if (!reach) btn = '<div class="count" style="font-size:.78rem;">🔒 ' + (owned.length ? G('zone_noadj') : G('zone_beachhead')) + '</div>';
+  else btn = '<button class="btn" style="background:#e2494a; margin:0;" onclick="gangZoneAttack(' + z.id + ')">⚔️ ' + G('zone_attack') + '</button>';
+  el.innerHTML = '<div style="background:var(--panel2,#0f0c1e); border:1px solid #ffffff18; border-radius:12px; padding:12px;">' +
+    '<div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;"><span style="font-size:1.6rem;">' + (ZEMO[z.code] || '⬛') + '</span><div style="flex:1; min-width:0;"><div style="font-weight:800;">' + G('zone_' + z.code) + (z.is_capital ? ' ★' : '') + '</div><div class="count" style="font-size:.8rem;">' + owner + '</div></div></div>' +
+    '<div class="count" style="font-size:.78rem; margin-bottom:8px;">' + note + '</div>' + btn + '</div>';
+}
+function zoneLegend(){
+  const el = document.getElementById('zLegend'); if (!el) return;
+  const zmap = window._zmap, my = window._myClan, cnt = {};
+  zmap.forEach(z => { if (z.owner_clan == null) return; const k = z.owner_clan; (cnt[k] = cnt[k] || {n: 0, name: (z.owner_emblem || '🛡️') + ' ' + (z.owner_name || '?'), cap: false}); cnt[k].n++; if (z.is_capital) cnt[k].cap = true; });
+  const arr = Object.keys(cnt).map(k => Object.assign({k: k}, cnt[k])).sort((a, b) => b.n - a.n);
+  if (!arr.length){ el.innerHTML = '<p class="count">' + G('map_nobody') + '</p>'; return; }
+  el.innerHTML = arr.map(g => { const mineRow = my != null && String(g.k) === String(my); const col = mineRow ? '#9FE1CB' : zClanColor(g.k); const ink = ZINK[col] || '#888';
+    return '<div style="display:flex; align-items:center; gap:8px; padding:3px 0;"><span style="width:15px; height:15px; border-radius:4px; background:' + col + '; border:1px solid ' + ink + '; display:inline-block;"></span><span style="flex:1; min-width:0; font-size:.86rem;">' + awEsc(g.name) + (mineRow ? ' (' + G('you') + ')' : '') + (g.cap ? ' 👑' : '') + '</span><strong style="font-size:.86rem;">' + G('zone_count', {n: g.n}) + '</strong></div>'; }).join('');
+}
+async function zoneLoadLog(){
+  const el = document.getElementById('zWarLog'); if (!el) return;
+  try {
+    const rows = await gRpcData('zone_war_log', {p_limit: 8});
+    if (!rows || !rows.length){ el.innerHTML = '<p class="count">' + G('warlog_empty') + '</p>'; return; }
+    el.innerHTML = rows.map(w => '<div style="display:flex; align-items:center; gap:8px; padding:3px 0;"><span>' + (w.won ? '🏆' : '💥') + '</span><span style="flex:1; min-width:0; font-size:.82rem;">' + awEsc(w.attacker || '?') + ' ' + (w.won ? G('wl_took') : G('wl_failed')) + ' ' + G('zone_' + w.zone_code) + (w.is_capital ? ' ★' : '') + '</span></div>').join('');
+  } catch(e){ el.innerHTML = '<p class="count">' + G('warlog_empty') + '</p>'; }
+}
+async function gangZoneAttack(zoneId){
+  const my = window._myClan; if (!my) return;
+  const z = (window._zmap || []).find(x => x.id === zoneId); if (!z) return;
+  if (!confirm(G('zone_confirm', {name: G('zone_' + z.code)}))) return;
+  const myRoster = await gGet('clan_roster?select=serial,pos&clan_id=eq.' + my + '&order=pos.asc');
+  let defSize = 3, defRoster = [];
+  if (z.owner_clan){ const dc = (await gGet('clans?select=def_size&id=eq.' + z.owner_clan))[0] || {}; defSize = Math.max(1, Math.min(5, dc.def_size || 3)); defRoster = await gGet('clan_roster?select=serial,pos&clan_id=eq.' + z.owner_clan + '&order=pos.asc'); }
+  const allSer = [...new Set([...myRoster.map(r => r.serial), ...defRoster.map(r => r.serial)])];
+  const cm = {}; if (allSer.length) (await gGet('cards?select=serial,name,nick,statsv,hp,potere,img,dna,strum,annuncio,rest_until&serial=in.(' + allSer.join(',') + ')')).forEach(c => cm[c.serial] = c);
+  const now = Date.now();
+  const teamB = defRoster.map(r => cm[r.serial]).filter(Boolean).slice(0, defSize);
+  let won, usedSerials = [];
+  if (!teamB.length){ won = true; }   // zona libera o difesa vuota: presa senza combattere
+  else {
+    const teamA = myRoster.map(r => cm[r.serial]).filter(c => c && !(c.rest_until && new Date(c.rest_until).getTime() > now));
+    if (!teamA.length){ alert(G('no_fresh')); return; }
+    const chosen = await pickLineup(teamA, Math.min(5, teamA.length)); if (!chosen) return;
+    const lineupA = chosen.map(s => cm[s]).filter(Boolean); if (!lineupA.length) return;
+    const res = await runTeamBattle(lineupA, teamB, {label: 'GUERRA DI ZONA'}); try { closeBattle(); } catch(e){}
+    if (!res) return; won = res.winner === 'A'; usedSerials = lineupA.map(c => c.serial);
+  }
+  try { await gRpc('clan_zone_report', {p_zone: zoneId, p_won: won, p_serials: usedSerials}); } catch(e){ alert('❌ ' + e.message); return; }
+  try { toast(won ? G('zone_won') : G('zone_lost')); } catch(e){}
+  renderZoneMap();
+}
+async function seedZones(){ const o = document.getElementById('zoneAdminOut'); if (!session || session.email !== ADMIN_EMAIL){ if (o) o.textContent = '⚠️ Solo admin.'; return; } if (o) o.textContent = '🗺️ Creo…'; try { const n = await gRpcData('admin_seed_zones', {}); if (o) o.textContent = '✅ Mappa creata (' + n + ' zone assegnate).'; } catch(e){ if (o) o.textContent = '❌ ' + e.message; } }
+async function simZoneWars(){ const o = document.getElementById('zoneAdminOut'); if (!session || session.email !== ADMIN_EMAIL){ if (o) o.textContent = '⚠️ Solo admin.'; return; } if (o) o.textContent = '⚔️ Simulo…'; try { const j = await gRpcData('sim_zone_wars', {p_rounds: 8}); const w = (j && j.wars) || []; if (o) o.textContent = '✅ ' + ((j && j.rounds) || 0) + ' conquiste. ' + w.map(x => x.att + (x.won ? ' ⚔️→ ' : ' ✖ ') + x.zone + (x.cap ? '★' : '')).join(' · '); } catch(e){ if (o) o.textContent = '❌ ' + e.message; } }
+async function zoneDaily(){ const o = document.getElementById('zoneAdminOut'); if (!session || session.email !== ADMIN_EMAIL){ if (o) o.textContent = '⚠️ Solo admin.'; return; } try { const n = await gRpcData('clan_zone_daily', {}); if (o) o.textContent = '💰 Rendita assegnata a ' + n + ' clan.'; } catch(e){ if (o) o.textContent = '❌ ' + e.message; } }
 /* ---------- notiziario: cosa è successo alle tue carte mentre eri via ---------- */
 async function checkWorldNews(){
   if (!collection.length) return;
@@ -4509,7 +4617,7 @@ async function migrateMelodies(){
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
 /* ---------- versione e aggiornamento automatico ---------- */
-const APP_VERSION = '22.3';   // unica fonte di verità: aggiorna anche version.txt a ogni release
+const APP_VERSION = '22.4';   // unica fonte di verità: aggiorna anche version.txt a ogni release
 try { document.getElementById('appVer').textContent = 'v' + APP_VERSION; } catch(e){}
 function verNewer(a, b){   // a più recente di b? confronto numerico 11.10 > 11.9
   const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);
