@@ -596,7 +596,10 @@
     "med_toast": "🏅 Medalla desbloqueada: {ic} {nm}! +{pt} puntos",
     "bm_sum": "🤖 Boss domados — <strong>{done}/{tot}</strong> <span class=\"count\">{open}</span>",
     "a_sentiero_done_nm": "Caminante de las Nueve Vidas",
-    "a_sentiero_done_ds": "Completa todo el Sendero (100 etapas)"
+    "a_sentiero_done_ds": "Completa todo el Sendero (100 etapas)",
+    "m_nemesi": "Vence a tu némesis",
+    "a_vendetta_nm": "Venganza",
+    "a_vendetta_ds": "Vence a tu némesis"
   },
   "reg": {
     "r_h_cards": "🎴 Las cartas",

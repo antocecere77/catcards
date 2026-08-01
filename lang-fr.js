@@ -596,7 +596,10 @@
     "med_toast": "🏅 Médaille débloquée : {ic} {nm} ! +{pt} points",
     "bm_sum": "🤖 Boss domptés — <strong>{done}/{tot}</strong> <span class=\"count\">{open}</span>",
     "a_sentiero_done_nm": "Voyageur des Neuf Vies",
-    "a_sentiero_done_ds": "Termine tout le Sentier (100 étapes)"
+    "a_sentiero_done_ds": "Termine tout le Sentier (100 étapes)",
+    "m_nemesi": "Bats ta némésis",
+    "a_vendetta_nm": "Vengeance",
+    "a_vendetta_ds": "Bats ta némésis"
   },
   "reg": {
     "r_h_cards": "🎴 Les cartes",

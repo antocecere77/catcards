@@ -15,11 +15,11 @@
 <script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs@master/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="lang-it.js?v=24.4"></script>
-<script src="lang-en.js?v=24.4"></script>
-<script src="lang-fr.js?v=24.4"></script>
-<script src="lang-es.js?v=24.4"></script>
-<script src="lang-de.js?v=24.4"></script>
+<script src="lang-it.js?v=24.5"></script>
+<script src="lang-en.js?v=24.5"></script>
+<script src="lang-fr.js?v=24.5"></script>
+<script src="lang-es.js?v=24.5"></script>
+<script src="lang-de.js?v=24.5"></script>
 <style>
   :root{
     --bg:#14121f; --panel:#1e1b2e; --panel2:#282440;
@@ -4708,7 +4708,7 @@ async function migrateMelodies(){
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
 /* ---------- versione e aggiornamento automatico ---------- */
-const APP_VERSION = '24.4';   // unica fonte di verità: aggiorna anche version.txt a ogni release
+const APP_VERSION = '24.5';   // unica fonte di verità: aggiorna anche version.txt a ogni release
 try { document.getElementById('appVer').textContent = 'v' + APP_VERSION; } catch(e){}
 function verNewer(a, b){   // a più recente di b? confronto numerico 11.10 > 11.9
   const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);
@@ -5903,6 +5903,8 @@ async function fightWorld(i){
   if (grudge){   // esito della resa dei conti
     if (w.serial === mineEntry.serial){
       addXp(mineEntry.serial, 60);   // bonus XP vendetta
+      counters.nemesiWins = (counters.nemesiWins || 0) + 1; saveCounters();
+      try { checkAchievements(); } catch(e){} try { missionEvent('nemesi_win'); } catch(e){}
       try { sfx('win'); } catch(e){} try { galaConfetti(); } catch(e){} setTimeout(() => { try { galaConfetti(); } catch(e){} }, 500);
       try { toast('🔥 ' + TB('grudge_win')); } catch(e){}
     } else { try { toast('💢 ' + TB('grudge_lose')); } catch(e){} }
@@ -6002,7 +6004,7 @@ function unifyVoices(){
 /* ---------- medagliere e contatori ---------- */
 let ach = {};
 try { ach = JSON.parse(localStorage.getItem('catcards_ach') || '{}'); } catch(e){}
-let counters = {wins: 0, losses: 0, lossStreak: 0, winStreak: 0, tourn4: 0, tourn8: 0, worldWins: 0, betWins: 0};
+let counters = {wins: 0, losses: 0, lossStreak: 0, winStreak: 0, tourn4: 0, tourn8: 0, worldWins: 0, betWins: 0, nemesiWins: 0};
 try { counters = Object.assign(counters, JSON.parse(localStorage.getItem('catcards_cnt') || '{}')); } catch(e){}
 function saveCounters(){ try { localStorage.setItem('catcards_cnt', JSON.stringify(counters)); } catch(e){} }
 /* ---------- Catdex: album della collezione, obiettivi e premi una tantum ---------- */
@@ -6094,6 +6096,7 @@ const MISSION_POOL = {
     {id:'fight3', ic:'🥊', txt:'Combatti 3 incontri (vanno bene anche locali)', evt:'any_fight', n:3},
     {id:'tourn',  ic:'🏆', txt:'Vinci un torneo (a 4 o a 8)', evt:'tourn_win', n:1},
     {id:'upset',  ic:'😼', txt:'L\'Impresa: batti nel mondo un avversario con più Elo del tuo', evt:'upset_win', n:1},
+    {id:'nemesi', ic:'🔥', txt:'Batti la tua nemesi', evt:'nemesi_win', n:1},
   ],
   gym: [
     {id:'train1', ic:'🏋️', txt:'Completa un allenamento riuscito', evt:'train', n:1},
@@ -6444,6 +6447,7 @@ const ACHS = [
   {id:'ricco',       ic:'💰', nm:'Riccone',            ds:'Possiedi 150 punti',                 pt:20, ck:() => points >= 150},
   {id:'onore',       ic:'🚪', nm:'Ritiro con onore',   ds:'Ritira una carta con record positivo', pt:20, ck:() => Array.isArray(window._myWorldRows) && window._myWorldRows.some(x => x.retired && (x.wins || 0) > (x.losses || 0))},
   {id:'disfatta',    ic:'💀', nm:'Disfatta',           ds:'Perdi 10 sfide mondiali di fila',    pt:30, ck:() => counters.lossStreak >= 10},
+  {id:'vendetta',    ic:'🔥', nm:'Vendetta',           ds:'Batti la tua nemesi',                pt:20, ck:() => (counters.nemesiWins || 0) >= 1},
   {id:'sentiero_done', ic:'🗺️', nm:'Viandante delle Nove Vite', ds:'Completa tutto il Sentiero (100 tappe)', pt:150, ck:() => typeof SENTIERI !== 'undefined' && SENTIERI.length >= 100 && SENTIERI.every(s => sentAlbum[s.id])},
 ];
 /* medaglie dei Boss: una per ognuno dei 64, generate dai dati + premio per divisione ---------- */
@@ -7920,6 +7924,8 @@ async function onQrFound(data, mine){
   if (grudge){
     if (w.serial === mine.serial){
       addXp(mine.serial, 60);
+      counters.nemesiWins = (counters.nemesiWins || 0) + 1; saveCounters();
+      try { checkAchievements(); } catch(e){} try { missionEvent('nemesi_win'); } catch(e){}
       try { sfx('win'); } catch(e){} try { galaConfetti(); } catch(e){} setTimeout(() => { try { galaConfetti(); } catch(e){} }, 500);
       try { toast('🔥 ' + TB('grudge_win')); } catch(e){}
     } else { try { toast('💢 ' + TB('grudge_lose')); } catch(e){} }

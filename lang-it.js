@@ -596,7 +596,10 @@
     "med_toast": "🏅 Medaglia sbloccata: {ic} {nm}! +{pt} punti",
     "bm_sum": "🤖 Boss domati — <strong>{done}/{tot}</strong> <span class=\"count\">{open}</span>",
     "a_sentiero_done_nm": "Viandante delle Nove Vite",
-    "a_sentiero_done_ds": "Completa tutto il Sentiero (100 tappe)"
+    "a_sentiero_done_ds": "Completa tutto il Sentiero (100 tappe)",
+    "m_nemesi": "Batti la tua nemesi",
+    "a_vendetta_nm": "Vendetta",
+    "a_vendetta_ds": "Batti la tua nemesi"
   },
   "reg": {
     "r_h_cards": "🎴 Le carte",

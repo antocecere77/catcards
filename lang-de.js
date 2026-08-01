@@ -596,7 +596,10 @@
     "med_toast": "🏅 Medaille freigeschaltet: {ic} {nm}! +{pt} Punkte",
     "bm_sum": "🤖 Bosse bezwungen — <strong>{done}/{tot}</strong> <span class=\"count\">{open}</span>",
     "a_sentiero_done_nm": "Wanderer der Neun Leben",
-    "a_sentiero_done_ds": "Schließe den ganzen Pfad ab (100 Etappen)"
+    "a_sentiero_done_ds": "Schließe den ganzen Pfad ab (100 Etappen)",
+    "m_nemesi": "Besiege deinen Erzfeind",
+    "a_vendetta_nm": "Rache",
+    "a_vendetta_ds": "Besiege deinen Erzfeind"
   },
   "reg": {
     "r_h_cards": "🎴 Die Karten",

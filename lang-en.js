@@ -596,7 +596,10 @@
     "med_toast": "🏅 Medal unlocked: {ic} {nm}! +{pt} points",
     "bm_sum": "🤖 Bosses tamed — <strong>{done}/{tot}</strong> <span class=\"count\">{open}</span>",
     "a_sentiero_done_nm": "Wayfarer of the Nine Lives",
-    "a_sentiero_done_ds": "Complete the whole Path (100 stages)"
+    "a_sentiero_done_ds": "Complete the whole Path (100 stages)",
+    "m_nemesi": "Beat your nemesis",
+    "a_vendetta_nm": "Payback",
+    "a_vendetta_ds": "Beat your nemesis"
   },
   "reg": {
     "r_h_cards": "🎴 The cards",
