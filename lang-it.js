@@ -1558,7 +1558,9 @@
     "hof_pluricampione": "Pluricampione",
     "val_pluricampione": "{n} titoli",
     "hof_novevite": "Le Nove Vite",
-    "val_novevite": "Sentiero completo"
+    "val_novevite": "Sentiero completo",
+    "aw_rivalita": "Rivalità della settimana",
+    "val_rivalita": "{n} scontri diretti"
   },
   "gang": {
     "login": "Accedi per usare i clan.",

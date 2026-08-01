@@ -1558,7 +1558,9 @@
     "hof_pluricampione": "Multicampeón",
     "val_pluricampione": "{n} títulos",
     "hof_novevite": "Las Nueve Vidas",
-    "val_novevite": "Sendero completo"
+    "val_novevite": "Sendero completo",
+    "aw_rivalita": "Rivalidad de la semana",
+    "val_rivalita": "{n} duelos"
   },
   "gang": {
     "login": "Inicia sesión para usar los clanes.",

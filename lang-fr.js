@@ -1558,7 +1558,9 @@
     "hof_pluricampione": "Multi-champion",
     "val_pluricampione": "{n} titres",
     "hof_novevite": "Les Neuf Vies",
-    "val_novevite": "Sentier terminé"
+    "val_novevite": "Sentier terminé",
+    "aw_rivalita": "Rivalité de la semaine",
+    "val_rivalita": "{n} duels"
   },
   "gang": {
     "login": "Connecte-toi pour utiliser les clans.",

@@ -1558,7 +1558,9 @@
     "hof_pluricampione": "Multi-Champion",
     "val_pluricampione": "{n} titles",
     "hof_novevite": "The Nine Lives",
-    "val_novevite": "Path complete"
+    "val_novevite": "Path complete",
+    "aw_rivalita": "Rivalry of the week",
+    "val_rivalita": "{n} clashes"
   },
   "gang": {
     "login": "Sign in to use clans.",

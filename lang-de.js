@@ -1558,7 +1558,9 @@
     "hof_pluricampione": "Mehrfachchampion",
     "val_pluricampione": "{n} Titel",
     "hof_novevite": "Die Neun Leben",
-    "val_novevite": "Pfad komplett"
+    "val_novevite": "Pfad komplett",
+    "aw_rivalita": "Rivalität der Woche",
+    "val_rivalita": "{n} Duelle"
   },
   "gang": {
     "login": "Melde dich an, um Clans zu nutzen.",
