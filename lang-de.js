@@ -1561,7 +1561,9 @@
     "val_novevite": "Pfad komplett",
     "aw_rivalita": "Rivalität der Woche",
     "val_rivalita": "{n} Duelle",
-    "cer_q_rivalita": "Zwei Katzen, eine Gasse: Wer gewann die heißeste Rivalität der Woche?"
+    "cer_q_rivalita": "Zwei Katzen, eine Gasse: Wer gewann die heißeste Rivalität der Woche?",
+    "d_rivalita": "Das Paar mit den meisten Duellen",
+    "full_rivalita": "Und nun die Rivalität der Woche! Zwei Katzen, tausend Raufereien… und nur eine geht erhobenen Hauptes!"
   },
   "gang": {
     "login": "Melde dich an, um Clans zu nutzen.",

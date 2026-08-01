@@ -1561,7 +1561,9 @@
     "val_novevite": "Path complete",
     "aw_rivalita": "Rivalry of the week",
     "val_rivalita": "{n} clashes",
-    "cer_q_rivalita": "Two cats, one alley: who came out on top in the week’s hottest rivalry?"
+    "cer_q_rivalita": "Two cats, one alley: who came out on top in the week’s hottest rivalry?",
+    "d_rivalita": "The pair that clashed the most",
+    "full_rivalita": "Now, the Rivalry of the week! Two cats, a thousand scraps… and only one walks away with his head high!"
   },
   "gang": {
     "login": "Sign in to use clans.",

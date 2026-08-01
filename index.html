@@ -15,11 +15,11 @@
 <script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs@master/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="lang-it.js?v=24.9"></script>
-<script src="lang-en.js?v=24.9"></script>
-<script src="lang-fr.js?v=24.9"></script>
-<script src="lang-es.js?v=24.9"></script>
-<script src="lang-de.js?v=24.9"></script>
+<script src="lang-it.js?v=25.0"></script>
+<script src="lang-en.js?v=25.0"></script>
+<script src="lang-fr.js?v=25.0"></script>
+<script src="lang-es.js?v=25.0"></script>
+<script src="lang-de.js?v=25.0"></script>
 <style>
   :root{
     --bg:#14121f; --panel:#1e1b2e; --panel2:#282440;
@@ -4720,7 +4720,7 @@ async function migrateMelodies(){
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
 /* ---------- versione e aggiornamento automatico ---------- */
-const APP_VERSION = '24.9';   // unica fonte di verità: aggiorna anche version.txt a ogni release
+const APP_VERSION = '25.0';   // unica fonte di verità: aggiorna anche version.txt a ogni release
 try { document.getElementById('appVer').textContent = 'v' + APP_VERSION; } catch(e){}
 function verNewer(a, b){   // a più recente di b? confronto numerico 11.10 > 11.9
   const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);
