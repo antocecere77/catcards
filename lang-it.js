@@ -1711,5 +1711,9 @@
     "apply_allused": "Tutte le tue carte sono già in un clan.",
     "apply_pick": "Con quale carta chiedi di entrare?",
     "applied_ok": "✉️ Richiesta inviata!"
+  },
+  "nemesi": {
+    "title": "Nemesi",
+    "record": "Ha vinto {them} dei {tot} scontri diretti"
   }
 };

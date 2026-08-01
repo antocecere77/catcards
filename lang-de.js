@@ -1710,5 +1710,9 @@
     "apply_allused": "Alle deine Karten sind schon in einem Clan.",
     "apply_pick": "Mit welcher Karte bewirbst du dich?",
     "applied_ok": "✉️ Anfrage gesendet!"
+  },
+  "nemesi": {
+    "title": "Erzfeind",
+    "record": "Gewann {them} von {tot} Duellen"
   }
 };

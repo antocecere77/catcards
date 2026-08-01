@@ -15,11 +15,11 @@
 <script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs@master/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="lang-it.js?v=24.0"></script>
-<script src="lang-en.js?v=24.0"></script>
-<script src="lang-fr.js?v=24.0"></script>
-<script src="lang-es.js?v=24.0"></script>
-<script src="lang-de.js?v=24.0"></script>
+<script src="lang-it.js?v=24.1"></script>
+<script src="lang-en.js?v=24.1"></script>
+<script src="lang-fr.js?v=24.1"></script>
+<script src="lang-es.js?v=24.1"></script>
+<script src="lang-de.js?v=24.1"></script>
 <style>
   :root{
     --bg:#14121f; --panel:#1e1b2e; --panel2:#282440;
@@ -643,6 +643,7 @@
     <button class="btn secondary" onclick="playSavedTheme()" data-i18n="theme_btn">▶️ Ascolta il tema</button>
     <button class="btn secondary" id="mWorldBtn" onclick="toggleWorld()">🚪 Ritira dal mondo</button>
     <div id="mClanBadge" style="display:none;"></div>
+    <div id="mNemesi"></div>
     <button class="btn secondary" onclick="buyFrame()" data-i18n="frame_btn">🎨 Cornice d'Oro (100 punti)</button>
     <button class="btn secondary" onclick="deleteSaved()" data-i18n="del_btn">🗑️ Elimina</button>
     <button class="btn secondary" onclick="closeModal()" data-i18n="close">✖ Chiudi</button>
@@ -1465,6 +1466,7 @@ function openCardModal(i){
     '<div style="max-width:300px; margin:8px auto 0;">' + xpBarHtml(c.serial) + '</div>';
   { const wb = document.getElementById('mWorldBtn'); if (wb) wb.textContent = myActive.has(c.serial) ? TSEC('ui', 'retire_btn') : TSEC('ui', 'publish_btn'); }   // toggle Pubblica/Ritira
   loadCardClan(c.serial);
+  loadNemesi(c.serial, 'mNemesi');
   document.getElementById('modal').style.display = 'flex';
 }
 async function loadCardClan(serial){   // mostra se la carta è in un clan + permette di ritirarla
@@ -4695,7 +4697,7 @@ async function migrateMelodies(){
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
 /* ---------- versione e aggiornamento automatico ---------- */
-const APP_VERSION = '24.0';   // unica fonte di verità: aggiorna anche version.txt a ogni release
+const APP_VERSION = '24.1';   // unica fonte di verità: aggiorna anche version.txt a ogni release
 try { document.getElementById('appVer').textContent = 'v' + APP_VERSION; } catch(e){}
 function verNewer(a, b){   // a più recente di b? confronto numerico 11.10 > 11.9
   const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);
@@ -5739,6 +5741,22 @@ function renderWorldList(){
   });
 }
 /* ---------- scheda carta generica: apribile da classifica, aste, ovunque ci sia un seriale ---------- */
+async function loadNemesi(serial, elId){   // 🔥 mostra la nemesi (chi l'ha battuta di più), dallo storico
+  const el = document.getElementById(elId); if (!el) return;
+  el.innerHTML = '';
+  try {
+    const rows = await gRpcData('card_nemesi', {p_serial: serial});
+    if (!rows || !rows.length) return;
+    const n = rows[0], heat = Math.min(100, (n.they_beat_me || 0) * 20);
+    const face = n.img ? '<img src="' + n.img + '" onclick="showCardBySerial(\'' + n.serial + '\')" style="width:44px; height:44px; object-fit:cover; border-radius:8px; cursor:pointer;">' : '<span style="font-size:1.7rem;">😾</span>';
+    el.innerHTML = '<div style="background:#ff606014; border:1px solid #ff606033; border-radius:12px; padding:10px; margin-top:10px; text-align:left;">' +
+      '<div style="display:flex; align-items:center; gap:8px;">' + face +
+      '<div style="flex:1; min-width:0;"><div style="font-weight:800; color:#ff8080;">🔥 ' + TSEC('nemesi', 'title') + '</div>' +
+      '<div style="font-size:.9rem;"><strong>' + awEsc(n.name || n.serial) + '</strong>' + (n.owner ? ' <span class="count" style="font-size:.72rem;">' + TSEC('gang', 'card_of', {name: awEsc(n.owner)}) + '</span>' : '') + '</div></div></div>' +
+      '<div class="count" style="font-size:.8rem; margin-top:6px;">' + TSEC('nemesi', 'record', {them: n.they_beat_me, tot: n.total}) + '</div>' +
+      '<div style="height:6px; background:#ffffff22; border-radius:4px; margin-top:4px; overflow:hidden;"><div style="height:100%; width:' + heat + '%; background:#ff5555;"></div></div></div>';
+  } catch(e){}
+}
 async function showCardBySerial(serial){
   try {
     const r = await fetch(SUPA_URL + '/rest/v1/cards?select=serial,name,owner,nick,rarity,razza,potere,statsv,hp,img,wins,losses,elo,win_streak,loss_streak,best_streak,was_champion,rest_until,retired&serial=eq.' + encodeURIComponent(serial), {headers: supaHeaders()});
@@ -5772,8 +5790,10 @@ function showCardSheet(c){
     (statsHtml ? '<div style="margin-top:10px;">' + statsHtml + '</div>' : '') +
     ((typeof c.potere === 'number') ? '<p style="color:#ffd166; font-size:.9rem; margin-top:8px;">🌟 ' + powerName(c.potere) + ' — ' + powerDesc(c.potere) + '</p>' : '') +
     '<p style="font-size:.85rem; margin-top:8px; line-height:1.6;">' + mvLine + '</p>' +
+    '<div id="nemesiBox"></div>' +
     '<button class="btn secondary" onclick="document.getElementById(\'worldModal\').style.display=\'none\'">✖ Chiudi</button>';
   document.getElementById('worldModal').style.display = 'flex';
+  loadNemesi(c.serial, 'nemesiBox');
 }
 function showWorldCard(i){
   const c = worldCards[i];

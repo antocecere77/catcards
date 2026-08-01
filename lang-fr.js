@@ -1710,5 +1710,9 @@
     "apply_allused": "Toutes tes cartes sont déjà dans un clan.",
     "apply_pick": "Avec quelle carte postules-tu ?",
     "applied_ok": "✉️ Demande envoyée !"
+  },
+  "nemesi": {
+    "title": "Némésis",
+    "record": "A gagné {them} des {tot} duels"
   }
 };

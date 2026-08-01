@@ -1710,5 +1710,9 @@
     "apply_allused": "All your cards are already in a clan.",
     "apply_pick": "Which card do you apply with?",
     "applied_ok": "✉️ Request sent!"
+  },
+  "nemesi": {
+    "title": "Nemesis",
+    "record": "Won {them} of {tot} head-to-heads"
   }
 };

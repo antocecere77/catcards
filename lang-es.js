@@ -1710,5 +1710,9 @@
     "apply_allused": "Todas tus cartas ya están en un clan.",
     "apply_pick": "¿Con qué carta te postulas?",
     "applied_ok": "✉️ ¡Solicitud enviada!"
+  },
+  "nemesi": {
+    "title": "Némesis",
+    "record": "Ganó {them} de {tot} duelos"
   }
 };
