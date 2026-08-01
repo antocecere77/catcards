@@ -1560,7 +1560,8 @@
     "hof_novevite": "Le Nove Vite",
     "val_novevite": "Sentiero completo",
     "aw_rivalita": "Rivalità della settimana",
-    "val_rivalita": "{n} scontri diretti"
+    "val_rivalita": "{n} scontri diretti",
+    "cer_q_rivalita": "Due gatti, un solo vicolo: chi l’ha spuntata nella rivalità più calda della settimana?"
   },
   "gang": {
     "login": "Accedi per usare i clan.",

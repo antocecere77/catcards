@@ -1560,7 +1560,8 @@
     "hof_novevite": "Las Nueve Vidas",
     "val_novevite": "Sendero completo",
     "aw_rivalita": "Rivalidad de la semana",
-    "val_rivalita": "{n} duelos"
+    "val_rivalita": "{n} duelos",
+    "cer_q_rivalita": "Dos gatos, un callejón: ¿quién se impuso en la rivalidad más caliente de la semana?"
   },
   "gang": {
     "login": "Inicia sesión para usar los clanes.",

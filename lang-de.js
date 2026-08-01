@@ -1560,7 +1560,8 @@
     "hof_novevite": "Die Neun Leben",
     "val_novevite": "Pfad komplett",
     "aw_rivalita": "Rivalität der Woche",
-    "val_rivalita": "{n} Duelle"
+    "val_rivalita": "{n} Duelle",
+    "cer_q_rivalita": "Zwei Katzen, eine Gasse: Wer gewann die heißeste Rivalität der Woche?"
   },
   "gang": {
     "login": "Melde dich an, um Clans zu nutzen.",

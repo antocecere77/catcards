@@ -15,11 +15,11 @@
 <script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs@master/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="lang-it.js?v=24.6"></script>
-<script src="lang-en.js?v=24.6"></script>
-<script src="lang-fr.js?v=24.6"></script>
-<script src="lang-es.js?v=24.6"></script>
-<script src="lang-de.js?v=24.6"></script>
+<script src="lang-it.js?v=24.7"></script>
+<script src="lang-en.js?v=24.7"></script>
+<script src="lang-fr.js?v=24.7"></script>
+<script src="lang-es.js?v=24.7"></script>
+<script src="lang-de.js?v=24.7"></script>
 <style>
   :root{
     --bg:#14121f; --panel:#1e1b2e; --panel2:#282440;
@@ -1717,9 +1717,9 @@ function awH(){ return {apikey: SUPA_KEY, Authorization: 'Bearer ' + ((session &
 function awEsc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 function awMedal(r){ return r === 1 ? '🥇' : r === 2 ? '🥈' : '🥉'; }
 const AW_ICON = {mvp:'🏆', instancabile:'🥊', cecchino:'🎯', dominatore:'🔥', ammazza:'🗡️', beniamino:'⭐', debuttante:'🆕', astro:'📈', pantofolaio:'😴', rivalita:'⚔️'};
-const AW_SINGLE = {dominatore:1, ammazza:1, beniamino:1, debuttante:1, astro:1, pantofolaio:1};   // premi a solo oro (in cerimonia si rivela solo il 1°)
+const AW_SINGLE = {dominatore:1, ammazza:1, beniamino:1, debuttante:1, astro:1, pantofolaio:1, rivalita:1};   // premi a solo oro (in cerimonia si rivela solo il 1°)
 const AW_ORDER_PAGE = ['mvp', 'instancabile', 'cecchino', 'dominatore', 'ammazza', 'beniamino', 'debuttante', 'astro', 'rivalita', 'pantofolaio'];
-const AW_ORDER_CER = ['instancabile', 'cecchino', 'dominatore', 'ammazza', 'beniamino', 'debuttante', 'astro', 'pantofolaio', 'mvp'];   // MVP gran finale
+const AW_ORDER_CER = ['instancabile', 'cecchino', 'dominatore', 'ammazza', 'beniamino', 'debuttante', 'astro', 'rivalita', 'pantofolaio', 'mvp'];   // MVP gran finale
 const HOF_ICON = {striscia:'🔥', veterano:'⚔️', recordman:'💯', winrate:'🎯', piccoelo:'📊', regno:'👑', muro:'🛡️', pluricampione:'🏅', novevite:'🐈‍⬛'};
 const HOF_ORDER = ['striscia', 'veterano', 'recordman', 'winrate', 'piccoelo', 'regno', 'muro', 'pluricampione', 'novevite'];
 function awValue(key, value){
@@ -4708,7 +4708,7 @@ async function migrateMelodies(){
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
 /* ---------- versione e aggiornamento automatico ---------- */
-const APP_VERSION = '24.6';   // unica fonte di verità: aggiorna anche version.txt a ogni release
+const APP_VERSION = '24.7';   // unica fonte di verità: aggiorna anche version.txt a ogni release
 try { document.getElementById('appVer').textContent = 'v' + APP_VERSION; } catch(e){}
 function verNewer(a, b){   // a più recente di b? confronto numerico 11.10 > 11.9
   const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);

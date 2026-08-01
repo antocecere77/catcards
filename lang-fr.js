@@ -1560,7 +1560,8 @@
     "hof_novevite": "Les Neuf Vies",
     "val_novevite": "Sentier terminé",
     "aw_rivalita": "Rivalité de la semaine",
-    "val_rivalita": "{n} duels"
+    "val_rivalita": "{n} duels",
+    "cer_q_rivalita": "Deux chats, une ruelle : qui l’a emporté dans la rivalité la plus chaude de la semaine ?"
   },
   "gang": {
     "login": "Connecte-toi pour utiliser les clans.",

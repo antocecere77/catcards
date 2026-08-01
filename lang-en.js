@@ -1560,7 +1560,8 @@
     "hof_novevite": "The Nine Lives",
     "val_novevite": "Path complete",
     "aw_rivalita": "Rivalry of the week",
-    "val_rivalita": "{n} clashes"
+    "val_rivalita": "{n} clashes",
+    "cer_q_rivalita": "Two cats, one alley: who came out on top in the week’s hottest rivalry?"
   },
   "gang": {
     "login": "Sign in to use clans.",
