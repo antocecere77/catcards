@@ -1702,6 +1702,8 @@
       "¿Estás loco? ¡Son leones disfrazados! …allá tú."
     ],
     "need3": "Necesitas al menos 3 cartas frescas para atacar (3v3).",
-    "zone_take_free": "¿Ocupar {name}? Está libre: la tomas sin luchar."
+    "zone_take_free": "¿Ocupar {name}? Está libre: la tomas sin luchar.",
+    "rendita_line": "💰 Tus {c} cartas aquí rinden ~{x} puntos/día.",
+    "rendita_none": "💰 Conquista zonas en el mapa: tus cartas empezarán a rendir puntos cada día."
   }
 };

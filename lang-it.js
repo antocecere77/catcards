@@ -1703,6 +1703,8 @@
       "Ma sei impazzito? Quelli so’ leoni travestiti! …poi nun venì a piagne."
     ],
     "need3": "Servono almeno 3 carte fresche per attaccare (3v3).",
-    "zone_take_free": "Occupare {name}? È libera: la prendi senza combattere."
+    "zone_take_free": "Occupare {name}? È libera: la prendi senza combattere.",
+    "rendita_line": "💰 Le tue {c} carte qui fruttano ~{x} punti/giorno.",
+    "rendita_none": "💰 Conquista zone sulla mappa: le tue carte inizieranno a fruttare punti ogni giorno."
   }
 };

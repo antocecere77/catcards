@@ -1702,6 +1702,8 @@
       "Bist du irre? Das sind verkleidete Löwen! …dein Problem."
     ],
     "need3": "Du brauchst mindestens 3 frische Karten zum Angreifen (3v3).",
-    "zone_take_free": "{name} besetzen? Sie ist frei: du nimmst sie ohne Kampf."
+    "zone_take_free": "{name} besetzen? Sie ist frei: du nimmst sie ohne Kampf.",
+    "rendita_line": "💰 Deine {c} Karten hier bringen ~{x} Punkte/Tag.",
+    "rendita_none": "💰 Erobere Zonen auf der Karte: deine Karten bringen dann täglich Punkte."
   }
 };

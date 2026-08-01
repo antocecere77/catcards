@@ -15,11 +15,11 @@
 <script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs@master/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="lang-it.js?v=23.1"></script>
-<script src="lang-en.js?v=23.1"></script>
-<script src="lang-fr.js?v=23.1"></script>
-<script src="lang-es.js?v=23.1"></script>
-<script src="lang-de.js?v=23.1"></script>
+<script src="lang-it.js?v=23.2"></script>
+<script src="lang-en.js?v=23.2"></script>
+<script src="lang-fr.js?v=23.2"></script>
+<script src="lang-es.js?v=23.2"></script>
+<script src="lang-de.js?v=23.2"></script>
 <style>
   :root{
     --bg:#14121f; --panel:#1e1b2e; --panel2:#282440;
@@ -2149,8 +2149,13 @@ async function renderMyClan(clanId){
   const serials = roster.map(r => r.serial); const cm = {};
   if (serials.length){ (await gGet('cards?select=serial,name,img,rest_until&serial=in.(' + serials.join(',') + ')')).forEach(c => cm[c.serial] = c); }
   const apps = isLeader ? await gGet('clan_applications?select=id,owner_name&clan_id=eq.' + clanId + '&order=created_at.asc') : [];
+  const zonesHeld = await gGet('clan_zones?select=is_capital&owner_clan=eq.' + clanId);
+  const zoneVal = zonesHeld.reduce((s, z) => s + (z.is_capital ? 6 : 2), 0);
+  const myCardsN = roster.filter(r => collection.some(c => c.serial === r.serial)).length;
+  const myIncome = (zoneVal > 0 && roster.length) ? Math.max(1, Math.round(zoneVal / roster.length)) * myCardsN : 0;
   let html = '<div style="text-align:center;"><div style="font-size:2.4rem;">' + (clan.emblem || '🛡️') + '</div><h2 style="margin:2px 0;">' + awEsc(clan.name) + '</h2><p class="count" style="margin:0;">' + G('members_n', {n: members.length}) + ' · ' + (clan.points || 0) + ' ' + G('pts') + '</p>';
   html += '<div style="margin-top:4px;"><span class="count">' + (clan.open ? G('open_lbl') : G('closed_lbl')) + '</span>' + (isLeader ? ' <button class="btn secondary" style="width:auto; margin:0; padding:4px 10px;" onclick="gangSetOpen(' + (!clan.open) + ')">' + (clan.open ? G('set_closed') : G('set_open')) + '</button>' : '') + '</div></div>';
+  if (myCardsN > 0) html += '<div style="text-align:center; margin-top:8px; background:#7ee78714; border-radius:10px; padding:8px;"><span style="font-size:.86rem;">' + (myIncome > 0 ? G('rendita_line', {c: myCardsN, x: myIncome}) : G('rendita_none')) + '</span></div>';
   html += '<h3 style="margin-top:16px;">' + G('members') + '</h3>';
   members.forEach(m => { const isLead = m.user_id === clan.leader_id; html += '<div style="display:flex; align-items:center; gap:8px; padding:4px 0;"><span style="flex:1; min-width:0;">' + awEsc(m.owner_name || '?') + (isLead ? ' <span style="color:var(--accent); font-size:.78rem;">' + G('leader') + '</span>' : '') + '</span>' + ((isLeader && !isLead) ? '<button class="btn secondary" style="width:auto;margin:0;padding:4px 8px;" onclick="gangKick(\'' + m.user_id + '\')">' + G('kick') + '</button>' : '') + '</div>'; });
   html += '<h3 style="margin-top:16px;">' + G('roster') + ' (' + roster.length + '/20)</h3>';
@@ -2352,7 +2357,7 @@ function zoneDetail(){
   const owned = zmap.filter(x => x.owner_clan === my && my != null).map(x => x.id);
   const anyFree = zmap.some(x => x.owner_clan == null);
   const leader = window._myClanLeader;
-  const ppd = z.is_capital ? 3 : 1;
+  const ppd = z.is_capital ? 6 : 2;
   let reach;
   if (owned.length) reach = zmap.some(x => x.owner_clan === my && (x.neighbors || []).indexOf(z.id) >= 0);
   else reach = (z.owner_clan == null) || !anyFree;
@@ -4659,7 +4664,7 @@ async function migrateMelodies(){
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
 /* ---------- versione e aggiornamento automatico ---------- */
-const APP_VERSION = '23.1';   // unica fonte di verità: aggiorna anche version.txt a ogni release
+const APP_VERSION = '23.2';   // unica fonte di verità: aggiorna anche version.txt a ogni release
 try { document.getElementById('appVer').textContent = 'v' + APP_VERSION; } catch(e){}
 function verNewer(a, b){   // a più recente di b? confronto numerico 11.10 > 11.9
   const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);

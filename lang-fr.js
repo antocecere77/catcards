@@ -1702,6 +1702,8 @@
       "T’es fou ? Ce sont des lions déguisés ! …c’est ton enterrement."
     ],
     "need3": "Il te faut au moins 3 cartes fraîches pour attaquer (3v3).",
-    "zone_take_free": "Occuper {name} ? Elle est libre : tu la prends sans combattre."
+    "zone_take_free": "Occuper {name} ? Elle est libre : tu la prends sans combattre.",
+    "rendita_line": "💰 Tes {c} cartes ici rapportent ~{x} points/jour.",
+    "rendita_none": "💰 Conquiers des zones sur la carte : tes cartes rapporteront des points chaque jour."
   }
 };

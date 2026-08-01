@@ -1702,6 +1702,8 @@
       "Are you nuts? Those are lions in disguise! …your funeral."
     ],
     "need3": "You need at least 3 fresh cards to attack (3v3).",
-    "zone_take_free": "Take {name}? It’s free: you grab it without a fight."
+    "zone_take_free": "Take {name}? It’s free: you grab it without a fight.",
+    "rendita_line": "💰 Your {c} cards here earn ~{x} points/day.",
+    "rendita_none": "💰 Conquer zones on the map: your cards will start earning points every day."
   }
 };
