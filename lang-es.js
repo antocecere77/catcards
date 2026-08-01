@@ -317,7 +317,11 @@
     "stake_pts": "+{pt} puntos y +{xp} XP",
     "stake_nopts": "+{xp} XP (sin puntos en local)",
     "boss_stake_note": " — puntos solo en la 1ª victoria del día",
-    "entry_catnip": "🌿 ¡{name} entra en la arena ya cargado de hierba gatera!"
+    "entry_catnip": "🌿 ¡{name} entra en la arena ya cargado de hierba gatera!",
+    "grudge_banner": "AJUSTE DE CUENTAS",
+    "grudge_line": "{name} te ha ganado {n} veces. ¡Hora de la venganza! 🔥",
+    "grudge_win": "¡VENGANZA! Cuentas saldadas. +60 XP",
+    "grudge_lose": "Esta vez no… la revancha esperará."
   },
   "chars": {
     "rocco_warn": "Ojo con su {stat}: ahí te come.",

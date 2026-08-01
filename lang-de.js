@@ -317,7 +317,11 @@
     "stake_pts": "+{pt} Punkte und +{xp} XP",
     "stake_nopts": "+{xp} XP (keine Punkte lokal)",
     "boss_stake_note": " — Punkte nur beim ersten Sieg des Tages",
-    "entry_catnip": "🌿 {name} betritt die Arena schon voll Katzenminze!"
+    "entry_catnip": "🌿 {name} betritt die Arena schon voll Katzenminze!",
+    "grudge_banner": "ABRECHNUNG",
+    "grudge_line": "{name} hat dich {n}-mal besiegt. Zeit für Rache! 🔥",
+    "grudge_win": "RACHE! Rechnung beglichen. +60 XP",
+    "grudge_lose": "Nicht diesmal… die Revanche wartet."
   },
   "chars": {
     "rocco_warn": "Pass auf seine {stat} auf: da frisst er dich.",

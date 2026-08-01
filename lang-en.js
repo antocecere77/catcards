@@ -317,7 +317,11 @@
     "stake_pts": "+{pt} points and +{xp} XP",
     "stake_nopts": "+{xp} XP (no points locally)",
     "boss_stake_note": " — points only on the first win of the day",
-    "entry_catnip": "🌿 {name} enters the arena already loaded with catnip!"
+    "entry_catnip": "🌿 {name} enters the arena already loaded with catnip!",
+    "grudge_banner": "GRUDGE MATCH",
+    "grudge_line": "{name} beat you {n} times. Time for payback! 🔥",
+    "grudge_win": "PAYBACK! Score settled. +60 XP",
+    "grudge_lose": "Not this time… the rematch will wait."
   },
   "chars": {
     "rocco_warn": "Watch his {stat}: that's where he eats you alive.",

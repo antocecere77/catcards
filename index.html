@@ -15,11 +15,11 @@
 <script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs@master/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="lang-it.js?v=24.2"></script>
-<script src="lang-en.js?v=24.2"></script>
-<script src="lang-fr.js?v=24.2"></script>
-<script src="lang-es.js?v=24.2"></script>
-<script src="lang-de.js?v=24.2"></script>
+<script src="lang-it.js?v=24.3"></script>
+<script src="lang-en.js?v=24.3"></script>
+<script src="lang-fr.js?v=24.3"></script>
+<script src="lang-es.js?v=24.3"></script>
+<script src="lang-de.js?v=24.3"></script>
 <style>
   :root{
     --bg:#14121f; --panel:#1e1b2e; --panel2:#282440;
@@ -2947,6 +2947,12 @@ function recordResult(winSerial, loseSerial){
   renderStats();
   try { checkCatdex(); renderCatdex(); } catch(e){}   // un livello nuovo può sbloccare obiettivi Catdex
 }
+function addXp(serial, n){   // aggiunge XP a una carta senza contarla come vittoria (bonus vendetta ecc.)
+  battleStats[serial] = battleStats[serial] || {w: 0, l: 0};
+  battleStats[serial].xp = (battleStats[serial].xp || 0) + n;
+  try { localStorage.setItem('catcards_stats', JSON.stringify(battleStats)); } catch(e){}
+  try { renderStats(); } catch(e){} try { checkCatdex(); renderCatdex(); } catch(e){}
+}
 function cardLevel(serial){
   const s = battleStats[serial];
   return 1 + Math.floor(((s && s.xp) || 0) / 100);
@@ -3945,7 +3951,7 @@ async function startBattle(){
   document.getElementById('battleScreen').style.display = 'flex';
   await runBattle(ea, eb, null);
 }
-async function runBattle(ea, eb, title){
+async function runBattle(ea, eb, title, opts){
   const a = makeFighter(ea), b = makeFighter(eb);
   battleOn = true;
   window._evLog = []; window._evOn = true;
@@ -3956,6 +3962,11 @@ async function runBattle(ea, eb, title){
   document.getElementById('blog').innerHTML = '';
   document.getElementById('battleScreen').scrollTop = 0;
   if (title) blog('🏟️ — ' + titleLabel(title) + ' —', 'winner');
+  if (opts && opts.grudge){   // ⚔️ RESA DEI CONTI: incontro con la nemesi
+    blog('⚔️ 🔥 — ' + TB('grudge_banner') + ' — 🔥 ⚔️', 'winner');
+    blog(TB('grudge_line', {name: (opts.grudge.name || '?'), n: opts.grudge.they_beat_me || 0}));
+    try { sfx('crit'); } catch(e){} try { sfx('crowd'); } catch(e){}
+  }
   // anteprima chiara della posta in gioco: punti e XP per vittoria/sconfitta
   { const rp = rewardPreview(title);
     const win = (rp.winPt ? TB('stake_pts', {pt: rp.winPt, xp: rp.winXp}) : TB('stake_nopts', {xp: rp.winXp})) + (rp.bossNote ? TB('boss_stake_note') : '');
@@ -4697,7 +4708,7 @@ async function migrateMelodies(){
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
 /* ---------- versione e aggiornamento automatico ---------- */
-const APP_VERSION = '24.2';   // unica fonte di verità: aggiorna anche version.txt a ogni release
+const APP_VERSION = '24.3';   // unica fonte di verità: aggiorna anche version.txt a ogni release
 try { document.getElementById('appVer').textContent = 'v' + APP_VERSION; } catch(e){}
 function verNewer(a, b){   // a più recente di b? confronto numerico 11.10 > 11.9
   const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);
@@ -5885,8 +5896,17 @@ async function fightWorld(i){
   const verdict = await askBet(mineEntry, remoteEntry);
   if (verdict === 'back'){ currentBet = null; return; }   // Zio Rocco ha sconsigliato: nessun match, nessun costo
   document.getElementById('battleScreen').style.display = 'flex';
-  const w = await runBattle(mineEntry, remoteEntry, 'SFIDA MONDIALE');
+  let grudge = null;   // è la nemesi della mia carta?
+  try { const nem = await gRpcData('card_nemesi', {p_serial: mineEntry.serial}); if (nem && nem.length && nem[0].serial === remoteEntry.serial) grudge = nem[0]; } catch(e){}
+  const w = await runBattle(mineEntry, remoteEntry, 'SFIDA MONDIALE', {grudge: grudge});
   if (!w) return;
+  if (grudge){   // esito della resa dei conti
+    if (w.serial === mineEntry.serial){
+      addXp(mineEntry.serial, 60);   // bonus XP vendetta
+      try { sfx('win'); } catch(e){} try { galaConfetti(); } catch(e){} setTimeout(() => { try { galaConfetti(); } catch(e){} }, 500);
+      try { toast('🔥 ' + TB('grudge_win')); } catch(e){}
+    } else { try { toast('💢 ' + TB('grudge_lose')); } catch(e){} }
+  }
   // missione «L'Impresa»: vittoria su un avversario con più Elo
   try {
     if (w.serial === mineEntry.serial){

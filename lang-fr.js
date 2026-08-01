@@ -317,7 +317,11 @@
     "stake_pts": "+{pt} points et +{xp} XP",
     "stake_nopts": "+{xp} XP (aucun point en local)",
     "boss_stake_note": " — points seulement à la 1re victoire du jour",
-    "entry_catnip": "🌿 {name} entre dans l arène déjà gonflé à l herbe à chat !"
+    "entry_catnip": "🌿 {name} entre dans l arène déjà gonflé à l herbe à chat !",
+    "grudge_banner": "REVANCHE",
+    "grudge_line": "{name} t’a battu {n} fois. L’heure de la vengeance ! 🔥",
+    "grudge_win": "VENGEANCE ! Comptes réglés. +60 XP",
+    "grudge_lose": "Pas cette fois… la revanche attendra."
   },
   "chars": {
     "rocco_warn": "Méfie-toi de sa {stat} : c'est là qu'il te bouffe.",

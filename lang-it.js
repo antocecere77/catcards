@@ -317,7 +317,11 @@
     "stake_pts": "+{pt} punti e +{xp} XP",
     "stake_nopts": "+{xp} XP (nessun punto in locale)",
     "boss_stake_note": " — punti solo alla prima vittoria del giorno",
-    "entry_catnip": "🌿 {name} entra in arena già carico di erba gatta!"
+    "entry_catnip": "🌿 {name} entra in arena già carico di erba gatta!",
+    "grudge_banner": "RESA DEI CONTI",
+    "grudge_line": "{name} ti ha battuto {n} volte. È il momento della vendetta! 🔥",
+    "grudge_win": "VENDETTA! Conti regolati. +60 XP",
+    "grudge_lose": "Ancora lei… la resa dei conti aspetterà."
   },
   "chars": {
     "rocco_warn": "Occhio alla sua {stat}: lì ti mangia.",
