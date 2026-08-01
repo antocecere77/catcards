@@ -15,11 +15,11 @@
 <script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs@master/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="lang-it.js?v=24.3"></script>
-<script src="lang-en.js?v=24.3"></script>
-<script src="lang-fr.js?v=24.3"></script>
-<script src="lang-es.js?v=24.3"></script>
-<script src="lang-de.js?v=24.3"></script>
+<script src="lang-it.js?v=24.4"></script>
+<script src="lang-en.js?v=24.4"></script>
+<script src="lang-fr.js?v=24.4"></script>
+<script src="lang-es.js?v=24.4"></script>
+<script src="lang-de.js?v=24.4"></script>
 <style>
   :root{
     --bg:#14121f; --panel:#1e1b2e; --panel2:#282440;
@@ -4708,7 +4708,7 @@ async function migrateMelodies(){
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
 /* ---------- versione e aggiornamento automatico ---------- */
-const APP_VERSION = '24.3';   // unica fonte di verità: aggiorna anche version.txt a ogni release
+const APP_VERSION = '24.4';   // unica fonte di verità: aggiorna anche version.txt a ogni release
 try { document.getElementById('appVer').textContent = 'v' + APP_VERSION; } catch(e){}
 function verNewer(a, b){   // a più recente di b? confronto numerico 11.10 > 11.9
   const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);
@@ -7913,8 +7913,17 @@ async function onQrFound(data, mine){
   const verdict = await askBet(mine, entry);   // si scommette anche nei duelli dal vivo
   if (verdict === 'back'){ currentBet = null; return; }
   document.getElementById('battleScreen').style.display = 'flex';
-  const w = await runBattle(mine, entry, 'SFIDA DAL VIVO');
+  let grudge = null;   // è la nemesi della mia carta?
+  try { const nem = await gRpcData('card_nemesi', {p_serial: mine.serial}); if (nem && nem.length && nem[0].serial === entry.serial) grudge = nem[0]; } catch(e){}
+  const w = await runBattle(mine, entry, 'SFIDA DAL VIVO', {grudge: grudge});
   if (!w) return;
+  if (grudge){
+    if (w.serial === mine.serial){
+      addXp(mine.serial, 60);
+      try { sfx('win'); } catch(e){} try { galaConfetti(); } catch(e){} setTimeout(() => { try { galaConfetti(); } catch(e){} }, 500);
+      try { toast('🔥 ' + TB('grudge_win')); } catch(e){}
+    } else { try { toast('💢 ' + TB('grudge_lose')); } catch(e){} }
+  }
   try { missionEvent('qr_duel'); } catch(e){}
   if (session && session.access_token){
     const winSerial = w.serial;
