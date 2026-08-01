@@ -1719,7 +1719,8 @@
     "apply_nocards": "You have no cards to offer.",
     "apply_allused": "All your cards are already in a clan.",
     "apply_pick": "Which card do you apply with?",
-    "applied_ok": "✉️ Request sent!"
+    "applied_ok": "✉️ Request sent!",
+    "scout_tip": "Watch #{s} ({sn}) — the toughest. The softest is #{w} ({wn})."
   },
   "nemesi": {
     "title": "Nemesis",

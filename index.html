@@ -15,11 +15,11 @@
 <script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs@master/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="lang-it.js?v=24.7"></script>
-<script src="lang-en.js?v=24.7"></script>
-<script src="lang-fr.js?v=24.7"></script>
-<script src="lang-es.js?v=24.7"></script>
-<script src="lang-de.js?v=24.7"></script>
+<script src="lang-it.js?v=24.8"></script>
+<script src="lang-en.js?v=24.8"></script>
+<script src="lang-fr.js?v=24.8"></script>
+<script src="lang-es.js?v=24.8"></script>
+<script src="lang-de.js?v=24.8"></script>
 <style>
   :root{
     --bg:#14121f; --panel:#1e1b2e; --panel2:#282440;
@@ -1514,16 +1514,19 @@ function askPlayerName(){
   });
 }
 function cardPow(c){ const s = Array.isArray(c.statsv) ? c.statsv.reduce((a, b) => a + (+b || 0), 0) : 0; return s > 0 ? s : 100; }
-function scoutWinPct(mine, enemy){   // stima Monte Carlo della staffetta (Bradley-Terry sulla forza)
+function scoutWinPct(mine, enemy){   // probabilità ESATTA della staffetta (deterministica: stessa formazione = stessa %)
   const A = mine.map(cardPow), B = enemy.slice(0, mine.length).map(cardPow);
   if (!A.length) return null; if (!B.length) return 100;
-  let wins = 0; const K = 300;
-  for (let t = 0; t < K; t++){
-    let ai = 0, bi = 0;
-    while (ai < A.length && bi < B.length){ if (Math.random() < A[ai] / (A[ai] + B[bi])) bi++; else ai++; }
-    if (ai < A.length) wins++;
+  const memo = {};
+  function p(i, j){   // P(vince A) dallo stato: i-esimo attaccante vs j-esimo difensore (il vincitore resta)
+    if (i >= A.length) return 0;   // attaccante esaurito → A perde
+    if (j >= B.length) return 1;   // difensore esaurito → A vince
+    const key = i + ',' + j; if (key in memo) return memo[key];
+    const pw = A[i] / (A[i] + B[j]);
+    const r = pw * p(i, j + 1) + (1 - pw) * p(i + 1, j);
+    memo[key] = r; return r;
   }
-  return Math.round(wins / K * 100);
+  return Math.round(p(0, 0) * 100);
 }
 function sfregioTier(p){ return p >= 70 ? 'hi' : p >= 50 ? 'mid' : p >= 30 ? 'low' : 'bad'; }
 function graffioPool(kind){   // kind: 'hi'|'mid'|'low'|'bad'|'wait' → array di battute varie
@@ -1558,6 +1561,15 @@ function scoutAndPick(mine, enemy, min, max){   // 🕵️ ricognizione: vedi la
         const col = p >= 70 ? '#7ee787' : p >= 50 ? '#ffd36e' : p >= 30 ? '#ffb060' : '#ff8080';
         bubble = '<em>«' + curLine + '»</em><div style="font-weight:900; color:' + col + '; font-size:1.1rem; margin-top:2px;">' + G('sfregio_pct', {p: p}) + '</div>';
       }
+      { const defs = enemy.slice(0, live);   // 🕵️ dritta: chi è il più tosto e il più molle della difesa
+        if (defs.length >= 2){
+          let si = 0, wi = 0;
+          defs.forEach((c, k) => { if (cardPow(c) > cardPow(defs[si])) si = k; if (cardPow(c) < cardPow(defs[wi])) wi = k; });
+          if (si !== wi){
+            const nm = c => awEsc((c.name || '').split(' ')[0]);
+            bubble += '<div style="font-size:.76rem; color:var(--muted,#9a90c0); margin-top:6px;">🕵️ ' + G('scout_tip', {s: si + 1, sn: nm(defs[si]), w: wi + 1, wn: nm(defs[wi])}) + '</div>';
+          }
+        } }
       ov.innerHTML = '<div style="background:var(--panel,#1c1830); border-radius:16px; padding:16px; max-width:380px; width:100%; max-height:90vh; overflow:auto; box-shadow:0 10px 40px #000a;">' +
         '<h3 style="margin:0 0 8px;">🗺️ ' + G('scout_title') + '</h3>' +
         '<div style="font-size:.76rem; color:var(--muted,#9a90c0); margin-bottom:4px;">' + G('scout_enemy') + '</div>' +
@@ -4708,7 +4720,7 @@ async function migrateMelodies(){
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
 /* ---------- versione e aggiornamento automatico ---------- */
-const APP_VERSION = '24.7';   // unica fonte di verità: aggiorna anche version.txt a ogni release
+const APP_VERSION = '24.8';   // unica fonte di verità: aggiorna anche version.txt a ogni release
 try { document.getElementById('appVer').textContent = 'v' + APP_VERSION; } catch(e){}
 function verNewer(a, b){   // a più recente di b? confronto numerico 11.10 > 11.9
   const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);

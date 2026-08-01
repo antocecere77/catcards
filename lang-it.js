@@ -1720,7 +1720,8 @@
     "apply_nocards": "Non hai carte da candidare.",
     "apply_allused": "Tutte le tue carte sono già in un clan.",
     "apply_pick": "Con quale carta chiedi di entrare?",
-    "applied_ok": "✉️ Richiesta inviata!"
+    "applied_ok": "✉️ Richiesta inviata!",
+    "scout_tip": "Occhio ar {s}° ({sn}): è er più tosto. Er più molle è er {w}° ({wn})."
   },
   "nemesi": {
     "title": "Nemesi",

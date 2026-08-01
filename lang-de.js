@@ -1719,7 +1719,8 @@
     "apply_nocards": "Du hast keine Karten anzubieten.",
     "apply_allused": "Alle deine Karten sind schon in einem Clan.",
     "apply_pick": "Mit welcher Karte bewirbst du dich?",
-    "applied_ok": "✉️ Anfrage gesendet!"
+    "applied_ok": "✉️ Anfrage gesendet!",
+    "scout_tip": "Achtung Nr. {s} ({sn}), der Härteste. Der Schwächste: Nr. {w} ({wn})."
   },
   "nemesi": {
     "title": "Erzfeind",

@@ -1719,7 +1719,8 @@
     "apply_nocards": "Tu n’as aucune carte à proposer.",
     "apply_allused": "Toutes tes cartes sont déjà dans un clan.",
     "apply_pick": "Avec quelle carte postules-tu ?",
-    "applied_ok": "✉️ Demande envoyée !"
+    "applied_ok": "✉️ Demande envoyée !",
+    "scout_tip": "Gaffe au n°{s} ({sn}), le plus coriace. Le plus faible : n°{w} ({wn})."
   },
   "nemesi": {
     "title": "Némésis",
