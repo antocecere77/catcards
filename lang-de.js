@@ -1704,6 +1704,11 @@
     "need3": "Du brauchst mindestens 3 frische Karten zum Angreifen (3v3).",
     "zone_take_free": "{name} besetzen? Sie ist frei: du nimmst sie ohne Kampf.",
     "rendita_line": "💰 Deine {c} Karten hier bringen ~{x} Punkte/Tag.",
-    "rendita_none": "💰 Erobere Zonen auf der Karte: deine Karten bringen dann täglich Punkte."
+    "rendita_none": "💰 Erobere Zonen auf der Karte: deine Karten bringen dann täglich Punkte.",
+    "card_of": "von {name}",
+    "apply_nocards": "Du hast keine Karten anzubieten.",
+    "apply_allused": "Alle deine Karten sind schon in einem Clan.",
+    "apply_pick": "Mit welcher Karte bewirbst du dich?",
+    "applied_ok": "✉️ Anfrage gesendet!"
   }
 };

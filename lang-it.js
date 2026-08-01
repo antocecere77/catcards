@@ -1705,6 +1705,11 @@
     "need3": "Servono almeno 3 carte fresche per attaccare (3v3).",
     "zone_take_free": "Occupare {name}? È libera: la prendi senza combattere.",
     "rendita_line": "💰 Le tue {c} carte qui fruttano ~{x} punti/giorno.",
-    "rendita_none": "💰 Conquista zone sulla mappa: le tue carte inizieranno a fruttare punti ogni giorno."
+    "rendita_none": "💰 Conquista zone sulla mappa: le tue carte inizieranno a fruttare punti ogni giorno.",
+    "card_of": "di {name}",
+    "apply_nocards": "Non hai carte da candidare.",
+    "apply_allused": "Tutte le tue carte sono già in un clan.",
+    "apply_pick": "Con quale carta chiedi di entrare?",
+    "applied_ok": "✉️ Richiesta inviata!"
   }
 };

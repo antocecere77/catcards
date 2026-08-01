@@ -1704,6 +1704,11 @@
     "need3": "Necesitas al menos 3 cartas frescas para atacar (3v3).",
     "zone_take_free": "¿Ocupar {name}? Está libre: la tomas sin luchar.",
     "rendita_line": "💰 Tus {c} cartas aquí rinden ~{x} puntos/día.",
-    "rendita_none": "💰 Conquista zonas en el mapa: tus cartas empezarán a rendir puntos cada día."
+    "rendita_none": "💰 Conquista zonas en el mapa: tus cartas empezarán a rendir puntos cada día.",
+    "card_of": "de {name}",
+    "apply_nocards": "No tienes cartas para ofrecer.",
+    "apply_allused": "Todas tus cartas ya están en un clan.",
+    "apply_pick": "¿Con qué carta te postulas?",
+    "applied_ok": "✉️ ¡Solicitud enviada!"
   }
 };

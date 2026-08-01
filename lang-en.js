@@ -1704,6 +1704,11 @@
     "need3": "You need at least 3 fresh cards to attack (3v3).",
     "zone_take_free": "Take {name}? It’s free: you grab it without a fight.",
     "rendita_line": "💰 Your {c} cards here earn ~{x} points/day.",
-    "rendita_none": "💰 Conquer zones on the map: your cards will start earning points every day."
+    "rendita_none": "💰 Conquer zones on the map: your cards will start earning points every day.",
+    "card_of": "by {name}",
+    "apply_nocards": "You have no cards to offer.",
+    "apply_allused": "All your cards are already in a clan.",
+    "apply_pick": "Which card do you apply with?",
+    "applied_ok": "✉️ Request sent!"
   }
 };
