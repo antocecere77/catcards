@@ -15,11 +15,11 @@
 <script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs@master/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="lang-it.js?v=25.0"></script>
-<script src="lang-en.js?v=25.0"></script>
-<script src="lang-fr.js?v=25.0"></script>
-<script src="lang-es.js?v=25.0"></script>
-<script src="lang-de.js?v=25.0"></script>
+<script src="lang-it.js?v=25.1"></script>
+<script src="lang-en.js?v=25.1"></script>
+<script src="lang-fr.js?v=25.1"></script>
+<script src="lang-es.js?v=25.1"></script>
+<script src="lang-de.js?v=25.1"></script>
 <style>
   :root{
     --bg:#14121f; --panel:#1e1b2e; --panel2:#282440;
@@ -1845,11 +1845,13 @@ async function loadAwardPast(){
     if (!rows.length){ box.innerHTML = '<p class="count">' + TSEC('award', 'past_empty') + '</p>'; return; }
     const map = {}, weeks = [];
     rows.forEach(x => { if (!map[x.week_id]){ map[x.week_id] = []; weeks.push(x.week_id); } map[x.week_id].push(x); });
+    window._awPastMap = map;
     let html = '';
     weeks.slice(0, 10).forEach(w => {
       let d = w; try { d = new Date(w + 'T00:00:00').toLocaleDateString(LANG, {day: 'numeric', month: 'long'}); } catch(e){}
       html += '<details style="margin-top:8px; background:var(--panel2); border-radius:10px; padding:8px 10px;">' +
         '<summary style="cursor:pointer; font-weight:700;">' + TSEC('award', 'week_of', {d: d}) + '</summary>' +
+        '<button class="btn secondary" style="margin:8px 0;" onclick="replayGala(\'' + w + '\')">' + TSEC('award', 'replay_ed') + '</button>' +
         awardBlocks(map[w], AW_ORDER_PAGE) + '</details>';
     });
     box.innerHTML = html;
@@ -1921,6 +1923,11 @@ async function playAwardGala(replay){
   if (!rows || !rows.length){ try { toast(TSEC('award', 'cer_none')); } catch(e){} return; }
   if (wid){ try { localStorage.setItem('catcards_aw_seen', wid); } catch(e){} }
   runGala(rows, preview);
+}
+function replayGala(w){   // rivedi la cerimonia di un'edizione passata (dati già caricati)
+  const rows = (window._awPastMap || {})[w];
+  if (!rows || !rows.length){ try { toast(TSEC('award', 'cer_none')); } catch(e){} return; }
+  runGala(rows, false);
 }
 async function runGala(rows, preview){
   const WEEKLY = ['mvp', 'instancabile', 'cecchino', 'dominatore', 'ammazza', 'beniamino', 'debuttante', 'astro', 'rivalita', 'pantofolaio'];
@@ -4720,7 +4727,7 @@ async function migrateMelodies(){
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
 /* ---------- versione e aggiornamento automatico ---------- */
-const APP_VERSION = '25.0';   // unica fonte di verità: aggiorna anche version.txt a ogni release
+const APP_VERSION = '25.1';   // unica fonte di verità: aggiorna anche version.txt a ogni release
 try { document.getElementById('appVer').textContent = 'v' + APP_VERSION; } catch(e){}
 function verNewer(a, b){   // a più recente di b? confronto numerico 11.10 > 11.9
   const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);

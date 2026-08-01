@@ -1563,7 +1563,8 @@
     "val_rivalita": "{n} duels",
     "cer_q_rivalita": "Deux chats, une ruelle : qui l’a emporté dans la rivalité la plus chaude de la semaine ?",
     "d_rivalita": "Le duo qui s’est le plus affronté",
-    "full_rivalita": "Et voici la Rivalité de la semaine ! Deux chats, mille bagarres… et un seul repart la tête haute !"
+    "full_rivalita": "Et voici la Rivalité de la semaine ! Deux chats, mille bagarres… et un seul repart la tête haute !",
+    "replay_ed": "▶️ Revoir la cérémonie"
   },
   "gang": {
     "login": "Connecte-toi pour utiliser les clans.",

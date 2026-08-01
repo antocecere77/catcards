@@ -1563,7 +1563,8 @@
     "val_rivalita": "{n} Duelle",
     "cer_q_rivalita": "Zwei Katzen, eine Gasse: Wer gewann die heißeste Rivalität der Woche?",
     "d_rivalita": "Das Paar mit den meisten Duellen",
-    "full_rivalita": "Und nun die Rivalität der Woche! Zwei Katzen, tausend Raufereien… und nur eine geht erhobenen Hauptes!"
+    "full_rivalita": "Und nun die Rivalität der Woche! Zwei Katzen, tausend Raufereien… und nur eine geht erhobenen Hauptes!",
+    "replay_ed": "▶️ Zeremonie erneut ansehen"
   },
   "gang": {
     "login": "Melde dich an, um Clans zu nutzen.",

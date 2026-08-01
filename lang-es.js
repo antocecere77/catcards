@@ -1563,7 +1563,8 @@
     "val_rivalita": "{n} duelos",
     "cer_q_rivalita": "Dos gatos, un callejón: ¿quién se impuso en la rivalidad más caliente de la semana?",
     "d_rivalita": "La pareja que más se enfrentó",
-    "full_rivalita": "¡Y llega la Rivalidad de la semana! Dos gatos, mil peleas… ¡y solo uno se va con la cabeza alta!"
+    "full_rivalita": "¡Y llega la Rivalidad de la semana! Dos gatos, mil peleas… ¡y solo uno se va con la cabeza alta!",
+    "replay_ed": "▶️ Volver a ver la ceremonia"
   },
   "gang": {
     "login": "Inicia sesión para usar los clanes.",

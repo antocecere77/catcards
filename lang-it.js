@@ -1563,7 +1563,8 @@
     "val_rivalita": "{n} scontri diretti",
     "cer_q_rivalita": "Due gatti, un solo vicolo: chi l’ha spuntata nella rivalità più calda della settimana?",
     "d_rivalita": "La coppia che se le è date di più",
-    "full_rivalita": "E veniamo alla Rivalità della settimana! Due gatti, mille scazzottate… e alla fine uno solo esce a testa alta!"
+    "full_rivalita": "E veniamo alla Rivalità della settimana! Due gatti, mille scazzottate… e alla fine uno solo esce a testa alta!",
+    "replay_ed": "▶️ Rivedi la cerimonia"
   },
   "gang": {
     "login": "Accedi per usare i clan.",
