@@ -1723,7 +1723,10 @@
     "apply_allused": "Toutes tes cartes sont déjà dans un clan.",
     "apply_pick": "Avec quelle carte postules-tu ?",
     "applied_ok": "✉️ Demande envoyée !",
-    "scout_tip": "Gaffe au n°{s} ({sn}), le plus coriace. Le plus faible : n°{w} ({wn})."
+    "scout_tip": "Gaffe au n°{s} ({sn}), le plus coriace. Le plus faible : n°{w} ({wn}).",
+    "rename_prompt": "Nouveau nom du clan :",
+    "rename_short": "Nom trop court.",
+    "rename_done": "✏️ Nom du clan mis à jour."
   },
   "nemesi": {
     "title": "Némésis",

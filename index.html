@@ -15,11 +15,11 @@
 <script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs@master/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="lang-it.js?v=25.2"></script>
-<script src="lang-en.js?v=25.2"></script>
-<script src="lang-fr.js?v=25.2"></script>
-<script src="lang-es.js?v=25.2"></script>
-<script src="lang-de.js?v=25.2"></script>
+<script src="lang-it.js?v=25.3"></script>
+<script src="lang-en.js?v=25.3"></script>
+<script src="lang-fr.js?v=25.3"></script>
+<script src="lang-es.js?v=25.3"></script>
+<script src="lang-de.js?v=25.3"></script>
 <style>
   :root{
     --bg:#14121f; --panel:#1e1b2e; --panel2:#282440;
@@ -1606,6 +1606,13 @@ async function simClanWars(){   // admin: lancia un'ondata di guerre bot lato se
   } catch(e){ if (out) out.textContent = '❌ ' + e.message; }
 }
 async function gangSetDefense(size){ try { await gRpc('clan_set_defense', {p_size: size}); openGang(); } catch(e){ alert('❌ ' + e.message); } }
+async function gangRename(){
+  const name = prompt(G('rename_prompt'), window._myClanName || '');
+  if (name == null) return;
+  const t = name.trim(); if (t.length < 2){ alert('❌ ' + G('rename_short')); return; }
+  try { await gRpc('clan_rename', {p_name: t}); try { toast(G('rename_done')); } catch(e){} openGang(); }
+  catch(e){ alert('❌ ' + e.message); }
+}
 async function publishOne(serial){
   const e = collection.find(c => c.serial === serial); if (!e) return;
   if (!session || !session.access_token){ alert(TSEC('msg', 'retire_login')); return; }
@@ -2183,7 +2190,7 @@ async function renderMyClan(clanId){
   const zoneVal = zonesHeld.reduce((s, z) => s + (z.is_capital ? 6 : 2), 0);
   const myCardsN = roster.filter(r => collection.some(c => c.serial === r.serial)).length;
   const myIncome = (zoneVal > 0 && roster.length) ? Math.max(1, Math.round(zoneVal / roster.length)) * myCardsN : 0;
-  let html = '<div style="text-align:center;"><div style="font-size:2.4rem;">' + (clan.emblem || '🛡️') + '</div><h2 style="margin:2px 0;">' + awEsc(clan.name) + '</h2><p class="count" style="margin:0;">' + G('members_n', {n: members.length}) + ' · ' + (clan.points || 0) + ' ' + G('pts') + '</p>';
+  let html = '<div style="text-align:center;"><div style="font-size:2.4rem;">' + (clan.emblem || '🛡️') + '</div><h2 style="margin:2px 0;">' + awEsc(clan.name) + (isLeader ? ' <button class="btn secondary" style="width:auto; margin:0; padding:2px 8px; font-size:.9rem; vertical-align:middle;" onclick="gangRename()">✏️</button>' : '') + '</h2><p class="count" style="margin:0;">' + G('members_n', {n: members.length}) + ' · ' + (clan.points || 0) + ' ' + G('pts') + '</p>';
   html += '<div style="margin-top:4px;"><span class="count">' + (clan.open ? G('open_lbl') : G('closed_lbl')) + '</span>' + (isLeader ? ' <button class="btn secondary" style="width:auto; margin:0; padding:4px 10px;" onclick="gangSetOpen(' + (!clan.open) + ')">' + (clan.open ? G('set_closed') : G('set_open')) + '</button>' : '') + '</div></div>';
   if (myCardsN > 0) html += '<div style="text-align:center; margin-top:8px; background:#7ee78714; border-radius:10px; padding:8px;"><span style="font-size:.86rem;">' + (myIncome > 0 ? G('rendita_line', {c: myCardsN, x: myIncome}) : G('rendita_none')) + '</span></div>';
   html += '<h3 style="margin-top:16px;">' + G('members') + ' (' + members.length + ')</h3>';
@@ -4727,7 +4734,7 @@ async function migrateMelodies(){
     : '🎼 Completati ' + ok + '/' + todo.length + ' — ultimo errore: ' + lastErr;
 }
 /* ---------- versione e aggiornamento automatico ---------- */
-const APP_VERSION = '25.2';   // unica fonte di verità: aggiorna anche version.txt a ogni release
+const APP_VERSION = '25.3';   // unica fonte di verità: aggiorna anche version.txt a ogni release
 try { document.getElementById('appVer').textContent = 'v' + APP_VERSION; } catch(e){}
 function verNewer(a, b){   // a più recente di b? confronto numerico 11.10 > 11.9
   const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);

@@ -1724,7 +1724,10 @@
     "apply_allused": "Tutte le tue carte sono già in un clan.",
     "apply_pick": "Con quale carta chiedi di entrare?",
     "applied_ok": "✉️ Richiesta inviata!",
-    "scout_tip": "Occhio ar {s}° ({sn}): è er più tosto. Er più molle è er {w}° ({wn})."
+    "scout_tip": "Occhio ar {s}° ({sn}): è er più tosto. Er più molle è er {w}° ({wn}).",
+    "rename_prompt": "Nuovo nome del clan:",
+    "rename_short": "Nome troppo corto.",
+    "rename_done": "✏️ Nome del clan aggiornato."
   },
   "nemesi": {
     "title": "Nemesi",

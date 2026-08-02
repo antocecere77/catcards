@@ -1723,7 +1723,10 @@
     "apply_allused": "Alle deine Karten sind schon in einem Clan.",
     "apply_pick": "Mit welcher Karte bewirbst du dich?",
     "applied_ok": "✉️ Anfrage gesendet!",
-    "scout_tip": "Achtung Nr. {s} ({sn}), der Härteste. Der Schwächste: Nr. {w} ({wn})."
+    "scout_tip": "Achtung Nr. {s} ({sn}), der Härteste. Der Schwächste: Nr. {w} ({wn}).",
+    "rename_prompt": "Neuer Clan-Name:",
+    "rename_short": "Name zu kurz.",
+    "rename_done": "✏️ Clan-Name aktualisiert."
   },
   "nemesi": {
     "title": "Erzfeind",

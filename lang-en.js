@@ -1723,7 +1723,10 @@
     "apply_allused": "All your cards are already in a clan.",
     "apply_pick": "Which card do you apply with?",
     "applied_ok": "✉️ Request sent!",
-    "scout_tip": "Watch #{s} ({sn}) — the toughest. The softest is #{w} ({wn})."
+    "scout_tip": "Watch #{s} ({sn}) — the toughest. The softest is #{w} ({wn}).",
+    "rename_prompt": "New clan name:",
+    "rename_short": "Name too short.",
+    "rename_done": "✏️ Clan name updated."
   },
   "nemesi": {
     "title": "Nemesis",
